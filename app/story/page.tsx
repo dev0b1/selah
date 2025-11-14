@@ -6,30 +6,70 @@ import { useRouter } from "next/navigation";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { StyleSelector, SongStyle } from "@/components/StyleSelector";
-import { LoadingAnimation } from "@/components/LoadingAnimation";
+import FileUpload from "@/components/FileUpload";
+import LoadingProgress, { LoadingStep } from "@/components/LoadingProgress";
+import { FiEdit, FiImage } from "react-icons/fi";
+
+type InputMode = 'text' | 'screenshot';
 
 export default function StoryPage() {
   const router = useRouter();
+  const [inputMode, setInputMode] = useState<InputMode>('text');
   const [story, setStory] = useState("");
+  const [screenshot, setScreenshot] = useState<File | null>(null);
   const [style, setStyle] = useState<SongStyle>("sad");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<LoadingStep>('ocr');
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   const handleGenerate = async () => {
-    if (story.trim().length < 10) {
+    if (inputMode === 'text' && story.trim().length < 10) {
       alert("Please tell us a bit more about your breakup (at least 10 characters)");
       return;
     }
 
+    if (inputMode === 'screenshot' && !screenshot) {
+      alert("Please upload a chat screenshot first");
+      return;
+    }
+
     setIsGenerating(true);
+    setLoadingStep('ocr');
+    setLoadingProgress(0);
 
     try {
+      let extractedText = story;
+
+      if (inputMode === 'screenshot' && screenshot) {
+        setLoadingStep('ocr');
+        
+        const formData = new FormData();
+        formData.append('image', screenshot);
+
+        const ocrResponse = await fetch('/api/ocr', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const ocrData = await ocrResponse.json();
+
+        if (!ocrData.success) {
+          throw new Error(ocrData.error || 'Failed to extract text from screenshot');
+        }
+
+        extractedText = ocrData.cleanedText;
+      }
+
+      setLoadingStep('lyrics');
+      setLoadingProgress(30);
+
       const response = await fetch("/api/generate-song", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          story,
+          story: extractedText,
           style,
         }),
       });
@@ -37,21 +77,26 @@ export default function StoryPage() {
       const data = await response.json();
 
       if (data.success) {
-        router.push(`/preview?songId=${data.songId}`);
+        setLoadingStep('complete');
+        setLoadingProgress(100);
+        
+        setTimeout(() => {
+          router.push(`/preview?songId=${data.songId}`);
+        }, 500);
       } else {
         throw new Error(data.error || "Failed to generate song");
       }
     } catch (error) {
       console.error("Error generating song:", error);
-      alert("Something went wrong. Please try again.");
+      alert(`Something went wrong: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
       setIsGenerating(false);
     }
   };
 
   if (isGenerating) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingAnimation message="Creating your personalized song..." />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <LoadingProgress currentStep={loadingStep} progress={loadingProgress} />
       </div>
     );
   }
@@ -73,29 +118,73 @@ export default function StoryPage() {
                 Tell Your <span className="text-gradient">Breakup Story</span>
               </h1>
               <p className="text-xl text-gray-600">
-                Don't hold back. Let it all out. We'll turn it into music.
+                Write your story or upload a chat screenshot
               </p>
             </div>
 
             <div className="card space-y-6">
-              <div className="space-y-3">
-                <label htmlFor="story" className="block text-lg font-semibold text-gray-700">
-                  Your Story
-                </label>
-                <textarea
-                  id="story"
-                  rows={6}
-                  value={story}
-                  onChange={(e) => setStory(e.target.value)}
-                  placeholder="Example: They said they needed space, then I saw them with someone new the next day. After 3 years together, I deserved better than that..."
-                  className="input-field resize-none"
-                  maxLength={500}
-                />
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>Be honest. The AI can handle it.</span>
-                  <span>{story.length}/500</span>
-                </div>
+              <div className="flex gap-4 border-b border-gray-200">
+                <button
+                  onClick={() => setInputMode('text')}
+                  className={`
+                    flex items-center gap-2 px-6 py-3 font-semibold transition-all border-b-2
+                    ${inputMode === 'text'
+                      ? 'border-rose-500 text-rose-500'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }
+                  `}
+                >
+                  <FiEdit className="w-5 h-5" />
+                  Write Story
+                </button>
+                <button
+                  onClick={() => setInputMode('screenshot')}
+                  className={`
+                    flex items-center gap-2 px-6 py-3 font-semibold transition-all border-b-2
+                    ${inputMode === 'screenshot'
+                      ? 'border-rose-500 text-rose-500'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }
+                  `}
+                >
+                  <FiImage className="w-5 h-5" />
+                  Upload Screenshot
+                </button>
               </div>
+
+              {inputMode === 'text' ? (
+                <div className="space-y-3">
+                  <label htmlFor="story" className="block text-lg font-semibold text-gray-700">
+                    Your Story
+                  </label>
+                  <textarea
+                    id="story"
+                    rows={6}
+                    value={story}
+                    onChange={(e) => setStory(e.target.value)}
+                    placeholder="Example: They said they needed space, then I saw them with someone new the next day. After 3 years together, I deserved better than that..."
+                    className="input-field resize-none"
+                    maxLength={500}
+                  />
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>Be honest. The AI can handle it.</span>
+                    <span>{story.length}/500</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <label className="block text-lg font-semibold text-gray-700">
+                    Upload Chat Screenshot
+                  </label>
+                  <FileUpload
+                    onFileSelect={(file) => setScreenshot(file)}
+                    onClear={() => setScreenshot(null)}
+                  />
+                  <p className="text-sm text-gray-500">
+                    We'll extract the conversation using AI and create your song
+                  </p>
+                </div>
+              )}
 
               <StyleSelector selected={style} onChange={setStyle} />
 
@@ -103,7 +192,7 @@ export default function StoryPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleGenerate}
-                disabled={story.trim().length < 10}
+                disabled={inputMode === 'text' ? story.trim().length < 10 : !screenshot}
                 className="btn-primary w-full text-xl py-5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Generate My Song 🎵

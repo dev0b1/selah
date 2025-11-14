@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getAudioProvider } from "@/lib/audio-provider";
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { generateLyrics, SongStyle } from '@/lib/lyrics';
+import { createElevenLabsClient } from '@/lib/elevenlabs';
 
 interface GenerateSongRequest {
   story: string;
-  style: "sad" | "savage" | "healing";
+  style: SongStyle;
 }
 
 export async function POST(request: NextRequest) {
@@ -14,19 +15,59 @@ export async function POST(request: NextRequest) {
 
     if (!story || story.trim().length < 10) {
       return NextResponse.json(
-        { success: false, error: "Story is too short" },
+        { success: false, error: 'Story is too short' },
         { status: 400 }
       );
     }
 
-    const audioProvider = getAudioProvider();
-    const { previewUrl, fullUrl } = await audioProvider.generateSong({ story, style });
+    const validStyles: SongStyle[] = ['sad', 'savage', 'healing', 'vibe', 'meme'];
+    if (!validStyles.includes(style)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid style selected' },
+        { status: 400 }
+      );
+    }
+
+    console.log('Generating lyrics for story:', story.substring(0, 50) + '...');
+    
+    const lyricsResult = await generateLyrics({ story, style });
+
+    console.log('Lyrics generated:', lyricsResult.title);
+
+    let previewUrl = '';
+    let fullUrl = '';
+
+    const elevenLabsClient = createElevenLabsClient();
+    
+    try {
+      console.log('Generating music with ElevenLabs...');
+      
+      const musicResult = await elevenLabsClient.generateSong({
+        prompt: lyricsResult.lyrics,
+        title: lyricsResult.title,
+        style,
+        duration: 30,
+      });
+
+      previewUrl = musicResult.audioUrl;
+      fullUrl = musicResult.audioUrl;
+
+      console.log('Music generated successfully');
+    } catch (musicError) {
+      console.warn('ElevenLabs music generation failed, using placeholder:', musicError);
+      
+      previewUrl = '/audio/placeholder-preview.mp3';
+      fullUrl = '/audio/placeholder-full.mp3';
+    }
 
     const song = await prisma.song.create({
       data: {
-        title: generateSongTitle(story, style),
+        title: lyricsResult.title,
         story,
         style,
+        lyrics: lyricsResult.lyrics,
+        genre: lyricsResult.genre,
+        mood: lyricsResult.mood,
         previewUrl,
         fullUrl,
         isPurchased: false,
@@ -36,24 +77,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       songId: song.id,
-      message: "Song generated successfully",
+      title: lyricsResult.title,
+      lyrics: lyricsResult.lyrics,
+      message: 'Song generated successfully',
     });
   } catch (error) {
-    console.error("Error generating song:", error);
+    console.error('Error generating song:', error);
     return NextResponse.json(
-      { success: false, error: "Failed to generate song" },
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to generate song',
+      },
       { status: 500 }
     );
   }
-}
-
-function generateSongTitle(story: string, style: string): string {
-  const words = story.split(" ").slice(0, 5);
-  const stylePrefix = {
-    sad: "Tears of",
-    savage: "Burn It Down:",
-    healing: "Moving On From",
-  };
-  
-  return `${stylePrefix[style as keyof typeof stylePrefix]} ${words.join(" ").substring(0, 30)}...`;
 }

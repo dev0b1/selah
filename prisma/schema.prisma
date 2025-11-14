@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -12,6 +12,9 @@ model Song {
   title                 String
   story                 String
   style                 String
+  lyrics                String?
+  genre                 String?
+  mood                  String?
   previewUrl            String
   fullUrl               String
   isPurchased           Boolean   @default(false)

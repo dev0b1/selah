@@ -1,10 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FaSadTear, FaFire, FaSeedling } from "react-icons/fa";
+import { FaSadTear, FaFire, FaSeedling, FaMusic, FaLaugh } from "react-icons/fa";
 import clsx from "clsx";
 
-export type SongStyle = "sad" | "savage" | "healing";
+export type SongStyle = "sad" | "savage" | "healing" | "vibe" | "meme";
 
 interface StyleSelectorProps {
   selected: SongStyle;
@@ -39,6 +39,24 @@ const styles = [
     bgColor: "bg-green-50",
     borderColor: "border-green-400",
   },
+  {
+    id: "vibe" as SongStyle,
+    name: "Vibe",
+    icon: FaMusic,
+    description: "Chill & relatable",
+    color: "from-purple-400 to-indigo-600",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-400",
+  },
+  {
+    id: "meme" as SongStyle,
+    name: "Meme",
+    icon: FaLaugh,
+    description: "Make it funny",
+    color: "from-yellow-400 to-orange-500",
+    bgColor: "bg-yellow-50",
+    borderColor: "border-yellow-400",
+  },
 ];
 
 export function StyleSelector({ selected, onChange }: StyleSelectorProps) {
@@ -47,7 +65,7 @@ export function StyleSelector({ selected, onChange }: StyleSelectorProps) {
       <label className="block text-lg font-semibold text-gray-700">
         Choose Your Vibe
       </label>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {styles.map((style) => {
           const Icon = style.icon;
           const isSelected = selected === style.id;
