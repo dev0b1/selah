@@ -36,6 +36,10 @@ export function LyricsOverlay({ lyrics, duration = 60, isPlaying }: LyricsOverla
     return () => clearInterval(interval);
   }, [isPlaying, duration, lyricsLines.length]);
 
+  useEffect(() => {
+    setScrollPosition(0);
+  }, [duration]);
+
   return (
     <div className="relative w-full h-64 md:h-96 overflow-hidden rounded-2xl bg-gradient-to-br from-heartbreak-50 to-white border border-heartbreak-200">
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

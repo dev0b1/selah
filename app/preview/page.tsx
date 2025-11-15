@@ -33,6 +33,7 @@ export default function PreviewPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [actualDuration, setActualDuration] = useState(10);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -93,8 +94,7 @@ export default function PreviewPage() {
     const current = audioRef.current.currentTime;
     setCurrentTime(current);
 
-    const previewLimit = song.isPurchased ? duration : 10;
-    if (!song.isPurchased && current >= previewLimit) {
+    if (!song.isPurchased && current >= 10) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       setIsPlaying(false);
@@ -103,8 +103,9 @@ export default function PreviewPage() {
 
   const handleLoadedMetadata = () => {
     if (!audioRef.current) return;
-    const actualDuration = audioRef.current.duration;
-    setDuration(song.isPurchased ? actualDuration : Math.min(10, actualDuration));
+    const loadedDuration = audioRef.current.duration;
+    setActualDuration(loadedDuration);
+    setDuration(song.isPurchased ? loadedDuration : 10);
   };
 
   const formatTime = (time: number) => {
@@ -149,7 +150,7 @@ export default function PreviewPage() {
               <div className="space-y-6">
                 <LyricsOverlay 
                   lyrics={song.lyrics} 
-                  duration={60}
+                  duration={song.isPurchased ? actualDuration : 10}
                   isPlaying={isPlaying}
                 />
 
