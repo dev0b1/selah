@@ -3,9 +3,18 @@
 ## Overview
 A viral Next.js web application for generating personalized AI breakup songs with Paddle subscription billing, social sharing features, and emotional healing support. Built with Next.js 16, Tailwind CSS, Framer Motion, and Paddle Billing.
 
-## Recent Changes (November 14, 2025)
+## Recent Changes (November 15, 2025)
 
-### Latest Updates - Professional UI Redesign
+### Latest Updates - Suno AI Integration & Animated Lyrics
+- ✅ **Integrated Suno AI** - Replaced ElevenLabs with Suno AI for professional music generation
+- ✅ **Added OpenRouter integration** - Using Claude 3.5 Sonnet for intelligent lyric generation from breakup stories
+- ✅ **Created LyricsOverlay component** - Smooth scrolling lyrics synchronized with song playback
+- ✅ **Created AnimatedBackground component** - Floating hearts, musical notes, and gradient animations
+- ✅ **Enhanced Share page** - Two-column layout with lyrics overlay, animated background, and custom audio player
+- ✅ **Enhanced Preview page** - Added lyrics display with animations and improved social sharing
+- ✅ **Implemented OCR workflow** - Screenshot → OCR → LLM → Suno AI complete pipeline
+
+### Previous Updates - Professional UI Redesign (November 14, 2025)
 - ✅ **Redesigned landing page** - Removed excessive pricing, focus on value and features
 - ✅ **Created dedicated pricing page** (`/pricing`) with comprehensive tier comparison
 - ✅ **Enhanced UI design** - Improved spacing, typography, card hover effects
@@ -36,23 +45,37 @@ A viral Next.js web application for generating personalized AI breakup songs wit
 ### Pages
 1. `/` - Landing page with hero, features, how it works, FAQ (pricing removed for cleaner UX)
 2. `/pricing` - Dedicated pricing page with all subscription tiers and FAQs
-3. `/story` - Story input and style selection
-4. `/preview` - Song preview with payment options
-5. `/success` - Payment confirmation page
+3. `/story` - Story input with text/screenshot options and style selection
+4. `/preview` - Song preview with animated lyrics overlay, custom player, and social sharing
+5. `/share/[id]` - Public song share page with full animations and lyrics
+6. `/success` - Payment confirmation page
 
 ### Components
 - `Header` - Navigation with logo and links
 - `Footer` - Links and social media
 - `StyleSelector` - Choose song vibe (Sad/Savage/Healing)
 - `SongPlayer` - Audio playback with controls
+- `LyricsOverlay` - Animated scrolling lyrics synchronized to music (NEW)
+- `AnimatedBackground` - Floating hearts, musical notes, gradient animations (NEW)
 - `SubscriptionCTA` - Pricing tiers and checkout
 - `LoadingAnimation` - Spinning musical notes animation
+- `LoadingProgress` - Progress indicator for song generation
+- `FileUpload` - Screenshot upload component
 - `SocialShareButtons` - Share to social platforms
 - `PaddleLoader` - Paddle.js SDK initialization
 
 ### API Routes
-- `/api/generate-song` - POST endpoint for song generation
+- `/api/generate-song` - POST endpoint for song generation (OpenRouter + Suno AI)
 - `/api/song/[id]` - GET endpoint for song retrieval
+- `/api/ocr` - POST endpoint for text extraction from screenshots
+- `/api/webhook` - Paddle webhook handler
+
+### Libraries
+- `lib/suno.ts` - Suno AI client for music generation (NEW)
+- `lib/openrouter.ts` - OpenRouter client for LLM prompt generation (NEW)
+- `lib/ocr.ts` - Tesseract.js OCR functionality
+- `lib/lyrics.ts` - Lyrics generation utilities
+- `lib/prisma.ts` - Prisma database client
 
 ## Paddle Billing Integration
 
@@ -101,14 +124,45 @@ The app includes comprehensive error handling for Paddle:
 - Logs errors to console for debugging
 - Prevents checkout with invalid price IDs
 
-## ElevenLabs Music API Integration
+## AI Integration
 
-The app is scaffolded for ElevenLabs Music API integration. See `lib/elevenlabs.ts` for the integration points. When implementing:
+### Suno AI Music Generation
+The app uses Suno AI (via third-party API providers) for professional music generation:
 
-1. Create an ElevenLabs account and get API key
-2. Implement the `generateSong()` method in `lib/elevenlabs.ts`
-3. Update `app/api/generate-song/route.ts` to call ElevenLabs API
-4. Handle audio file storage and retrieval
+**Required Environment Variables:**
+```
+SUNO_API_KEY=your_api_key_here
+```
+
+**Integration Flow:**
+1. User provides breakup story (text or screenshot)
+2. OCR extracts text from screenshot (if applicable)
+3. OpenRouter/LLM generates song lyrics and metadata
+4. Suno AI generates the actual music
+5. Song is stored in database with preview and full URLs
+
+**Implementation:** See `lib/suno.ts` for the Suno API client
+
+### OpenRouter LLM Integration
+The app uses OpenRouter to access Claude 3.5 Sonnet for intelligent prompt generation:
+
+**Required Environment Variables:**
+```
+OPENROUTER_API_KEY=your_api_key_here
+```
+
+**Purpose:**
+- Converts raw breakup stories into structured song lyrics
+- Generates song titles and genre/style tags
+- Optimizes prompts for Suno AI music generation
+
+**Implementation:** See `lib/openrouter.ts` for the OpenRouter API client
+
+### Tesseract.js OCR
+Extracts text from chat screenshots using client-side OCR:
+- Implementation: `lib/ocr.ts`
+- API endpoint: `/api/ocr`
+- No API key required (runs in-browser)
 
 ## User Preferences
 - Mobile-first responsive design
@@ -136,10 +190,36 @@ The app is scaffolded for ElevenLabs Music API integration. See `lib/elevenlabs.
 - All hosts allowed for iframe compatibility
 - TypeScript strict mode enabled
 
+## Complete Workflow
+
+### Song Generation Flow
+1. **User Input**: User enters breakup story as text OR uploads chat screenshot
+2. **OCR Processing** (if screenshot): Tesseract.js extracts text from image
+3. **LLM Generation**: OpenRouter (Claude 3.5) converts story into:
+   - Song title
+   - Genre/style tags
+   - Full lyrics (200-400 words)
+4. **Music Generation**: Suno AI creates the actual song (30-60 seconds)
+5. **Preview Display**: User sees:
+   - Animated lyrics overlay
+   - Custom audio player
+   - Animated background with floating elements
+   - Social share buttons
+6. **Sharing**: Users can share song on TikTok, Instagram, WhatsApp, Twitter
+
+### Technical Features
+- **Mobile-first responsive design** with Tailwind CSS
+- **Smooth animations** using Framer Motion
+- **Lyrics scrolling** synchronized to song duration (60s default)
+- **CSS-only animations** for background (no video generation)
+- **Export functionality** (premium feature - locked)
+- **AI Breakup Advice** (premium feature - upsell in UI)
+
 ## Next Steps
-1. Add ElevenLabs API key and implement song generation
+1. ✅ Suno AI and OpenRouter integration complete
 2. Set up Paddle products and prices in dashboard
 3. Configure webhook endpoint for subscription events
 4. Test payment flow in sandbox mode
 5. Add user authentication for song history
 6. Implement download functionality for purchased songs
+7. Test complete OCR → LLM → Suno workflow with real API keys

@@ -1,23 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { SongPlayer } from "@/components/SongPlayer";
 import { SubscriptionCTA } from "@/components/SubscriptionCTA";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
-import { FaLock, FaDownload } from "react-icons/fa";
+import { LyricsOverlay } from "@/components/LyricsOverlay";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
+import { FaLock, FaDownload, FaPlay, FaPause } from "react-icons/fa";
 
 interface Song {
   id: string;
   title: string;
   previewUrl: string;
   fullUrl: string;
+  lyrics: string;
   style: string;
   story: string;
+  isPurchased: boolean;
 }
 
 export default function PreviewPage() {
@@ -27,6 +30,10 @@ export default function PreviewPage() {
   const [song, setSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSubscription, setShowSubscription] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     if (songId) {
@@ -70,12 +77,51 @@ export default function PreviewPage() {
     );
   }
 
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleTimeUpdate = () => {
+    if (!audioRef.current) return;
+    const current = audioRef.current.currentTime;
+    setCurrentTime(current);
+
+    const previewLimit = song.isPurchased ? duration : 10;
+    if (!song.isPurchased && current >= previewLimit) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      setIsPlaying(false);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (!audioRef.current) return;
+    const actualDuration = audioRef.current.duration;
+    setDuration(song.isPurchased ? actualDuration : Math.min(10, actualDuration));
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/share/${song?.id}` : '';
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <AnimatedBackground />
       <Header />
       
-      <main className="pt-32 pb-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="pt-32 pb-20 relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -95,16 +141,94 @@ export default function PreviewPage() {
                 Your Song is <span className="text-gradient">Ready!</span>
               </h1>
               <p className="text-xl text-gray-600">
-                Listen to your 10-second preview below
+                Listen to your preview and see the lyrics come to life!
               </p>
             </div>
 
-            <SongPlayer
-              audioUrl={song.previewUrl}
-              title={song.title}
-              isPreview={true}
-              previewDuration={10}
-            />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <LyricsOverlay 
+                  lyrics={song.lyrics} 
+                  duration={60}
+                  isPlaying={isPlaying}
+                />
+
+                <div className="card bg-healing-50 border-healing-200">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    Your Breakup Story
+                  </h3>
+                  <p className="text-gray-700 italic mb-4">"{song.story}"</p>
+                  <div className="flex items-center space-x-2">
+                    <span className="px-3 py-1 bg-healing-200 text-healing-800 rounded-full text-sm font-medium">
+                      {song.style.charAt(0).toUpperCase() + song.style.slice(1)} Vibe
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="card sticky top-24">
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-lg text-gray-800">{song.title}</h3>
+                      {!song.isPurchased && (
+                        <span className="text-xs bg-heartbreak-100 text-heartbreak-700 px-3 py-1 rounded-full font-medium">
+                          Preview (10s)
+                        </span>
+                      )}
+                    </div>
+
+                    <audio
+                      ref={audioRef}
+                      src={song.isPurchased ? song.fullUrl : song.previewUrl}
+                      onTimeUpdate={handleTimeUpdate}
+                      onLoadedMetadata={handleLoadedMetadata}
+                      onEnded={() => setIsPlaying(false)}
+                    />
+
+                    <div className="flex items-center space-x-4">
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={togglePlay}
+                        className="w-14 h-14 rounded-full bg-heartbreak-500 hover:bg-heartbreak-600 text-white flex items-center justify-center transition-colors flex-shrink-0"
+                      >
+                        {isPlaying ? <FaPause className="text-xl" /> : <FaPlay className="text-xl ml-1" />}
+                      </motion.button>
+
+                      <div className="flex-1">
+                        <input
+                          type="range"
+                          min="0"
+                          max={duration}
+                          value={currentTime}
+                          onChange={(e) => {
+                            if (audioRef.current) {
+                              audioRef.current.currentTime = parseFloat(e.target.value);
+                              setCurrentTime(parseFloat(e.target.value));
+                            }
+                          }}
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-heartbreak-500"
+                        />
+                        <div className="flex justify-between text-xs text-gray-500 mt-2">
+                          <span>{formatTime(currentTime)}</span>
+                          <span>{formatTime(duration)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-6">
+                      <h4 className="text-sm font-semibold text-gray-700 mb-3">Share Your Song</h4>
+                      <SocialShareButtons 
+                        url={shareUrl}
+                        title={song.title}
+                        message={`Check out my AI-generated breakup song: ${song.title}`}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <div className="card bg-gradient-to-br from-heartbreak-50 to-heartbreak-100 border-2 border-heartbreak-200">
               <div className="flex items-start space-x-4">
@@ -143,22 +267,6 @@ export default function PreviewPage() {
                 <SubscriptionCTA />
               </motion.div>
             )}
-
-            <div className="card">
-              <SocialShareButtons songId={song.id} songTitle={song.title} />
-            </div>
-
-            <div className="card bg-healing-50 border-healing-200">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Your Breakup Story
-              </h3>
-              <p className="text-gray-700 italic mb-4">"{song.story}"</p>
-              <div className="flex items-center space-x-2">
-                <span className="px-3 py-1 bg-healing-200 text-healing-800 rounded-full text-sm font-medium">
-                  {song.style.charAt(0).toUpperCase() + song.style.slice(1)} Vibe
-                </span>
-              </div>
-            </div>
 
             <div className="card bg-blue-50 border-blue-200">
               <div className="flex items-start space-x-3">

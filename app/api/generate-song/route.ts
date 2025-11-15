@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { generateLyrics, SongStyle } from '@/lib/lyrics';
-import { createElevenLabsClient } from '@/lib/elevenlabs';
+import { SongStyle } from '@/lib/lyrics';
+import { createOpenRouterClient } from '@/lib/openrouter';
+import { createSunoClient } from '@/lib/suno';
 
 interface GenerateSongRequest {
   story: string;
@@ -28,46 +29,75 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Generating lyrics for story:', story.substring(0, 50) + '...');
+    console.log('Step 1: Generating song prompt with OpenRouter...');
     
-    const lyricsResult = await generateLyrics({ story, style });
-
-    console.log('Lyrics generated:', lyricsResult.title);
+    let promptResult;
+    try {
+      const openRouterClient = createOpenRouterClient();
+      promptResult = await openRouterClient.generateSongPrompt({
+        extractedText: story,
+        style,
+      });
+      
+      if (!promptResult.prompt || promptResult.prompt.length < 20) {
+        throw new Error('Generated lyrics are too short');
+      }
+      
+      console.log('Step 2: Prompt generated:', promptResult.title);
+    } catch (promptError) {
+      console.error('OpenRouter prompt generation failed:', promptError);
+      
+      promptResult = {
+        title: `${style.charAt(0).toUpperCase() + style.slice(1)} Breakup Song`,
+        tags: `${style}, emotional, heartbreak`,
+        prompt: `A song about heartbreak and moving on.\n${story.substring(0, 200)}`,
+      };
+      
+      console.log('Using fallback prompt template');
+    }
 
     let previewUrl = '';
     let fullUrl = '';
+    let lyrics = promptResult.prompt;
+    let duration = 30;
 
-    const elevenLabsClient = createElevenLabsClient();
+    const sunoClient = createSunoClient();
     
     try {
-      console.log('Generating music with ElevenLabs...');
+      console.log('Step 3: Generating music with Suno AI...');
       
-      const musicResult = await elevenLabsClient.generateSong({
-        prompt: lyricsResult.lyrics,
-        title: lyricsResult.title,
+      const musicResult = await sunoClient.generateSong({
+        prompt: promptResult.prompt,
+        title: promptResult.title,
+        tags: promptResult.tags,
         style,
-        duration: 30,
       });
 
       previewUrl = musicResult.audioUrl;
-      fullUrl = musicResult.audioUrl;
+      fullUrl = musicResult.videoUrl || musicResult.audioUrl;
+      duration = musicResult.duration || 60;
+      
+      if (musicResult.lyrics && musicResult.lyrics.length > lyrics.length) {
+        lyrics = musicResult.lyrics;
+      }
 
       console.log('Music generated successfully');
     } catch (musicError) {
-      console.warn('ElevenLabs music generation failed, using placeholder:', musicError);
+      console.warn('Suno music generation failed, using placeholder:', musicError);
       
       previewUrl = '/audio/placeholder-preview.mp3';
       fullUrl = '/audio/placeholder-full.mp3';
+      duration = 10;
     }
 
     const song = await prisma.song.create({
       data: {
-        title: lyricsResult.title,
+        title: promptResult.title,
         story,
         style,
-        lyrics: lyricsResult.lyrics,
-        genre: lyricsResult.genre,
-        mood: lyricsResult.mood,
+        lyrics: lyrics,
+        genre: promptResult.tags,
+        mood: style,
         previewUrl,
         fullUrl,
         isPurchased: false,
@@ -77,8 +107,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       songId: song.id,
-      title: lyricsResult.title,
-      lyrics: lyricsResult.lyrics,
+      title: promptResult.title,
+      lyrics: lyrics,
       message: 'Song generated successfully',
     });
   } catch (error) {

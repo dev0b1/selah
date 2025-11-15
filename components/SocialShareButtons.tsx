@@ -5,18 +5,21 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 
 interface SocialShareButtonsProps {
-  songId: string;
-  songTitle: string;
+  songId?: string;
+  songTitle?: string;
+  url?: string;
+  title?: string;
+  message?: string;
 }
 
-export function SocialShareButtons({ songId, songTitle }: SocialShareButtonsProps) {
+export function SocialShareButtons({ songId, songTitle, url, title, message }: SocialShareButtonsProps) {
   const [copied, setCopied] = useState(false);
   
-  const shareUrl = typeof window !== "undefined" 
+  const shareUrl = url || (typeof window !== "undefined" && songId
     ? `${window.location.origin}/share/${songId}`
-    : "";
+    : "");
   
-  const shareText = `Check out my AI-generated breakup song: "${songTitle}" 💔🎵`;
+  const shareText = message || `Check out my AI-generated breakup song: "${title || songTitle}" 💔🎵`;
 
   const handleTikTok = () => {
     const tiktokUrl = `https://www.tiktok.com/upload?caption=${encodeURIComponent(shareText + " " + shareUrl)}`;
