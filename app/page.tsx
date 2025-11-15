@@ -5,11 +5,14 @@ import Link from "next/link";
 import { FaArrowRight } from "react-icons/fa";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import AnimatedCounter from "@/components/AnimatedCounter";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-exroast-black">
+    <div className="min-h-screen bg-black relative">
+      <AnimatedBackground />
+      <div className="relative z-10">
       <Header />
       
       <main className="pt-24">
@@ -88,7 +91,7 @@ export default function HomePage() {
                 </motion.button>
               </Link>
               
-              <p className="text-base text-gray-400 font-bold">
+              <p className="text-base text-white font-bold">
                 Free 15-second preview • Full roast $4.99 • No sadness allowed 💅
               </p>
             </motion.div>
@@ -118,8 +121,8 @@ export default function HomePage() {
               >
                 <div className="text-7xl mb-4 animate-fire">🔥</div>
                 <h3 className="text-3xl font-black text-white mb-2">Petty Roast</h3>
-                <p className="text-lg text-gray-300 mb-3">Savage, brutal, hilarious</p>
-                <p className="text-base italic text-gray-400">"They thought they were the catch? LOL"</p>
+                <p className="text-lg text-white mb-3">Savage, brutal, hilarious</p>
+                <p className="text-base italic text-white/80">"They thought they were the catch? LOL"</p>
               </motion.div>
 
               <motion.div
@@ -132,8 +135,8 @@ export default function HomePage() {
               >
                 <div className="text-7xl mb-4">👑</div>
                 <h3 className="text-3xl font-black text-white mb-2">Glow-Up Flex</h3>
-                <p className="text-lg text-gray-300 mb-3">Upbeat victory anthem</p>
-                <p className="text-base italic text-gray-400">"I'm thriving, they're crying"</p>
+                <p className="text-lg text-white mb-3">Upbeat victory anthem</p>
+                <p className="text-base italic text-white/80">"I'm thriving, they're crying"</p>
               </motion.div>
             </div>
           </div>
@@ -150,10 +153,10 @@ export default function HomePage() {
               whileHover={{ scale: 1.05, rotate: 2 }}
               className="card text-center"
             >
-              <div className="text-5xl font-black text-exroast-pink mb-2">
+              <div className="text-6xl font-black text-exroast-gold mb-2">
                 <AnimatedCounter end={50000} suffix="+" duration={2.5} />
               </div>
-              <p className="text-exroast-gold font-bold">Exes roasted this week</p>
+              <p className="text-white font-bold">Exes roasted this week</p>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -163,10 +166,10 @@ export default function HomePage() {
               whileHover={{ scale: 1.05, rotate: -2 }}
               className="card text-center"
             >
-              <div className="text-5xl font-black text-exroast-pink mb-2">
+              <div className="text-6xl font-black text-exroast-gold mb-2">
                 <AnimatedCounter end={2.1} suffix="M+" decimals={1} duration={2.5} />
               </div>
-              <p className="text-exroast-gold font-bold">TikTok views</p>
+              <p className="text-white font-bold">TikTok views</p>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -176,10 +179,10 @@ export default function HomePage() {
               whileHover={{ scale: 1.05, rotate: 2 }}
               className="card text-center"
             >
-              <div className="text-5xl font-black text-exroast-pink mb-2">
+              <div className="text-6xl font-black text-exroast-gold mb-2">
                 <AnimatedCounter end={100} suffix="%" duration={2} />
               </div>
-              <p className="text-exroast-gold font-bold">Savage guarantee</p>
+              <p className="text-white font-bold">Savage guarantee</p>
             </motion.div>
           </div>
         </section>
@@ -200,14 +203,14 @@ export default function HomePage() {
               {
                 step: "1",
                 title: "Spill the tea",
-                description: "Text or upload a chat screenshot. We want ALL the details. 👀",
-                icon: "☕",
+                description: "Text or upload a chat screenshot. We want ALL the details.",
+                icon: "🗡️",
               },
               {
                 step: "2",
                 title: "Pick your vibe",
                 description: "Petty roast or glow-up flex? Choose your energy.",
-                icon: "🗡️",
+                icon: "👑",
               },
               {
                 step: "3",
@@ -238,7 +241,7 @@ export default function HomePage() {
                 <h3 className="text-2xl font-black text-white mb-3">
                   {item.title}
                 </h3>
-                <p className="text-gray-300 text-lg">{item.description}</p>
+                <p className="text-white text-lg">{item.description}</p>
               </motion.div>
             ))}
           </div>
@@ -258,7 +261,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
               {
-                icon: "😈",
+                icon: "🗡️",
                 title: "Get even (legally)",
                 description: "Roast them without texting. No restraining orders needed.",
               },
@@ -268,12 +271,12 @@ export default function HomePage() {
                 description: "30 seconds to a TikTok-viral roast song. They'll hear it.",
               },
               {
-                icon: "🎯",
+                icon: "🔥",
                 title: "100% petty",
                 description: "Zero healing vibes. Pure savage energy. As it should be.",
               },
               {
-                icon: "🚀",
+                icon: "👑",
                 title: "Go viral",
                 description: "Share on TikTok. Watch your ex's friends send it to them.",
               },
@@ -297,7 +300,7 @@ export default function HomePage() {
                 <h3 className="text-xl font-black text-white mb-3">
                   {benefit.title}
                 </h3>
-                <p className="text-gray-300">{benefit.description}</p>
+                <p className="text-white">{benefit.description}</p>
               </motion.div>
             ))}
           </div>
@@ -307,17 +310,17 @@ export default function HomePage() {
         <section className="section-container">
           <div className="card max-w-3xl mx-auto text-center bg-gradient-to-br from-exroast-pink/10 to-exroast-gold/10 border-4 border-exroast-pink">
             <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
-              Pricing That Slaps 💸
+              Pricing That Slaps 🔥
             </h2>
             <div className="space-y-4 mb-8">
-              <p className="text-2xl text-exroast-gold font-bold">
-                🔥 Free: 15-second watermarked preview
+              <p className="text-2xl font-bold">
+                🔥 <span className="text-white">Free: 15-second watermarked preview</span>
               </p>
-              <p className="text-2xl text-exroast-gold font-bold">
-                💎 $4.99: Full 30-second roast (one-time)
+              <p className="text-2xl font-bold">
+                💅 <span className="text-exroast-gold text-3xl">$4.99</span><span className="text-white">: Full 30-second roast (one-time)</span>
               </p>
-              <p className="text-2xl text-exroast-gold font-bold">
-                👑 $12.99/mo: Unlimited roasts, no watermark
+              <p className="text-2xl font-bold">
+                👑 <span className="text-exroast-gold text-3xl">$12.99/mo</span><span className="text-white">: Unlimited roasts, no watermark</span>
               </p>
             </div>
             <Link href="/pricing">
@@ -355,6 +358,7 @@ export default function HomePage() {
       </main>
 
       <Footer />
+      </div>
     </div>
   );
 }

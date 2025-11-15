@@ -6,12 +6,12 @@ import { PaddleLoader } from "@/components/PaddleLoader";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "💔 HeartHeal - Turn Your Pain Into Songs That Heal",
-  description: "Instant AI songs that say what you wish you could — sad, savage, healing, or funny. Transform your heartbreak into music in seconds.",
-  keywords: ["breakup", "healing", "AI music", "heartbreak", "emotional healing", "sad songs", "savage songs"],
+  title: "🔥 ExRoast.fm - Turn Your Breakup Into a Savage Roast Song",
+  description: "Zero sadness. 100% savage. Turn your breakup into a TikTok-viral AI roast song in seconds. Petty, brutal, hilarious.",
+  keywords: ["breakup song", "roast my ex", "AI music", "savage roast", "petty revenge", "TikTok viral", "breakup revenge"],
   openGraph: {
-    title: "💔 HeartHeal - Heartbroken? Turn your pain into a song that heals",
-    description: "Instant AI songs tailored to your emotions",
+    title: "🔥 ExRoast.fm - Roast Your Ex With AI Music",
+    description: "Zero sadness. 100% savage. TikTok-viral AI roasts.",
     type: "website",
   },
 };
@@ -23,7 +23,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="antialiased bg-gradient-to-br from-heartbreak-50 via-white to-gray-50 min-h-screen">
+      <body className="antialiased bg-black min-h-screen">
         <PaddleLoader />
         {children}
       </body>
