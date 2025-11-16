@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db, songs } from '@/src/db';
 import { SongStyle } from '@/lib/lyrics';
 import { createOpenRouterClient } from '@/lib/openrouter';
 import { createSunoClient } from '@/lib/suno';
@@ -90,19 +90,17 @@ export async function POST(request: NextRequest) {
       duration = 10;
     }
 
-    const song = await prisma.song.create({
-      data: {
-        title: promptResult.title,
-        story,
-        style,
-        lyrics: lyrics,
-        genre: promptResult.tags,
-        mood: style,
-        previewUrl,
-        fullUrl,
-        isPurchased: false,
-      },
-    });
+    const [song] = await db.insert(songs).values({
+      title: promptResult.title,
+      story,
+      style,
+      lyrics: lyrics,
+      genre: promptResult.tags,
+      mood: style,
+      previewUrl,
+      fullUrl,
+      isPurchased: false,
+    }).returning();
 
     return NextResponse.json({
       success: true,

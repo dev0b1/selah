@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, songs } from "@/src/db";
+import { eq } from "drizzle-orm";
 
 export async function GET(
   request: NextRequest,
@@ -8,9 +9,8 @@ export async function GET(
   try {
     const songId = params.id;
     
-    const song = await prisma.song.findUnique({
-      where: { id: songId },
-    });
+    const songResult = await db.select().from(songs).where(eq(songs.id, songId)).limit(1);
+    const song = songResult[0];
 
     if (!song) {
       return NextResponse.json(

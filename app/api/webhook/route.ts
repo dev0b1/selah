@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db, transactions, songs } from "@/src/db";
+import { eq } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,24 +34,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const existing = await prisma.transaction.findUnique({
-      where: { id: eventData.data.id || `tx-${Date.now()}` },
-    });
+    const transactionId = eventData.data.id || `tx-${Date.now()}`;
+    const existing = await db.select().from(transactions).where(eq(transactions.id, transactionId)).limit(1);
     
-    if (!existing) {
-      await prisma.transaction.create({
-        data: {
-          id: eventData.data.id || `tx-${Date.now()}`,
-          songId: eventData.data.custom_data?.songId || null,
-          userId: eventData.data.custom_data?.userId || null,
-          amount: eventData.data.details?.totals?.total || "0",
-          currency: eventData.data.currency_code || "USD",
-          status: eventData.data.status || eventData.eventType,
-          paddleData: JSON.stringify(eventData.data),
-        },
+    if (existing.length === 0) {
+      await db.insert(transactions).values({
+        id: transactionId,
+        songId: eventData.data.custom_data?.songId || null,
+        userId: eventData.data.custom_data?.userId || null,
+        amount: eventData.data.details?.totals?.total || "0",
+        currency: eventData.data.currency_code || "USD",
+        status: eventData.data.status || eventData.eventType,
+        paddleData: JSON.stringify(eventData.data),
       });
     } else {
-      console.log(`Transaction ${eventData.data.id} already processed - skipping`);
+      console.log(`Transaction ${transactionId} already processed - skipping`);
       return NextResponse.json({ received: true, note: "Already processed" });
     }
 
@@ -96,26 +94,27 @@ async function handleTransactionCompleted(transaction: any) {
   const { songId, userId } = transaction.custom_data;
   
   if (songId) {
-    const song = await prisma.song.findUnique({ where: { id: songId } });
+    const songResult = await db.select().from(songs).where(eq(songs.id, songId)).limit(1);
     
-    if (!song) {
+    if (songResult.length === 0) {
       console.error(`Song ${songId} not found for transaction ${transaction.id}`);
       return;
     }
+    
+    const song = songResult[0];
     
     if (song.isPurchased) {
       console.log(`Song ${songId} already purchased - skipping`);
       return;
     }
     
-    await prisma.song.update({
-      where: { id: songId },
-      data: {
+    await db.update(songs)
+      .set({
         isPurchased: true,
         purchaseTransactionId: transaction.id,
         userId: userId || null,
-      },
-    });
+      })
+      .where(eq(songs.id, songId));
     
     console.log(`Song ${songId} unlocked for user ${userId || 'anonymous'}`);
   }

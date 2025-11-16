@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { db, songs } from '@/src/db';
 import { getAllTemplates, saveRoast } from '@/lib/supabase-service';
 import { matchTemplate } from '@/lib/template-matcher';
 
@@ -30,19 +30,17 @@ export async function POST(request: NextRequest) {
 
     console.log('Selected template:', selectedTemplate.filename, 'Score:', match?.score || 0);
 
-    const song = await prisma.song.create({
-      data: {
-        title: `${style.charAt(0).toUpperCase() + style.slice(1)} Roast`,
-        lyrics: `Template roast based on your ${style} vibe!\n\n(Upgrade to Pro for personalized lyrics based on your story)`,
-        previewUrl: selectedTemplate.storageUrl,
-        fullUrl: '',
-        style,
-        story: story.substring(0, 500),
-        duration: 15,
-        isPurchased: false,
-        isTemplate: true
-      },
-    });
+    const [song] = await db.insert(songs).values({
+      title: `${style.charAt(0).toUpperCase() + style.slice(1)} Roast`,
+      lyrics: `Template roast based on your ${style} vibe!\n\n(Upgrade to Pro for personalized lyrics based on your story)`,
+      previewUrl: selectedTemplate.storageUrl,
+      fullUrl: '',
+      style,
+      story: story.substring(0, 500),
+      duration: 15,
+      isPurchased: false,
+      isTemplate: true
+    }).returning();
 
     try {
       await saveRoast({
