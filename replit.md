@@ -5,6 +5,17 @@ ExRoast.fm is a Next.js web application that turns breakup stories into savage, 
 
 ## Recent Changes (November 16, 2025)
 
+### Viral Beast Transformation (November 16, 2025)
+- ✅ **Neon Spark Storm** - 60 CSS-only animated sparks (pink/gold/orange) floating upward like fire embers across full screen
+- ✅ **Hero Demo Video** - Pulsing "You ghosted? Here's your diss track 😈" with animated fire emoji and gold text-shadow
+- ✅ **Confetti Pop Animation** - Pink/gold fire emoji confetti explosion on successful song generation (3s CSS animation)
+- ✅ **Typewriter Effect** - Hero headline letters "ignite" with gold glow animation on page load
+- ✅ **Button Micro-Animations** - All CTAs pulse with pink glow on hover (scale 1.05 + animated box-shadow)
+- ✅ **Subtle Tooltips** - Replaced blocking onboarding with 3 hover tooltips:
+  - Input field: "Be specific for savage lyrics (e.g., 'Ghosted after tacos')"
+  - Modes: "Petty = Brutal diss; Glow-Up = Victory banger"
+  - Generate button: "15s free preview—unlock full for $4.99"
+
 ### Final Launch Polish (November 16, 2025)
 - ✅ **Enhanced Logo Visibility** - ExRoast.fm logo now uses vibrant neon gradient (hot pink #ff006e → gold #ffd23f) for maximum impact
 - ✅ **Fixed Dim Buttons** - All CTA buttons now use solid colors with proper glows:
@@ -66,6 +77,11 @@ ExRoast.fm is a Next.js web application that turns breakup stories into savage, 
 - `SongPlayer` - Audio playback with gold waveform
 - `LyricsOverlay` - Animated scrolling lyrics
 - `AnimatedBackground` - Fire and revenge party animations
+- `SparkStorm` - 60 CSS-only neon sparks floating upward (pink/gold/orange)
+- `DemoVideo` - Hero demo with pulsing lyrics overlay
+- `ConfettiPop` - Confetti explosion on successful generation
+- `TypewriterText` - Letters ignite with gold glow animation
+- `Tooltip` - Hover/tap tooltips with pink/gold gradient styling
 - `SubscriptionModal` - Pricing and unlock prompt
 - `FileUpload` - Screenshot upload ("Drop those receipts")
 - `SocialShareButtons` - TikTok share with pre-filled caption
