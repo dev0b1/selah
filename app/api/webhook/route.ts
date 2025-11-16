@@ -113,6 +113,7 @@ async function handleTransactionCompleted(transaction: any) {
         isPurchased: true,
         purchaseTransactionId: transaction.id,
         userId: userId || null,
+        updatedAt: new Date(),
       })
       .where(eq(songs.id, songId));
     

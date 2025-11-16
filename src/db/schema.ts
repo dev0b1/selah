@@ -6,7 +6,7 @@ export const users = pgTable('users', {
   name: text('name'),
   avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
 export const songs = pgTable('songs', {
@@ -25,7 +25,7 @@ export const songs = pgTable('songs', {
   purchaseTransactionId: text('purchase_transaction_id'),
   userId: text('user_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
   expiresAt: timestamp('expires_at'),
 }, (table) => ({
   userIdIdx: index('songs_user_id_idx').on(table.userId),
@@ -42,7 +42,7 @@ export const subscriptions = pgTable('subscriptions', {
   songsRemaining: integer('songs_remaining').default(0).notNull(),
   renewsAt: timestamp('renews_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
 }, (table) => ({
   userIdIdx: index('subscriptions_user_id_idx').on(table.userId),
 }));
@@ -55,7 +55,7 @@ export const templates = pgTable('templates', {
   mood: text('mood').notNull(),
   storageUrl: text('storage_url').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
 }, (table) => ({
   modeIdx: index('templates_mode_idx').on(table.mode),
 }));
