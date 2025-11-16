@@ -169,7 +169,7 @@ export default function StoryPage() {
                     Spill the tea — what did they do? 🔥
                   </label>
                   <Tooltip content="Be specific for savage lyrics (e.g., 'Ghosted after tacos')">
-                    <div className="relative" style={{ padding: '0 20px' }}>
+                    <div className="relative">
                       <textarea
                         value={story}
                         onChange={(e) => {
@@ -187,7 +187,7 @@ export default function StoryPage() {
                           opacity: 1.0
                         }}
                       />
-                      <div className="absolute bottom-4 right-6 text-base font-bold" style={{ color: '#ffd23f', opacity: 1.0 }}>
+                      <div className="absolute bottom-4 right-4 text-sm text-white/70 font-medium">
                         {story.length}/500
                       </div>
                     </div>
@@ -229,28 +229,31 @@ export default function StoryPage() {
               {/* Generate Button */}
               <Tooltip content="15s free preview—unlock full for $4.99">
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: '0 0 30px rgba(255, 0, 110, 0.8)'
+                  }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleGenerate}
                   disabled={inputMode === 'text' && story.trim().length < 10}
-                  className={`w-full py-6 rounded-2xl font-black text-2xl transition-all duration-300 ${
-                    inputMode === 'text' && story.trim().length < 10
-                      ? 'bg-gray-700 text-white cursor-not-allowed opacity-50'
-                      : 'btn-pulse'
-                  }`}
+                  className="w-full py-6 rounded-2xl font-black text-2xl transition-all duration-300"
                   style={
                     inputMode === 'text' && story.trim().length < 10
-                      ? {}
+                      ? {
+                          backgroundColor: '#555',
+                          color: '#999',
+                          cursor: 'not-allowed',
+                          opacity: 0.5
+                        }
                       : {
-                          backgroundColor: '#ff006e',
+                          backgroundColor: '#ffd23f',
                           color: '#ffffff',
-                          border: '2px solid #ffd23f',
-                          boxShadow: '0 0 20px #ff006e',
-                          opacity: 1.0
+                          border: '3px solid #ff006e',
+                          boxShadow: '0 0 20px rgba(255, 210, 63, 0.6)',
                         }
                   }
                 >
-                  <span style={{ opacity: 1.0 }}>Generate My Roast 🔥💅</span>
+                  Generate My Roast 🔥💅
                 </motion.button>
               </Tooltip>
 
