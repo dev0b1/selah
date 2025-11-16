@@ -37,7 +37,7 @@ export function TypewriterText({ text, delay = 0, className = '' }: TypewriterTe
             textShadow: [
               "0 0 0px #ffd23f",
               "0 0 10px #ffd23f",
-              "0 0 5px #ffd23f"
+              "0 0 10px #ff006e"
             ]
           }}
           transition={{ 
@@ -47,6 +47,9 @@ export function TypewriterText({ text, delay = 0, className = '' }: TypewriterTe
               duration: 0.5,
               repeat: 1
             }
+          }}
+          style={{
+            filter: 'drop-shadow(0 0 10px #ff006e)'
           }}
         >
           {char}
