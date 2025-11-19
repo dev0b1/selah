@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { PaddleLoader } from "@/components/PaddleLoader";
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "🔥 ExRoast.fm - Turn Your Breakup Into a Savage Roast Song",
@@ -22,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={inter.variable}>
-      <body className="antialiased bg-black min-h-screen">
+    <html lang="en">
+      <body className="antialiased bg-black min-h-screen font-sans">
         <PaddleLoader />
         {children}
       </body>

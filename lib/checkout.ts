@@ -8,10 +8,17 @@ export async function openSingleCheckout(opts?: { songId?: string | null }) {
   // If user not signed in, start OAuth and redirect to /auth/complete
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
+    // Save the intended purchase so we can resume after sign-in.
     if (typeof window !== 'undefined') {
-      const redirectPath = opts?.songId ? `/checkout?songId=${opts.songId}` : `/checkout?type=single`;
-      const redirectTo = `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectPath)}`;
-      await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+      try {
+        const payload = { type: 'single', songId: opts?.songId || null, ts: Date.now() };
+        localStorage.setItem('intendedPurchase', JSON.stringify(payload));
+      } catch (e) {
+        // ignore localStorage errors
+      }
+      // Start the normal OAuth flow. After login the header will detect the
+      // session and auto-open the intended purchase.
+      await supabase.auth.signInWithOAuth({ provider: 'google' });
       return;
     }
     return;
@@ -52,10 +59,15 @@ export async function openTierCheckout(tierId: string, priceId?: string) {
   const supabase = createClientComponentClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
+    // Save the intended tier purchase so we can resume after sign in.
     if (typeof window !== 'undefined') {
-      const dest = `/checkout?tier=${tierId}`;
-      const redirectTo = `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(dest)}`;
-      await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
+      try {
+        const payload = { type: 'tier', tierId, priceId: priceId || null, ts: Date.now() };
+        localStorage.setItem('intendedPurchase', JSON.stringify(payload));
+      } catch (e) {
+        // ignore localStorage errors
+      }
+      await supabase.auth.signInWithOAuth({ provider: 'google' });
       return;
     }
     return;

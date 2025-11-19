@@ -7,12 +7,15 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaBars, FaTimes } from "react-icons/fa";
+import SubscriptionPrompt from "./SubscriptionPrompt";
+import { openSingleCheckout, openTierCheckout } from "@/lib/checkout";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<any | null>(null);
   const [confirmSignOutOpen, setConfirmSignOutOpen] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
   const supabase = createClientComponentClient();
   const pathname = usePathname();
   const router = useRouter();
@@ -29,6 +32,66 @@ export function Header() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (mounted) setUser(session?.user || null);
     });
+
+    // When a user signs in, first check if we have an intended purchase saved
+    // (set before sign-in). If present, resume the checkout automatically.
+    // Otherwise, check pro-status and show the subscription prompt once.
+    (async () => {
+      if (typeof window === 'undefined') return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const currentUser = session?.user || null;
+        if (currentUser) {
+          // Resume intended purchase if present
+          try {
+            const ip = localStorage.getItem('intendedPurchase');
+            if (ip) {
+              // remove it immediately so repeated attempts don't trigger twice
+              localStorage.removeItem('intendedPurchase');
+              const parsed = JSON.parse(ip);
+              // expiry guard: ignore intended purchases older than 10 minutes
+              const ageMs = Date.now() - (parsed?.ts || 0);
+              const TEN_MIN = 10 * 60 * 1000;
+              if (ageMs > TEN_MIN) {
+                // expired, fall back to normal subscription prompt flow
+              } else {
+                // small delay to allow any client scripts (Paddle) to initialize
+                setTimeout(() => {
+                  if (parsed?.type === 'single') {
+                    openSingleCheckout({ songId: parsed.songId || null });
+                  } else if (parsed?.type === 'tier') {
+                    openTierCheckout(parsed.tierId, parsed.priceId || undefined);
+                  }
+                }, 200);
+                return;
+              }
+            }
+          } catch (e) {
+            // ignore localStorage / JSON errors
+          }
+
+          // call our pro-status endpoint which accepts x-user-id header
+          const res = await fetch('/api/user/pro-status', {
+            method: 'GET',
+            headers: { 'x-user-id': currentUser.id }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const isPro = !!json?.isPro;
+            try {
+              const seen = localStorage.getItem('seenSubscriptionPrompt');
+              if (!isPro && seen !== 'true') {
+                setShowSubscriptionPrompt(true);
+              }
+            } catch (e) {
+              // ignore localStorage errors
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
 
     // show one-time toast after sign in
     try {
@@ -184,6 +247,17 @@ export function Header() {
           Signed in successfully
         </div>
       )}
+      {/* Subscription prompt shown to new, non-pro users on first login */}
+      <AnimatePresence>
+        {showSubscriptionPrompt && (
+          <SubscriptionPrompt
+            onClose={() => {
+              try { localStorage.setItem('seenSubscriptionPrompt', 'true'); } catch (e) {}
+              setShowSubscriptionPrompt(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
       {/* Sign-out confirmation modal */}
       <AnimatePresence>
         {confirmSignOutOpen && (
