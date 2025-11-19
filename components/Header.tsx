@@ -18,6 +18,7 @@ export function Header({ userProp }: { userProp?: any }) {
   const [showToast, setShowToast] = useState(false);
   const [showSubscriptionPrompt, setShowSubscriptionPrompt] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [mobileCredits, setMobileCredits] = useState<number | null>(null);
   const supabase = createClientComponentClient();
   const pathname = usePathname();
   const router = useRouter();
@@ -148,6 +149,31 @@ export function Header({ userProp }: { userProp?: any }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, supabase]);
 
+  // fetch credits for mobile menu display when user available
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!user?.id) {
+        if (mounted) setMobileCredits(null);
+        return;
+      }
+      try {
+        const res = await fetch('/api/account/summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        });
+        if (!res.ok) throw new Error('no summary');
+        const json = await res.json();
+        const c = Number(json?.subscription?.creditsRemaining ?? 0) || 0;
+        if (mounted) setMobileCredits(c);
+      } catch (e) {
+        if (mounted) setMobileCredits(null);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [user]);
+
   // If the user becomes authenticated on the client and is on the public
   // landing page (`/`), send them to the main logged-in page (`/story`).
   useEffect(() => {
@@ -276,14 +302,14 @@ export function Header({ userProp }: { userProp?: any }) {
             >
               <button
                 onClick={() => { setMobileMenuOpen(false); router.push('/checkout'); }}
-                className="w-full bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black px-4 py-3 rounded-full font-bold"
+                className="w-full bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black px-4 py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-exroast-gold/60"
               >
                 Upgrade
               </button>
               <Link
                 href="/#faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-exroast-gold hover:text-white transition-colors duration-200 font-bold py-2"
+                className="block text-exroast-gold hover:text-white transition-colors duration-200 font-bold py-2 focus:outline-none focus:ring-4 focus:ring-exroast-gold/40"
               >
                 FAQ
               </Link>
@@ -301,12 +327,15 @@ export function Header({ userProp }: { userProp?: any }) {
                   <div className="space-y-2">
                     <div className="text-white">Signed in as</div>
                     <div className="text-gray-300 font-bold">{user.email}</div>
+                    {mobileCredits !== null && (
+                      <div className="text-sm text-white/80">Credits: <span className="font-bold">{mobileCredits}</span></div>
+                    )}
                     <button
                       onClick={() => {
                         setMobileMenuOpen(false);
                         setShowSettingsMenu(true);
                       }}
-                      className="w-full btn-primary"
+                      className="w-full btn-primary focus:outline-none focus:ring-4 focus:ring-exroast-gold/60"
                     >
                       My Roasts
                     </button>
@@ -321,14 +350,14 @@ export function Header({ userProp }: { userProp?: any }) {
                           console.error('Sign out error', e);
                         }
                       }}
-                      className="w-full mt-2 bg-white text-black py-3 rounded-full font-bold"
+                      className="w-full mt-2 bg-white text-black py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-exroast-gold/60"
                     >
                       Sign out
                     </button>
                   </div>
                 ) : (
                   <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                    <button className="w-full bg-white text-black py-3 rounded-full font-bold">Sign in</button>
+                    <button className="w-full bg-white text-black py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-exroast-gold/60">Sign in</button>
                   </Link>
                 )}
               </div>

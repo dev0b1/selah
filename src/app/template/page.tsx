@@ -295,9 +295,17 @@ export default function TemplatePage() {
                 </Tooltip>
               </div>
 
-              <p className="text-center text-sm text-gray-400">
-                Free 15-second template preview • Full roast $4.99 • Takes 30 seconds
-              </p>
+              <div className="flex flex-col items-center space-y-3">
+                <p className="text-center text-sm text-gray-400">
+                  Free 15-second template preview • Full roast $4.99 • Takes 30 seconds
+                </p>
+                <button
+                  onClick={() => router.push('/checkout?type=single')}
+                  className="bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black font-bold px-6 py-3 rounded-full focus:outline-none focus:ring-4 focus:ring-exroast-gold/60"
+                >
+                  Buy full roast — $4.99
+                </button>
+              </div>
             </div>
           </motion.div>
         </div>
