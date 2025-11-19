@@ -48,7 +48,7 @@ export async function middleware(request: NextRequest) {
   // Redirect logged-in users who try to access `/` to the roast page `/story`.
   if (user) {
     // Redirect logged-in users away from public pages to /story
-    const publicPaths = ['/', '/pricing', '/auth', '/login'];
+  const publicPaths = ['/', '/pricing', '/auth', '/login', '/template'];
     if (publicPaths.includes(request.nextUrl.pathname)) {
       const url = request.nextUrl.clone();
       url.pathname = '/story';
