@@ -10,7 +10,7 @@ export async function openSingleCheckout(opts?: { songId?: string | null }) {
   if (!user) {
     if (typeof window !== 'undefined') {
       const redirectPath = opts?.songId ? `/checkout?songId=${opts.songId}` : `/checkout?type=single`;
-      const redirectTo = `${window.location.origin}/auth/complete?returnTo=${encodeURIComponent(redirectPath)}`;
+      const redirectTo = `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(redirectPath)}`;
       await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
       return;
     }
@@ -54,7 +54,7 @@ export async function openTierCheckout(tierId: string, priceId?: string) {
   if (!user) {
     if (typeof window !== 'undefined') {
       const dest = `/checkout?tier=${tierId}`;
-      const redirectTo = `${window.location.origin}/auth/complete?returnTo=${encodeURIComponent(dest)}`;
+      const redirectTo = `${window.location.origin}/auth/callback?redirectTo=${encodeURIComponent(dest)}`;
       await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
       return;
     }

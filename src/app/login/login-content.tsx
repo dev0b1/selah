@@ -32,7 +32,7 @@ export default function LoginContent() {
 
     try {
       const dest = redirectTo || '/story';
-      const redirectToFull = `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/complete?returnTo=${encodeURIComponent(dest)}`;
+      const redirectToFull = `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback?redirectTo=${encodeURIComponent(dest)}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
