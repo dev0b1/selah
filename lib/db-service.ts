@@ -1,6 +1,6 @@
 import { db } from '@/server/db';
-import { templates, subscriptions, roasts, users, userPreferences, dailyQuotes, audioNudges } from '@/src/db/schema';
-import { eq, desc, and, gte } from 'drizzle-orm';
+import { templates, subscriptions, roasts, users, userPreferences, dailyQuotes, audioNudges, dailyCheckIns } from '@/src/db/schema';
+import { eq, desc, and, gte, sql } from 'drizzle-orm';
 import { Template } from './template-matcher';
 
 export async function getAllTemplates(): Promise<Template[]> {
@@ -394,5 +394,140 @@ export async function saveAudioNudge(
   } catch (error) {
     console.error('Error saving audio nudge:', error);
     return false;
+  }
+}
+
+export async function getUserStreak(userId: string): Promise<{
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckInDate: Date | null;
+}> {
+  try {
+    const userData = await db
+      .select({
+        currentStreak: users.currentStreak,
+        longestStreak: users.longestStreak,
+        lastCheckInDate: users.lastCheckInDate
+      })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!userData || userData.length === 0) {
+      return { currentStreak: 0, longestStreak: 0, lastCheckInDate: null };
+    }
+
+    return userData[0] as { currentStreak: number; longestStreak: number; lastCheckInDate: Date | null };
+  } catch (error) {
+    console.error('Error fetching user streak:', error);
+    return { currentStreak: 0, longestStreak: 0, lastCheckInDate: null };
+  }
+}
+
+export async function saveDailyCheckIn(checkIn: {
+  userId: string;
+  mood: string;
+  message: string;
+  motivationText?: string;
+  motivationAudioUrl?: string;
+}): Promise<boolean> {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const existingCheckIn = await db
+      .select()
+      .from(dailyCheckIns)
+      .where(and(
+        eq(dailyCheckIns.userId, checkIn.userId),
+        gte(dailyCheckIns.createdAt, today)
+      ))
+      .limit(1);
+
+    if (existingCheckIn.length > 0) {
+      return false;
+    }
+
+    await db.insert(dailyCheckIns).values({
+      userId: checkIn.userId,
+      mood: checkIn.mood,
+      message: checkIn.message,
+      motivationText: checkIn.motivationText,
+      motivationAudioUrl: checkIn.motivationAudioUrl
+    });
+
+    await updateUserStreak(checkIn.userId);
+    return true;
+  } catch (error) {
+    console.error('Error saving daily check-in:', error);
+    return false;
+  }
+}
+
+async function updateUserStreak(userId: string): Promise<void> {
+  try {
+    const userData = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!userData || userData.length === 0) return;
+
+    const user = userData[0];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let newStreak = 1;
+
+    if (user.lastCheckInDate) {
+      const lastCheckIn = new Date(user.lastCheckInDate);
+      lastCheckIn.setHours(0, 0, 0, 0);
+      const daysDiff = Math.floor((today.getTime() - lastCheckIn.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysDiff === 1) {
+        newStreak = (user.currentStreak || 0) + 1;
+      } else if (daysDiff > 1) {
+        newStreak = 1;
+      } else {
+        newStreak = user.currentStreak || 1;
+      }
+    }
+
+    const newLongestStreak = Math.max(newStreak, user.longestStreak || 0);
+
+    await db
+      .update(users)
+      .set({
+        currentStreak: newStreak,
+        longestStreak: newLongestStreak,
+        lastCheckInDate: today,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, userId));
+  } catch (error) {
+    console.error('Error updating user streak:', error);
+  }
+}
+
+export async function getTodayCheckIn(userId: string): Promise<any | null> {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const checkIn = await db
+      .select()
+      .from(dailyCheckIns)
+      .where(and(
+        eq(dailyCheckIns.userId, userId),
+        gte(dailyCheckIns.createdAt, today)
+      ))
+      .orderBy(desc(dailyCheckIns.createdAt))
+      .limit(1);
+
+    return checkIn.length > 0 ? checkIn[0] : null;
+  } catch (error) {
+    console.error('Error fetching today check-in:', error);
+    return null;
   }
 }

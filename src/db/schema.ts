@@ -5,6 +5,9 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   name: text('name'),
   avatarUrl: text('avatar_url'),
+  currentStreak: integer('current_streak').default(0).notNull(),
+  longestStreak: integer('longest_streak').default(0).notNull(),
+  lastCheckInDate: timestamp('last_check_in_date'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
 });
@@ -158,3 +161,20 @@ export type InsertDailyQuote = typeof dailyQuotes.$inferInsert;
 
 export type AudioNudge = typeof audioNudges.$inferSelect;
 export type InsertAudioNudge = typeof audioNudges.$inferInsert;
+
+export const dailyCheckIns = pgTable('daily_check_ins', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  mood: text('mood').notNull(),
+  message: text('message'),
+  motivationText: text('motivation_text'),
+  motivationAudioUrl: text('motivation_audio_url'),
+  convertedToSong: boolean('converted_to_song').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('daily_check_ins_user_id_idx').on(table.userId),
+  createdAtIdx: index('daily_check_ins_created_at_idx').on(table.createdAt),
+}));
+
+export type DailyCheckIn = typeof dailyCheckIns.$inferSelect;
+export type InsertDailyCheckIn = typeof dailyCheckIns.$inferInsert;

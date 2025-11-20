@@ -32,11 +32,11 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Redirect to login if not authenticated and trying to access protected routes
-  // Treat `/story` as a protected route so anonymous visitors are sent to auth.
   if (!user && (
     request.nextUrl.pathname.startsWith('/checkout') ||
     request.nextUrl.pathname.startsWith('/dashboard') ||
-    request.nextUrl.pathname === '/story'
+    request.nextUrl.pathname.startsWith('/app') ||
+    request.nextUrl.pathname.startsWith('/account')
   )) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth';
@@ -45,15 +45,16 @@ export async function middleware(request: NextRequest) {
   }
 
   // If the user IS authenticated, don't allow them to view the public landing page.
-  // Redirect logged-in users who try to access `/` to the roast page `/story`.
+  // Redirect logged-in users who try to access `/` to the app home `/app`.
   if (user) {
-    // Redirect logged-in users away from public pages to /story
-  const publicPaths = ['/', '/pricing', '/auth', '/login', '/template'];
+    // Redirect logged-in users away from public pages to /app
+    const publicPaths = ['/', '/pricing', '/template'];
     if (publicPaths.includes(request.nextUrl.pathname)) {
       const url = request.nextUrl.clone();
-      url.pathname = '/story';
+      url.pathname = '/app';
       return NextResponse.redirect(url);
     }
+    // Allow /auth and /login for logout purposes
   }
 
   return supabaseResponse;

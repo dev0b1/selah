@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code');
-  const redirectTo = searchParams.get('redirectTo') || '/story';
+  const redirectTo = searchParams.get('redirectTo') || '/app';
 
   if (code) {
     console.log('[auth/callback] received code, redirectTo=', redirectTo);
