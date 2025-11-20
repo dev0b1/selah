@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FaSpinner } from "react-icons/fa";
+import { FaSpinner, FaMusic } from "react-icons/fa";
+import { ConfettiPop } from "@/components/ConfettiPop";
 
 const MOOD_OPTIONS = [
   { id: "hurting", label: "Still hurting", emoji: "💔", color: "from-red-500 to-pink-500" },
@@ -14,32 +15,34 @@ const MOOD_OPTIONS = [
 interface DailyCheckInTabProps {
   userId: string;
   onStreakUpdate: (newStreak: number) => void;
+  hasCheckedInToday: boolean;
 }
 
-export function DailyCheckInTab({ userId, onStreakUpdate }: DailyCheckInTabProps) {
+export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: DailyCheckInTabProps) {
   const [selectedMood, setSelectedMood] = useState<string>("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [motivation, setMotivation] = useState<string | null>(null);
-  const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [todayMotivation, setTodayMotivation] = useState<string>("");
 
   useEffect(() => {
-    checkTodayCheckIn();
-  }, [userId]);
+    if (hasCheckedInToday) {
+      fetchTodayMotivation();
+    }
+  }, [hasCheckedInToday, userId]);
 
-  const checkTodayCheckIn = async () => {
+  const fetchTodayMotivation = async () => {
     try {
       const response = await fetch(`/api/daily/check-in?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
-        if (data.checkIn) {
-          setHasCheckedInToday(true);
-          setTodayMotivation(data.checkIn.motivationText || "");
+        if (data.checkIn?.motivationText) {
+          setTodayMotivation(data.checkIn.motivationText);
         }
       }
     } catch (error) {
-      console.error("Error checking today's check-in:", error);
+      console.error("Error fetching today's motivation:", error);
     }
   };
 
@@ -62,7 +65,7 @@ export function DailyCheckInTab({ userId, onStreakUpdate }: DailyCheckInTabProps
       if (response.ok) {
         const data = await response.json();
         setMotivation(data.motivation);
-        setHasCheckedInToday(true);
+        setShowConfetti(true);
         if (data.streak !== undefined) {
           onStreakUpdate(data.streak);
         }
@@ -81,12 +84,12 @@ export function DailyCheckInTab({ userId, onStreakUpdate }: DailyCheckInTabProps
   };
 
   const handleConvertToSong = () => {
-    console.log("Convert to song - feature coming soon!");
+    alert("🎵 Victory Song feature coming soon! This will convert your motivation into an uplifting 30-second anthem for 1 credit.");
   };
 
   if (hasCheckedInToday && !motivation) {
     return (
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -101,15 +104,15 @@ export function DailyCheckInTab({ userId, onStreakUpdate }: DailyCheckInTabProps
             >
               ✅
             </motion.div>
-            <h2 className="text-4xl md:text-5xl font-black text-gradient">
+            <h2 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-400 to-exroast-gold bg-clip-text text-transparent">
               You Already Checked In Today!
             </h2>
-            <p className="text-xl text-white font-bold">
+            <p className="text-xl md:text-2xl text-white font-bold">
               Come back tomorrow to keep your streak going 🔥
             </p>
             {todayMotivation && (
-              <div className="bg-white/5 border-2 border-exroast-gold rounded-xl p-6 mt-6">
-                <p className="text-lg text-white leading-relaxed">
+              <div className="bg-white/5 border-2 border-exroast-gold rounded-xl p-8 mt-6">
+                <p className="text-lg md:text-xl text-white leading-relaxed">
                   {todayMotivation}
                 </p>
               </div>
@@ -122,7 +125,9 @@ export function DailyCheckInTab({ userId, onStreakUpdate }: DailyCheckInTabProps
 
   if (motivation) {
     return (
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-4xl mx-auto">
+        <ConfettiPop show={showConfetti} onComplete={() => setShowConfetti(false)} />
+        
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -155,10 +160,11 @@ export function DailyCheckInTab({ userId, onStreakUpdate }: DailyCheckInTabProps
               onClick={handleConvertToSong}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="btn-primary w-full text-xl py-6 flex items-center justify-center gap-3"
+              className="btn-primary w-full text-lg md:text-xl py-6 flex items-center justify-center gap-3"
             >
+              <FaMusic />
               <span>Turn This Into a Victory Song 🎵</span>
-              <span className="text-sm bg-exroast-gold text-black px-3 py-1 rounded-full font-black">
+              <span className="text-sm bg-white/20 px-3 py-1 rounded-full font-black">
                 1 CREDIT
               </span>
             </motion.button>
@@ -170,7 +176,7 @@ export function DailyCheckInTab({ userId, onStreakUpdate }: DailyCheckInTabProps
               onClick={handleDone}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="btn-secondary w-full text-xl py-4"
+              className="w-full text-lg md:text-xl py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold transition-colors"
             >
               Done – See You Tomorrow 🔥
             </motion.button>
@@ -181,47 +187,50 @@ export function DailyCheckInTab({ userId, onStreakUpdate }: DailyCheckInTabProps
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4">
+    <div className="max-w-4xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="space-y-8"
       >
         <div className="text-center space-y-4">
-          <h2 className="text-4xl md:text-5xl font-black text-white">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-white">
             How are you feeling today? 💭
           </h2>
+          <p className="text-xl md:text-2xl text-gray-300 font-bold">
+            Pick your mood and let it all out
+          </p>
         </div>
 
         <div className="card space-y-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {MOOD_OPTIONS.map((mood) => (
               <motion.button
                 key={mood.id}
                 onClick={() => setSelectedMood(mood.id)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`p-6 rounded-xl border-4 transition-all duration-300 ${
+                className={`p-4 md:p-6 rounded-xl border-4 transition-all duration-300 ${
                   selectedMood === mood.id
-                    ? `bg-gradient-to-br ${mood.color} border-white shadow-lg`
+                    ? `bg-gradient-to-br ${mood.color} border-white shadow-lg shadow-${mood.color.split('-')[1]}-500/50`
                     : "bg-white/5 border-white/20 hover:border-white/40"
                 }`}
               >
-                <div className="text-4xl mb-2">{mood.emoji}</div>
-                <div className="text-white font-bold text-sm">{mood.label}</div>
+                <div className="text-3xl md:text-4xl mb-2">{mood.emoji}</div>
+                <div className="text-white font-bold text-xs md:text-sm">{mood.label}</div>
               </motion.button>
             ))}
           </div>
 
           <div>
-            <label className="block text-white font-bold mb-3 text-lg">
+            <label className="block text-white font-bold mb-3 text-lg md:text-xl">
               What's on your mind?
             </label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Let it all out... what happened? How are you feeling?"
-              className="w-full h-40 bg-black border-2 border-white/20 rounded-xl px-6 py-4 text-white placeholder-gray-500 focus:border-exroast-gold focus:outline-none resize-none text-lg"
+              className="w-full h-40 md:h-48 bg-black border-2 border-white/20 rounded-xl px-6 py-4 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none resize-none text-base md:text-lg"
               maxLength={500}
             />
             <div className="text-right text-gray-400 text-sm mt-2">
@@ -234,7 +243,7 @@ export function DailyCheckInTab({ userId, onStreakUpdate }: DailyCheckInTabProps
             disabled={!selectedMood || !message.trim() || isLoading}
             whileHover={{ scale: selectedMood && message.trim() ? 1.05 : 1 }}
             whileTap={{ scale: selectedMood && message.trim() ? 0.95 : 1 }}
-            className="btn-primary w-full text-2xl py-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            className="w-full text-xl md:text-2xl py-6 md:py-8 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 text-white rounded-xl font-black disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg shadow-purple-500/50 transition-all duration-300"
           >
             {isLoading ? (
               <>
