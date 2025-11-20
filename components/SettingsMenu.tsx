@@ -24,10 +24,6 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
     }
   };
 
-  // Focus + keyboard handling: focus first focusable on open, close on Escape,
-  // and trap Tab within the menu. We'll render a centered modal overlay on
-  // desktop and a full-screen modal on mobile. Clicking the overlay or the
-  // close button will call onClose to dismiss.
   const [isMobile, setIsMobile] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
 
@@ -39,7 +35,6 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
     return () => m.removeEventListener('change', update);
   }, []);
 
-  // fetch credits and roasts when menu opens (requires user)
   const [roasts, setRoasts] = useState<any[] | null>(null);
   useEffect(() => {
     let mounted = true;
@@ -73,7 +68,6 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
   }, [user]);
 
   useEffect(() => {
-    // focus first button when mounted
     const el = document.getElementById('settings-menu');
     if (el) {
       const btn = el.querySelector('button');
@@ -85,7 +79,6 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
         onClose?.();
       }
       if (e.key === 'Tab') {
-        // focus trap
         const container = document.getElementById('settings-menu');
         if (!container) return;
         const focusable = Array.from(container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
@@ -114,10 +107,9 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
     if (e.target === e.currentTarget) onClose?.();
   };
 
-  // Render modal overlay (full-screen on mobile, centered modal on desktop)
   return (
     <div
-      className="fixed inset-0 z-60 bg-black/40 flex items-start md:items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 md:p-8"
       role="dialog"
       aria-modal="true"
       onClick={handleOverlayClick}
@@ -125,129 +117,223 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
       <div
         id="settings-menu"
         ref={containerRef}
-        className="w-full max-w-md md:max-w-3xl bg-exroast-black/95 border border-exroast-pink/30 rounded-xl shadow-2xl overflow-hidden"
+        className="w-full max-w-5xl bg-gradient-to-br from-[#0a0a0c] via-[#0f0a12] to-[#0a0a0c] border-2 border-exroast-pink/40 rounded-2xl shadow-[0_0_50px_rgba(255,0,110,0.3)] overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300"
       >
-        {/* Header - spans both columns */}
-        <div className="flex items-center justify-between p-4 border-b border-white/6">
+        {/* Header */}
+        <div className="relative flex items-center justify-between p-6 border-b border-exroast-pink/20 bg-gradient-to-r from-exroast-pink/5 to-transparent">
           <div className="flex items-center gap-4">
             {user?.user_metadata?.avatar_url ? (
-              <img src={user.user_metadata.avatar_url} alt="avatar" className="w-12 h-12 rounded-full object-cover" />
+              <div className="relative">
+                <img 
+                  src={user.user_metadata.avatar_url} 
+                  alt="avatar" 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-exroast-pink/50 shadow-lg" 
+                />
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-[#0a0a0c]"></div>
+              </div>
             ) : (
-              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-2xl">👤</div>
+              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-exroast-pink/20 to-purple-500/20 flex items-center justify-center text-3xl border-2 border-exroast-pink/50">
+                👤
+              </div>
             )}
             <div>
-              <div className="text-white font-black">{user?.email || 'Account'}</div>
-              <div className="text-sm text-white/70">Credits: <span className="font-bold">{credits ?? 0}</span></div>
+              <div className="text-white font-black text-xl tracking-tight">{user?.email || 'Account'}</div>
+              <div className="text-sm text-white/60 mt-1">
+                Credits: <span className="font-bold text-exroast-pink">{credits ?? 0}</span>
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => { router.push('/checkout'); onClose?.(); }}
-              className="hidden sm:inline-flex items-center bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black font-bold px-4 py-2 rounded-full shadow-md hover:scale-105 transition-transform"
+              className="hidden sm:inline-flex items-center bg-gradient-to-r from-[#ff006e] via-[#ff4791] to-[#ffd23f] text-black font-extrabold px-6 py-3 rounded-full shadow-lg hover:shadow-[0_0_20px_rgba(255,0,110,0.6)] hover:scale-105 transition-all duration-200"
             >
-              Upgrade 🔥
+              <span>Upgrade</span>
+              <span className="ml-2">🔥</span>
             </button>
             <button
               onClick={() => onClose?.()}
               aria-label="Close settings"
-              className="text-white/60 hover:text-white p-2 rounded"
+              className="text-white/60 hover:text-white hover:bg-white/10 p-2 rounded-full transition-all duration-200"
             >
-              ✕
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
           </div>
         </div>
 
         {/* Body: two columns on desktop */}
-        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left column: account, credits, quick actions */}
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left column */}
           <div className="space-y-4">
             <button
               onClick={() => { router.push('/account'); onClose?.(); }}
-              className="w-full text-left px-4 py-3 rounded-lg bg-white/5 hover:bg-white/6 flex items-center justify-between"
+              className="group w-full text-left px-5 py-4 rounded-xl bg-gradient-to-r from-white/5 to-white/[0.02] hover:from-white/10 hover:to-white/5 border border-white/10 hover:border-exroast-pink/30 transition-all duration-200 flex items-center justify-between"
             >
-              <span className="font-bold">Account</span>
-              <span className="text-sm text-white/70">Manage profile</span>
-            </button>
-
-            <div className="bg-gradient-to-r from-[#111014] to-[#0f0f12] p-4 rounded-lg border border-exroast-pink/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-white/80">Credits available</div>
-                  <div className="text-2xl font-extrabold mt-1">{credits ?? 0}</div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-exroast-pink/20 flex items-center justify-center group-hover:bg-exroast-pink/30 transition-colors">
+                  <span className="text-xl">⚙️</span>
                 </div>
                 <div>
-                  <button
-                    onClick={() => { router.push('/checkout?tier=unlimited'); onClose?.(); }}
-                    className="bg-exroast-pink px-4 py-2 rounded-full font-bold"
-                  >
-                    Go Unlimited
-                  </button>
+                  <div className="font-bold text-white">Account</div>
+                  <div className="text-xs text-white/60">Manage profile</div>
                 </div>
               </div>
-              <div className="text-xs text-white/60 mt-3">Unlimited roasts + audio nudges when you upgrade.</div>
+              <svg className="w-5 h-5 text-white/40 group-hover:text-exroast-pink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+
+            <div className="relative bg-gradient-to-br from-[#1a0f1f] via-[#0f0a15] to-[#0a0a0c] p-6 rounded-xl border border-exroast-pink/30 shadow-lg overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-exroast-pink/10 rounded-full blur-3xl"></div>
+              <div className="relative">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <div className="text-sm text-white/70 font-medium">Credits available</div>
+                    <div className="text-4xl font-black mt-2 bg-gradient-to-r from-exroast-pink to-yellow-400 bg-clip-text text-transparent">
+                      {credits ?? 0}
+                    </div>
+                  </div>
+                  <div className="text-5xl opacity-20">🎵</div>
+                </div>
+                <button
+                  onClick={() => { router.push('/checkout?tier=unlimited'); onClose?.(); }}
+                  className="w-full bg-gradient-to-r from-exroast-pink to-purple-600 px-5 py-3 rounded-xl font-bold text-white shadow-lg hover:shadow-[0_0_20px_rgba(255,0,110,0.4)] hover:scale-[1.02] transition-all duration-200"
+                >
+                  Go Unlimited 🚀
+                </button>
+                <div className="text-xs text-white/50 mt-3 text-center">Unlimited roasts + audio nudges</div>
+              </div>
             </div>
 
             <div className="mt-2">
-              <div className="text-sm text-white/70 mb-2">Quick actions</div>
+              <div className="text-sm text-white/60 font-semibold mb-3 px-1">Quick actions</div>
               <div className="space-y-2">
                 <button
                   onClick={() => { router.push('/checkout'); onClose?.(); }}
-                  className="w-full text-left px-4 py-3 rounded-lg bg-white/5 hover:bg-white/6"
+                  className="group w-full text-left px-5 py-4 rounded-xl bg-gradient-to-r from-white/5 to-white/[0.02] hover:from-exroast-pink/10 hover:to-purple-500/10 border border-white/10 hover:border-exroast-pink/30 transition-all duration-200 flex items-center justify-between"
                 >
-                  Upgrade - Buy full roast
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">💎</span>
+                    <span className="font-semibold text-white">Upgrade - Buy full roast</span>
+                  </div>
+                  <svg className="w-5 h-5 text-white/40 group-hover:text-exroast-pink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
             </div>
           </div>
 
           {/* Right column: My Roasts */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm text-white/70">My Roasts</div>
-              <div className="text-xs text-white/60">Recent</div>
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between mb-4 px-1">
+              <div className="text-sm text-white/60 font-semibold flex items-center gap-2">
+                <span className="text-xl">🎤</span>
+                <span>My Roasts</span>
+              </div>
+              <div className="text-xs text-white/50 bg-white/5 px-3 py-1 rounded-full">Recent</div>
             </div>
 
-            <div className="bg-white/3 rounded-lg p-2 max-h-64 overflow-auto">
+            <div className="flex-1 bg-gradient-to-br from-white/[0.03] to-white/[0.01] rounded-xl p-3 border border-white/10 max-h-[400px] overflow-auto custom-scrollbar">
               {roasts === null ? (
-                <div className="text-white/60 p-4">Loading…</div>
+                <div className="flex items-center justify-center h-32">
+                  <div className="text-white/60 flex items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-exroast-pink border-t-transparent rounded-full animate-spin"></div>
+                    <span>Loading…</span>
+                  </div>
+                </div>
               ) : roasts.length === 0 ? (
-                <div className="text-white/60 p-4">No roasts yet</div>
+                <div className="flex flex-col items-center justify-center h-32 text-center">
+                  <div className="text-4xl mb-2 opacity-30">🎵</div>
+                  <div className="text-white/60">No roasts yet</div>
+                  <div className="text-xs text-white/40 mt-1">Create your first roast to see it here</div>
+                </div>
               ) : (
-                <div className="divide-y divide-white/6">
+                <div className="space-y-2">
                   {roasts.slice(0, 8).map((r: any) => (
                     <button
                       key={r.id}
                       onClick={() => { onClose?.(); router.push(`/preview?songId=${r.id}`); }}
-                      className="w-full text-left px-3 py-3 hover:bg-white/5 flex items-center justify-between"
+                      className="group w-full text-left px-4 py-3 rounded-lg bg-white/[0.02] hover:bg-gradient-to-r hover:from-exroast-pink/10 hover:to-purple-500/10 border border-white/5 hover:border-exroast-pink/30 transition-all duration-200 flex items-center justify-between"
                     >
-                      <div className="flex-1 pr-4">
-                        <div className="text-sm font-bold text-white truncate">{r.title || 'Untitled Roast'}</div>
-                        <div className="text-xs text-white/60">{new Date(r.createdAt).toLocaleString()}</div>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-exroast-pink/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                          <span className="text-lg">🎵</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-white truncate group-hover:text-exroast-pink transition-colors">
+                            {r.title || 'Untitled Roast'}
+                          </div>
+                          <div className="text-xs text-white/50">{new Date(r.createdAt).toLocaleDateString()}</div>
+                        </div>
                       </div>
-                      <div className="text-xs text-white/50">▶</div>
+                      <svg className="w-5 h-5 text-white/30 group-hover:text-exroast-pink transition-colors flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
                     </button>
                   ))}
                 </div>
               )}
             </div>
           </div>
+        </div>
 
-          {/* Footer row - spans both columns */}
-          <div className="md:col-span-2">
-            <div className="border-t border-white/6 mt-4 pt-4" />
-            <div className="mt-3">
-              <button
-                onClick={handleSignOut}
-                className="w-full text-left px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold"
-                disabled={loading}
-              >
-                {loading ? 'Signing out…' : 'Sign out'}
-              </button>
-            </div>
+        {/* Footer */}
+        <div className="px-6 pb-6">
+          <div className="border-t border-white/10 pt-4">
+            <button
+              onClick={handleSignOut}
+              className="w-full px-5 py-3 rounded-xl bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-bold shadow-lg hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Signing out…</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Sign out</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255, 0, 110, 0.3);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 0, 110, 0.5);
+        }
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slide-in-from-bottom-4 {
+          from { transform: translateY(1rem); }
+          to { transform: translateY(0); }
+        }
+        .animate-in {
+          animation: fade-in 0.3s ease-out, slide-in-from-bottom-4 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

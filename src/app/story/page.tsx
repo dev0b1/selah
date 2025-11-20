@@ -333,13 +333,13 @@ export default function StoryPage() {
 
               <div className="flex flex-col items-center space-y-3">
                 <p className="text-center text-sm text-gray-400">
-                  Free 15-second preview • Full roast $4.99 • Takes 30 seconds
+                  Demo song (template) — full demo available. Upgrade for a personalized song.
                 </p>
                 <button
-                  onClick={() => router.push('/checkout?type=single')}
+                  onClick={() => router.push('/checkout?tier=premium')}
                   className="bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black font-bold px-6 py-3 rounded-full focus:outline-none focus:ring-4 focus:ring-exroast-gold/60"
                 >
-                  Buy full roast — $4.99
+                  Upgrade for a personalized song
                 </button>
               </div>
             </div>

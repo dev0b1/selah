@@ -178,21 +178,8 @@ export default function PreviewContent() {
     if (!audioRef.current) return;
     const current = audioRef.current.currentTime;
     setCurrentTime(current);
-
-    if (song.isTemplate && current >= 15 && !hasShownModalRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      setShowUpsellModal(true);
-      hasShownModalRef.current = true;
-    } else if (!song.isPurchased && current >= 10) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      
-      // Trigger first-time modal since preview was truncated
-      handleAudioEnded();
-    }
+    // No truncation: templates (demos) and purchased songs play fully.
+    // We simply update the current time and let the audio end naturally.
   };
 
   const handleAudioEnded = () => {
@@ -216,7 +203,8 @@ export default function PreviewContent() {
     if (!audioRef.current) return;
     const loadedDuration = audioRef.current.duration;
     setActualDuration(loadedDuration);
-    setDuration(song.isPurchased ? loadedDuration : 10);
+    // Always use the real loaded duration; there is no preview truncation.
+    setDuration(loadedDuration);
   };
 
   const formatTime = (time: number) => {
@@ -277,13 +265,13 @@ export default function PreviewContent() {
             <div className="space-y-6">
               <div className="card sticky top-24">
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-lg text-gradient">{song.title}</h3>
-                    {!song.isPurchased && (
+                    {song.isTemplate ? (
                       <span className="text-xs bg-exroast-pink text-white px-3 py-1 rounded-full font-medium">
-                        Preview (10s)
+                        Demo (full)
                       </span>
-                    )}
+                    ) : null}
                   </div>
 
                   <audio
