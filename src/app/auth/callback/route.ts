@@ -12,13 +12,17 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     if (process.env.NODE_ENV !== 'production') {
+      // Dev-only debug info to help track OAuth redirects without printing secrets
       try {
-        const allCookies = cookieStore.getAll();
-        console.log('[auth/callback] received code, redirectTo=', redirectTo, 'searchParams=', Object.fromEntries(searchParams.entries()), 'cookies=', allCookies.map(c=>({name:c.name,value:c.value})));
+        console.log('[auth/callback] received code, redirectTo=', redirectTo);
+        console.log('[auth/callback] searchParams:', Object.fromEntries(searchParams.entries()));
+        const cookieNames = (await cookieStore.getAll()).map(c => c.name);
+        console.log('[auth/callback] cookie names present:', cookieNames);
       } catch (e) {
-        console.log('[auth/callback] debug log failed', e);
+        // swallow any logging errors
       }
     }
+  // reuse cookieStore defined above
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

@@ -30,9 +30,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (!saved) {
+      // Distinguish already-checked-in from other failures for clearer client handling
       return NextResponse.json(
-        { error: 'Already checked in today or failed to save' },
-        { status: 400 }
+        { error: 'already_checked_in', message: 'User already checked in today' },
+        { status: 409 }
       );
     }
 

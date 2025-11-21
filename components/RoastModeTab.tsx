@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { FaSpinner, FaFire, FaPlay, FaDownload } from "react-icons/fa";
+import RoastCreator from "@/components/RoastCreator";
 
 interface RoastModeTabProps {
   userId: string;
@@ -32,52 +33,51 @@ export function RoastModeTab({ userId }: RoastModeTabProps) {
     }
   };
 
+  const handleCreateRoast = async () => {
+    // If not logged in, send to template flow (free users / anonymous)
+    if (!userId) {
+      router.push('/template');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/user/pro-status', {
+        headers: {
+          'x-user-id': userId,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!res.ok) {
+        // fallback to template
+        router.push('/template');
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.isPro) {
+        // Pro users go to the personalized roast creation page (story), pre-select roast mode
+        router.push('/story?mode=petty');
+      } else {
+        // Free users get template previews
+        router.push('/template');
+      }
+    } catch (error) {
+      console.error('Error checking pro status:', error);
+      router.push('/template');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto space-y-12">
-      {/* Create New Roast Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
-        <div className="text-center space-y-3">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black bg-gradient-to-r from-orange-400 via-red-500 to-red-600 bg-clip-text text-transparent">
-            Create Your Savage Roast 🔥
-          </h2>
-          <p className="text-lg md:text-xl text-gray-300 font-semibold">
-            30-second AI diss track that ends them
-          </p>
-        </div>
-
-        <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-lg p-6 md:p-8 shadow-xl">
-          <div className="space-y-6">
-            <div className="bg-white/5 border border-white/10 rounded-lg p-5 md:p-6">
-              <div className="flex items-start gap-4">
-                <div className="text-3xl md:text-4xl">🗡️</div>
-                <div className="flex-1">
-                  <h3 className="text-lg md:text-xl font-bold text-white mb-2">
-                    Ready to roast?
-                  </h3>
-                  <p className="text-sm md:text-base text-gray-300 leading-relaxed">
-                    Spill the tea, pick your vibe (Petty Roast or Glow-Up Flex), and get your 30-second banger.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => router.push("/app")}
-              className="w-full text-lg md:text-xl font-black py-5 md:py-6 rounded-lg flex items-center justify-center gap-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <span>Spill the Tea & Create Roast</span>
-              <FaFire className="text-2xl" />
-            </button>
-            
-            <p className="text-center text-gray-500 text-xs md:text-sm">
-              Full roast creation with OCR, style selection, and audio preview
-            </p>
-          </div>
-        </div>
+      {/* Embedded Roast Creator (shared component) */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+        <RoastCreator userId={userId} />
       </motion.div>
 
       {/* Divider */}

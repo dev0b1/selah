@@ -40,7 +40,7 @@ export function StyleSelector({ selected, onChange }: StyleSelectorProps) {
       <label className="block text-xl font-black text-exroast-gold">
         Choose Your Vibe 🎵
       </label>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div className="grid grid-cols-2 md:grid-cols-2 gap-2 md:gap-4">
         {styles.map((style) => {
           const Icon = style.icon;
           const isSelected = selected === style.id;
@@ -52,27 +52,28 @@ export function StyleSelector({ selected, onChange }: StyleSelectorProps) {
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
               className={clsx(
-                "p-8 rounded-2xl border-4 transition-all duration-300 text-left",
-                isSelected
-                  ? `${style.bgColor} ${style.borderColor} shadow-2xl shadow-${style.id === 'petty' ? 'exroast-pink' : 'exroast-gold'}/50`
-                  : "bg-exroast-black/50 border-gray-700 hover:border-gray-600 shadow-xl"
-              )}
+                    // smaller on mobile, keep original larger padding on md+
+                    "p-2 md:p-8 rounded-2xl border-4 transition-all duration-300 text-left",
+                  isSelected
+                    ? `${style.bgColor} ${style.borderColor} shadow-2xl shadow-${style.id === 'petty' ? 'exroast-pink' : 'exroast-gold'}/50`
+                    : "bg-exroast-black/50 border-gray-700 hover:border-gray-600 shadow-xl"
+                )}
             >
               <div className="flex flex-col items-center space-y-4">
                 <div
                   className={clsx(
-                    "p-6 rounded-full bg-gradient-to-br",
+                      "p-4 md:p-6 rounded-full bg-gradient-to-br",
                     style.color
                   )}
                 >
-                  <Icon className="text-5xl text-white" />
+                      <Icon className="text-2xl md:text-5xl text-white" />
                 </div>
                 <div className="text-center">
-                  <h3 className="font-black text-2xl text-white mb-2">
+                    <h3 className="font-black text-xl md:text-2xl text-white mb-2">
                     {style.name}
                   </h3>
-                  <p className="text-base text-gray-300 mb-2">{style.description}</p>
-                  <p className="text-sm italic text-gray-400">"{style.example}"</p>
+                    <p className="text-sm md:text-base text-gray-300 mb-2">{style.description}</p>
+                    <p className="text-xs md:text-sm italic text-gray-400">"{style.example}"</p>
                 </div>
               </div>
             </motion.button>

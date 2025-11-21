@@ -31,6 +31,12 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Allow auth routes (including the OAuth callback) through the middleware
+  // to avoid intercepting provider redirects and causing a bounce.
+  if (request.nextUrl.pathname.startsWith('/auth')) {
+    return supabaseResponse;
+  }
+
   // Protected routes that require authentication
   const protectedPaths = ['/checkout', '/dashboard', '/app', '/account'];
   const isProtectedPath = protectedPaths.some(path => 

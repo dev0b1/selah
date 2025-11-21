@@ -20,8 +20,7 @@ export default function TemplatePage() {
   const [loadingStep, setLoadingStep] = useState<LoadingStep>('lyrics');
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [optInDailyQuotes, setOptInDailyQuotes] = useState(false);
-  const [optInAudioNudges, setOptInAudioNudges] = useState(false);
+  // daily opt-in removed from template page — handled in Daily tab
 
   const handleGenerate = async () => {
     if (story.trim().length < 10) {
@@ -80,20 +79,7 @@ export default function TemplatePage() {
           localStorage.setItem('recentRoasts', JSON.stringify(recentRoasts.slice(0, 3)));
         }
 
-        if (optInDailyQuotes) {
-          try {
-            await fetch('/api/daily-quotes/opt-in', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ 
-                userId: data.songId || 'anonymous', 
-                audioEnabled: optInAudioNudges 
-              })
-            });
-          } catch (error) {
-            console.error('Failed to opt in to daily quotes:', error);
-          }
-        }
+        // daily opt-in moved to Daily tab; creation flows no longer contain the opt-in controls
 
         setTimeout(() => {
           router.push(`/preview?songId=${data.songId}`);
@@ -190,73 +176,7 @@ export default function TemplatePage() {
                 </Tooltip>
               </div>
 
-              {/* Daily Motivation Opt-In */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="bg-gradient-to-r from-exroast-pink/10 to-exroast-gold/10 border-2 border-exroast-gold/30 rounded-xl p-6 space-y-4"
-              >
-                <div className="flex items-start space-x-3">
-                  <div className="text-3xl emoji-enhanced">💬</div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-black text-gradient mb-2">
-                      Daily Petty Power-Ups 🔥
-                    </h3>
-                    <p className="text-white text-sm mb-4">
-                      Stay savage with daily motivation delivered straight to you
-                    </p>
-                    
-                    <div className="space-y-3">
-                      <label className="flex items-start space-x-3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          checked={optInDailyQuotes}
-                          onChange={(e) => {
-                            setOptInDailyQuotes(e.target.checked);
-                            if (!e.target.checked) {
-                              setOptInAudioNudges(false);
-                            }
-                          }}
-                          className="mt-1 w-5 h-5 rounded border-2 border-exroast-gold bg-black checked:bg-exroast-gold checked:border-exroast-gold focus:ring-2 focus:ring-exroast-gold cursor-pointer"
-                        />
-                        <div className="flex-1">
-                          <span className="text-white font-bold group-hover:text-exroast-gold transition-colors">
-                            ✅ Daily savage quotes (FREE - unlimited)
-                          </span>
-                          <p className="text-white/70 text-xs mt-1">
-                            "They didn't lose you. You upgraded."
-                          </p>
-                        </div>
-                      </label>
-
-                      {optInDailyQuotes && (
-                        <motion.label
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="flex items-start space-x-3 cursor-pointer group ml-8"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={optInAudioNudges}
-                            onChange={(e) => setOptInAudioNudges(e.target.checked)}
-                            className="mt-1 w-5 h-5 rounded border-2 border-exroast-pink bg-black checked:bg-exroast-pink checked:border-exroast-pink focus:ring-2 focus:ring-exroast-pink cursor-pointer"
-                          />
-                          <div className="flex-1">
-                            <span className="text-white font-bold group-hover:text-exroast-pink transition-colors">
-                              🎵 Audio nudges (15-20s with beats)
-                            </span>
-                            <p className="text-white/70 text-xs mt-1">
-                              FREE: template previews
-                            </p>
-                          </div>
-                        </motion.label>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+              {/* Daily Petty Power-Ups removed from template page; details are available in the Daily tab */}
 
               {/* Generate Button */}
               <div className="flex justify-center">
