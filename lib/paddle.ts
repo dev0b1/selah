@@ -6,8 +6,7 @@ type PaddleInitOpts = {
 
 /**
  * Lightweight wrapper that delegates to the official @paddle/paddle-js package.
- * The package exposes initializePaddle which returns a Promise resolving to the
- * paddle instance. We mirror that API so callers can remain unchanged.
+ * Directly mirrors the API from @paddle/paddle-js without any fallback logic.
  */
 export default async function initializePaddle(opts: PaddleInitOpts) {
   const { environment = 'sandbox', token, eventCallback } = opts;
@@ -20,50 +19,45 @@ export default async function initializePaddle(opts: PaddleInitOpts) {
     throw new Error('Paddle token is required');
   }
 
-  // If already initialized globally, just return it (don't re-initialize)
-  if ((window as any).Paddle?.Initialized) {
-    console.log('[Paddle] Already initialized, returning existing instance');
-    return (window as any).Paddle;
+  // Debug: verify token format
+  console.log('[Paddle Debug] Token prefix:', token.substring(0, 10));
+  console.log('[Paddle Debug] Environment:', environment);
+  
+  if (environment === 'sandbox' && !token.startsWith('test_')) {
+    console.error('❌ Using sandbox but token does not start with test_');
+  }
+  if (environment === 'production' && !token.startsWith('live_')) {
+    console.error('❌ Using production but token does not start with live_');
   }
 
-  // Dynamically import the npm package which will inject the Paddle client
   try {
+    // Dynamically import the official @paddle/paddle-js package
     const mod = await import('@paddle/paddle-js');
     
-    if (mod && typeof mod.initializePaddle === 'function') {
-      console.log('[Paddle Init] Initializing with environment:', environment);
-      
-      // Forward the options to the package initializer
-      const instance = await mod.initializePaddle({
-        environment,
-        token,
-        eventCallback
-      });
+    if (!mod.initializePaddle) {
+      throw new Error('@paddle/paddle-js module loaded but initializePaddle function not found');
+    }
 
-      if (!instance) {
-        console.error('[Paddle Init] initializePaddle returned null/undefined');
-        // Fall back to global if it exists
-        return (window as any).Paddle || null;
-      }
+    // Forward all options directly to the official package
+    const instance = await mod.initializePaddle({
+      environment,
+      token,
+      eventCallback
+    });
 
-      // Masked token log for runtime debugging
+    if (!instance) {
+      throw new Error('Paddle initialization returned null or undefined');
+    }
+
+    // Optional: Masked token log for debugging
+    if (process.env.NODE_ENV === 'development') {
       const masked = `${token.slice(0, 6)}...${token.slice(-4)}`;
-      console.log('[Paddle Init] Successfully initialized. Token mask:', masked);
-      
-      return instance;
-    } else {
-      console.error('[Paddle Init] @paddle/paddle-js module loaded but initializePaddle function not found');
-      return (window as any).Paddle || null;
+      console.log('[Paddle] Initialized successfully. Token mask:', masked);
     }
-  } catch (e) {
-    console.error('[Paddle Init] Failed to initialize @paddle/paddle-js package:', e);
-    
-    // Fall back to any global Paddle object if present
-    if ((window as any).Paddle) {
-      console.warn('[Paddle Init] Using fallback global Paddle object');
-      return (window as any).Paddle;
-    }
-    
-    return null;
+
+    return instance;
+  } catch (error) {
+    console.error('[Paddle] Initialization failed:', error);
+    throw error; // Re-throw so callers know it failed
   }
 }
