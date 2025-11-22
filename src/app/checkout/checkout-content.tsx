@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import initializePaddle from '@/lib/paddle';
 import { motion } from "framer-motion";
 import { FaSpinner } from "react-icons/fa";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
@@ -59,22 +60,14 @@ export default function CheckoutContent() {
         const tier = searchParams.get("tier") || "premium";
         const type = searchParams.get("type");
 
-        // Wait for Paddle to load
-        await new Promise((resolve) => {
-          const checkPaddle = setInterval(() => {
-            if (typeof window !== "undefined" && (window as any).Paddle) {
-              clearInterval(checkPaddle);
-              resolve(null);
-            }
-          }, 100);
-          setTimeout(() => {
-            clearInterval(checkPaddle);
-            resolve(null);
-          }, 5000); // Max 5 seconds wait
-        });
-
-        if (!(window as any).Paddle) {
-          setError("Payment system failed to load. Please try again.");
+        // Initialize Paddle using helper which loads the CDN and calls Initialize
+        try {
+          const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!;
+          await initializePaddle({ environment: process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT === 'production' ? 'production' : 'sandbox', token: clientToken, eventCallback: (ev) => {
+            console.log('[Paddle Event]', ev?.name, ev);
+          }});
+        } catch (e) {
+          setError('Payment system failed to load. Please try again.');
           setIsLoading(false);
           return;
         }
@@ -129,7 +122,12 @@ export default function CheckoutContent() {
         }
 
         // Open Paddle checkout
-        (window as any).Paddle.Checkout.open(checkoutPayload);
+        const paddle = (window as any).Paddle;
+        paddle.Checkout.open({
+          ...checkoutPayload,
+          // include customer email to help Paddle map customers
+          customer: { email: resolvedUser.email }
+        });
 
         setIsLoading(false);
       } catch (err) {

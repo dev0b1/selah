@@ -1,6 +1,7 @@
 "use client";
 
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import initializePaddle from './paddle';
 
 interface SingleCheckoutOpts {
   songId?: string | null;
@@ -128,6 +129,20 @@ export async function openSingleCheckout(opts?: SingleCheckoutOpts) {
     return;
   }
 
+  // Initialize paddle via helper (ensures script loaded and token initialized)
+  try {
+    const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!
+    await initializePaddle({ environment: process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT === 'production' ? 'production' : 'sandbox', token: clientToken, eventCallback: (ev) => {
+      console.log('[Paddle Event]', ev?.name, ev);
+      if (ev?.name === 'checkout.closed' || ev?.name === 'checkout.completed') {
+        safeLocalStorage.removeItem('inCheckout');
+      }
+    }});
+  } catch (e) {
+    console.error('[openSingleCheckout] Failed to initialize Paddle', e);
+    return;
+  }
+
   const singlePriceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE;
   console.log('[openSingleCheckout] singlePriceId:', singlePriceId);
 
@@ -158,7 +173,8 @@ export async function openSingleCheckout(opts?: SingleCheckoutOpts) {
 
   try {
     console.log('[openSingleCheckout] Calling Paddle.Checkout.open()...');
-    (window as any).Paddle.Checkout.open(payload);
+    const paddle = (window as any).Paddle;
+    paddle.Checkout.open(payload);
     console.log('[openSingleCheckout] Paddle.Checkout.open() called successfully');
   } catch (error) {
     console.error('[openSingleCheckout] Error opening Paddle checkout:', error);
@@ -195,6 +211,19 @@ export async function openTierCheckout(tierId: string, priceId?: string) {
     return;
   }
 
+  try {
+    const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!
+    await initializePaddle({ environment: process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT === 'production' ? 'production' : 'sandbox', token: clientToken, eventCallback: (ev) => {
+      console.log('[Paddle Event]', ev?.name, ev);
+      if (ev?.name === 'checkout.closed' || ev?.name === 'checkout.completed') {
+        safeLocalStorage.removeItem('inCheckout');
+      }
+    }});
+  } catch (e) {
+    console.error('[openTierCheckout] Failed to initialize Paddle', e);
+    return;
+  }
+
   const priceToUse = priceId || process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM;
   console.log('[openTierCheckout] priceToUse:', priceToUse);
 
@@ -224,7 +253,8 @@ export async function openTierCheckout(tierId: string, priceId?: string) {
 
   try {
     console.log('[openTierCheckout] Calling Paddle.Checkout.open()...');
-    (window as any).Paddle.Checkout.open(payload);
+    const paddle = (window as any).Paddle;
+    paddle.Checkout.open(payload);
     console.log('[openTierCheckout] Paddle.Checkout.open() called successfully');
   } catch (error) {
     console.error('[openTierCheckout] Error opening Paddle checkout:', error);
