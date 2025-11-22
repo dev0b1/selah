@@ -158,12 +158,15 @@ export async function openSingleCheckout(opts?: SingleCheckoutOpts) {
     settings: {
       successUrl: `${window.location.origin}/success?type=single${opts?.songId ? `&songId=${opts.songId}` : ''}`,
       theme: 'light',
+      allowLogout: false,
       ...setupPaddleCallbacks()
     },
     customData: {
       userId: user.id,
       ...(opts?.songId && { songId: opts.songId })
-    }
+    },
+    // include customer email to help Paddle map customers
+    customer: { email: (user as any).email }
   };
 
   console.log('[openSingleCheckout] Payload created:', { successUrl: payload.settings.successUrl, customData: payload.customData });
@@ -239,11 +242,14 @@ export async function openTierCheckout(tierId: string, priceId?: string) {
     settings: {
       successUrl: `${window.location.origin}/success?tier=${tierId}`,
       theme: 'light',
+      allowLogout: false,
       ...setupPaddleCallbacks()
     },
     customData: {
       userId: user.id
     }
+    ,
+    customer: { email: (user as any).email }
   };
 
   console.log('[openTierCheckout] Payload created:', { successUrl: payload.settings.successUrl, customData: payload.customData });

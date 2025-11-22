@@ -34,7 +34,12 @@ export default async function initializePaddle(opts: PaddleInitOpts) {
       // forward the options to the package initializer
       // @paddle/paddle-js returns a promise that resolves with the instance
       const instance = await mod.initializePaddle({ environment, token, eventCallback } as any);
-      return instance || (window as any).Paddle;
+        // Masked token log for runtime debugging (don't print full token)
+        try {
+          const masked = token ? `${String(token).slice(0,6)}...${String(token).slice(-4)}` : 'none';
+          console.log('[Paddle Init] token present?', Boolean(token), 'mask:', masked);
+        } catch (e) {}
+        return instance || (window as any).Paddle;
     }
   } catch (e) {
     console.warn('Failed to initialize @paddle/paddle-js package', e);
