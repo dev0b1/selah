@@ -47,7 +47,6 @@ async function resolveUser() {
     const userFromSession = sessionData?.user;
     if (userFromSession) return userFromSession;
   } catch (e) {
-    // ignore and continue to server-side check
     console.debug('[resolveUser] supabase.auth.getSession() failed', e);
   }
 
@@ -75,31 +74,54 @@ async function resolveUser() {
   }
 }
 
-// Helper to handle Paddle availability
-function checkPaddleAvailability(): boolean {
-  if (typeof window === 'undefined') return false;
-  
-  if (!(window as any).Paddle) {
-    alert("Payment system is still loading. Please wait a moment and try again.");
-    return false;
-  }
-  
-  return true;
-}
+// Initialize Paddle once and cache the instance
+let paddleInstance: any = null;
+let paddleInitPromise: Promise<any> | null = null;
 
-// Helper to setup Paddle event callbacks for cleanup
-function setupPaddleCallbacks() {
-  return {
-    eventCallback: (data: any) => {
-      console.log('[Paddle Event]', data.name, data);
-      
-      // Clean up the checkout flag when modal closes or completes
-      if (data.name === 'checkout.closed' || data.name === 'checkout.completed') {
-        console.log('[Paddle Event] Clearing inCheckout flag due to:', data.name);
-        safeLocalStorage.removeItem('inCheckout');
+async function ensurePaddleInitialized() {
+  // Return cached instance if available
+  if (paddleInstance) {
+    return paddleInstance;
+  }
+
+  // If initialization is already in progress, wait for it
+  if (paddleInitPromise) {
+    return paddleInitPromise;
+  }
+
+  // Start new initialization
+  paddleInitPromise = (async () => {
+    try {
+      const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN;
+      const environment = process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT;
+
+      if (!clientToken) {
+        throw new Error('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN not configured');
       }
+
+      console.log('[Paddle] Initializing with environment:', environment);
+
+      const instance = await initializePaddle({
+        environment: environment === 'production' ? 'production' : 'sandbox',
+        token: clientToken,
+        eventCallback: (ev) => {
+          console.log('[Paddle Event]', ev?.name);
+          if (ev?.name === 'checkout.closed' || ev?.name === 'checkout.completed') {
+            safeLocalStorage.removeItem('inCheckout');
+          }
+        }
+      });
+
+      paddleInstance = instance;
+      return instance;
+    } catch (e) {
+      console.error('[Paddle] Initialization failed:', e);
+      paddleInitPromise = null; // Reset so retry is possible
+      throw e;
     }
-  };
+  })();
+
+  return paddleInitPromise;
 }
 
 export async function openSingleCheckout(opts?: SingleCheckoutOpts) {
@@ -110,7 +132,6 @@ export async function openSingleCheckout(opts?: SingleCheckoutOpts) {
 
   if (!user) {
     console.log('[openSingleCheckout] User is null, redirecting to /pricing');
-    // Redirect to pricing page for explicit sign-in
     if (typeof window !== 'undefined') {
       const payload: IntendedPurchase = {
         type: 'single',
@@ -123,24 +144,13 @@ export async function openSingleCheckout(opts?: SingleCheckoutOpts) {
     return;
   }
 
-  console.log('[openSingleCheckout] Checking Paddle availability...');
-  if (!checkPaddleAvailability()) {
-    console.error('[openSingleCheckout] Paddle not available');
-    return;
-  }
-
-  // Initialize paddle via helper (ensures package loaded and token initialized)
+  // Initialize Paddle
   let paddle: any;
   try {
-    const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!;
-    paddle = await initializePaddle({ environment: process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT === 'production' ? 'production' : 'sandbox', token: clientToken, eventCallback: (ev) => {
-      console.log('[Paddle Event]', ev?.name, ev);
-      if (ev?.name === 'checkout.closed' || ev?.name === 'checkout.completed') {
-        safeLocalStorage.removeItem('inCheckout');
-      }
-    }});
+    paddle = await ensurePaddleInitialized();
   } catch (e) {
-    console.error('[openSingleCheckout] Failed to initialize Paddle', e);
+    console.error('[openSingleCheckout] Failed to initialize Paddle:', e);
+    alert('Payment system failed to load. Please refresh and try again.');
     return;
   }
 
@@ -158,29 +168,30 @@ export async function openSingleCheckout(opts?: SingleCheckoutOpts) {
     settings: {
       successUrl: `${window.location.origin}/success?type=single${opts?.songId ? `&songId=${opts.songId}` : ''}`,
       theme: 'light',
-      allowLogout: false,
-      ...setupPaddleCallbacks()
+      allowLogout: false
     },
     customData: {
       userId: user.id,
       ...(opts?.songId && { songId: opts.songId })
     },
-    // include customer email to help Paddle map customers
-    customer: { email: (user as any).email }
+    customer: {
+      email: user.email
+    }
   };
 
-  console.log('[openSingleCheckout] Payload created:', { successUrl: payload.settings.successUrl, customData: payload.customData });
+  console.log('[openSingleCheckout] Opening checkout with payload:', {
+    successUrl: payload.settings.successUrl,
+    customData: payload.customData
+  });
 
   // Mark checkout as in progress
   safeLocalStorage.setItem('inCheckout', 'true');
-  console.log('[openSingleCheckout] Set localStorage.inCheckout = true');
 
   try {
-    console.log('[openSingleCheckout] Calling Paddle.Checkout.open()...');
     paddle.Checkout.open(payload);
-    console.log('[openSingleCheckout] Paddle.Checkout.open() called successfully');
+    console.log('[openSingleCheckout] Checkout opened successfully');
   } catch (error) {
-    console.error('[openSingleCheckout] Error opening Paddle checkout:', error);
+    console.error('[openSingleCheckout] Error opening checkout:', error);
     safeLocalStorage.removeItem('inCheckout');
     alert('Failed to open payment system. Please try again.');
   }
@@ -194,7 +205,6 @@ export async function openTierCheckout(tierId: string, priceId?: string) {
 
   if (!user) {
     console.log('[openTierCheckout] User is null, redirecting to /pricing');
-    // Redirect to pricing page for explicit sign-in
     if (typeof window !== 'undefined') {
       const payload: IntendedPurchase = {
         type: 'tier',
@@ -208,23 +218,13 @@ export async function openTierCheckout(tierId: string, priceId?: string) {
     return;
   }
 
-  console.log('[openTierCheckout] Checking Paddle availability...');
-  if (!checkPaddleAvailability()) {
-    console.error('[openTierCheckout] Paddle not available');
-    return;
-  }
-
+  // Initialize Paddle
   let paddle: any;
   try {
-    const clientToken = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!;
-    paddle = await initializePaddle({ environment: process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT === 'production' ? 'production' : 'sandbox', token: clientToken, eventCallback: (ev) => {
-      console.log('[Paddle Event]', ev?.name, ev);
-      if (ev?.name === 'checkout.closed' || ev?.name === 'checkout.completed') {
-        safeLocalStorage.removeItem('inCheckout');
-      }
-    }});
+    paddle = await ensurePaddleInitialized();
   } catch (e) {
-    console.error('[openTierCheckout] Failed to initialize Paddle', e);
+    console.error('[openTierCheckout] Failed to initialize Paddle:', e);
+    alert('Payment system failed to load. Please refresh and try again.');
     return;
   }
 
@@ -242,28 +242,29 @@ export async function openTierCheckout(tierId: string, priceId?: string) {
     settings: {
       successUrl: `${window.location.origin}/success?tier=${tierId}`,
       theme: 'light',
-      allowLogout: false,
-      ...setupPaddleCallbacks()
+      allowLogout: false
     },
     customData: {
       userId: user.id
+    },
+    customer: {
+      email: user.email
     }
-    ,
-    customer: { email: (user as any).email }
   };
 
-  console.log('[openTierCheckout] Payload created:', { successUrl: payload.settings.successUrl, customData: payload.customData });
+  console.log('[openTierCheckout] Opening checkout with payload:', {
+    successUrl: payload.settings.successUrl,
+    customData: payload.customData
+  });
 
   // Mark checkout as in progress
   safeLocalStorage.setItem('inCheckout', 'true');
-  console.log('[openTierCheckout] Set localStorage.inCheckout = true');
 
   try {
-    console.log('[openTierCheckout] Calling Paddle.Checkout.open()...');
     paddle.Checkout.open(payload);
-    console.log('[openTierCheckout] Paddle.Checkout.open() called successfully');
+    console.log('[openTierCheckout] Checkout opened successfully');
   } catch (error) {
-    console.error('[openTierCheckout] Error opening Paddle checkout:', error);
+    console.error('[openTierCheckout] Error opening checkout:', error);
     safeLocalStorage.removeItem('inCheckout');
     alert('Failed to open payment system. Please try again.');
   }
