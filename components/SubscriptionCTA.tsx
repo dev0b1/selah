@@ -133,66 +133,15 @@ export function SubscriptionCTA({ songId, autoOpenSingle }: SubscriptionCTAProps
         }
       }
 
-      if (!resolvedUser) {
-        // If user isn't signed in, start Google OAuth and redirect to checkout after auth.
-        const redirectPath = opts?.songId ? `/checkout?songId=${opts.songId}` : `/checkout?type=single`;
-        if (typeof window !== 'undefined') {
-          const redirectTo = `${window.location.origin}/auth/callback`;
-          try { document.cookie = `post_auth_redirect=${encodeURIComponent(redirectPath)}; path=/; max-age=600`; } catch (e) {}
-          await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } });
-        } else {
-          const redirect = opts?.songId ? `/checkout?songId=${opts.songId}` : `/checkout?type=single`;
-          router.push(`/auth?redirectTo=${encodeURIComponent(redirect)}`);
-        }
-        return;
+      // Delegate to centralized checkout helper which handles user resolution,
+      // payload creation and Paddle initialization. This prevents duplicate
+      // checkout codepaths and keeps behavior consistent across the app.
+      try {
+        await openSingleCheckout({ songId: opts?.songId || null });
+      } catch (e) {
+        console.error('handleSingleSongPurchase -> openSingleCheckout error', e);
+        alert('Unable to open checkout. Please try again or contact support.');
       }
-
-      if (typeof window === "undefined") {
-        throw new Error("Window is not defined");
-      }
-
-      if (!(window as any).Paddle) {
-        alert("Payment system is still loading. Please wait a moment and try again.");
-        setIsLoading(null);
-        return;
-      }
-
-      const singlePriceId = process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE;
-
-      if (!SINGLE_PRICE_ID && !singlePriceId) {
-        console.error("Paddle price ID for single purchase not configured. Please set up your Paddle products.");
-        alert("Payment system not configured. Please contact support.");
-        setIsLoading(null);
-        return;
-      }
-      const priceToCheck = singlePriceId || SINGLE_PRICE_ID;
-      const isPaddleFormat = /^pri_[0-9a-zA-Z]{5,}/.test(priceToCheck);
-      if (!isPaddleFormat) {
-        console.warn(`Price ID "${singlePriceId}" doesn't match Paddle format (this is a best-effort check).`);
-      }
-
-      // Build checkout payload. Paddle SDK will convert camelCase customData -> custom_data
-      const checkoutPayload: any = {
-        items: [
-          { priceId: priceToCheck, quantity: 1 }
-        ],
-        settings: {
-          successUrl: `${window.location.origin}/success?type=single${opts?.songId ? `&songId=${opts.songId}` : ''}`,
-          theme: 'light'
-        }
-      };
-
-      // If we have a songId, attach it so webhook can unlock the right song.
-      if (opts?.songId) {
-        checkoutPayload.customData = {
-          songId: opts.songId,
-          userId: user?.id || null,
-        };
-      } else {
-        checkoutPayload.customData = { userId: user?.id || null };
-      }
-
-      (window as any).Paddle.Checkout.open(checkoutPayload);
     } catch (error) {
       console.error("Checkout error:", error);
       alert("Unable to open checkout. Please try again or contact support.");

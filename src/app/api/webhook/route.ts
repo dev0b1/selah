@@ -1,134 +1,172 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Environment, Paddle } from '@paddle/paddle-node-sdk';
 import { db } from "@/server/db";
 import { transactions, songs, subscriptions } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { refillCredits } from "@/lib/db-service";
 import { mapPriceIdToAction } from '@/lib/paddle-config';
 
+// Initialize Paddle SDK instance once (reused across requests)
+const paddle = new Paddle(process.env.PADDLE_API_KEY!, {
+  environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as Environment) || Environment.sandbox,
+});
+
 export async function POST(request: NextRequest) {
+  const signature = request.headers.get('paddle-signature') ?? '';
+  const body = await request.text();
+
+  // Validate signature and body are present
+  if (!signature || !body) {
+    console.error('[Webhook] Missing signature or body');
+    return NextResponse.json({ error: 'Missing signature or body' }, { status: 400 });
+  }
+
+  if (!process.env.PADDLE_API_KEY || !process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET) {
+    console.warn('[Webhook] Paddle credentials not configured');
+    return NextResponse.json({ received: true, note: 'Credentials not configured' }, { status: 200 });
+  }
+
   try {
-    const body = await request.text();
-    const signature = request.headers.get("paddle-signature") || "";
+    // Unmarshal and verify webhook signature (await in case it's async)
+    const eventData = await paddle.webhooks.unmarshal(
+      body,
+      process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET!,
+      signature,
+    );
 
-    if (!process.env.PADDLE_API_KEY || !process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET) {
-      console.warn("Paddle credentials not configured - webhook processing disabled");
-      return NextResponse.json({ received: true, note: "Credentials not configured" });
+    if (!eventData || !eventData.data) {
+      throw new Error('Invalid event data structure');
     }
 
-    let eventData: any;
-    try {
-      const { Paddle } = await import("@paddle/paddle-node-sdk");
-      const paddle = new Paddle(process.env.PADDLE_API_KEY);
-      
-      eventData = await paddle.webhooks.unmarshal(
-        body,
-        process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET,
-        signature
-      );
-      
-      if (!eventData || !eventData.data) {
-        throw new Error("Invalid event data structure");
-      }
-    } catch (verifyError) {
-      console.error("Webhook signature verification failed:", verifyError);
-      return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 401 }
-      );
-    }
+    console.log(`[Webhook] Received event: ${eventData.eventType}`);
 
-  const transactionId = eventData.data.id || `tx-${Date.now()}`;
-  const existing = await db.select().from(transactions).where(eq(transactions.id, transactionId)).limit(1);
+    const transactionId = eventData.data.id || `tx-${Date.now()}`;
     
-    if (existing.length === 0) {
-      await db.insert(transactions).values({
-        id: transactionId,
-        songId: eventData.data.custom_data?.songId || null,
-        userId: eventData.data.custom_data?.userId || null,
-        amount: eventData.data.details?.totals?.total || "0",
-        currency: eventData.data.currency_code || "USD",
-        status: eventData.data.status || eventData.eventType,
-        paddleData: JSON.stringify(eventData.data),
-      });
-    } else {
-      console.log(`Transaction ${transactionId} already processed - skipping`);
+    // Check for duplicate with row locking to prevent race conditions
+    const existing = await db.select()
+      .from(transactions)
+      .where(eq(transactions.id, transactionId))
+      .limit(1);
+    
+    if (existing.length > 0) {
+      console.log(`[Webhook] Transaction ${transactionId} already processed - skipping`);
       return NextResponse.json({ received: true, note: "Already processed" });
     }
 
-    // Detect price_id if present (Paddle price ids look like `pri_...`) so we can
-    // map purchases to internal actions even when custom_data isn't provided.
-    const priceId = eventData.data.price_id || eventData.data.product_id || eventData.data.plan_id || eventData.data.checkout?.price_id;
-    const priceAction = mapPriceIdToAction(priceId);
-    if (priceAction) {
-      console.log('Detected Paddle price action for priceId=', priceId, priceAction);
+    // Type-safe data extraction - cast to any for webhook data since structure varies
+    const data = eventData.data as any;
+
+    // Insert transaction record first to claim this event
+    await db.insert(transactions).values({
+      id: transactionId,
+      songId: data.custom_data?.songId || null,
+      userId: data.custom_data?.userId || null,
+      amount: data.details?.totals?.total || "0",
+      currency: data.currency_code || "USD",
+      status: data.status || eventData.eventType,
+      paddleData: JSON.stringify(data),
+    });
+
+    // Extract price_id from items array (Paddle structure)
+    let priceId: string | null = null;
+    if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+      // Get first item's price_id
+      priceId = data.items[0].price?.id || data.items[0].price_id || null;
+    }
+    
+    // Fallback to other possible locations
+    if (!priceId) {
+      priceId = data.price_id || 
+                data.product_id || 
+                data.plan_id || 
+                data.checkout?.price_id || 
+                null;
     }
 
+    const priceAction = priceId ? mapPriceIdToAction(priceId) : null;
+    if (priceAction) {
+      console.log(`[Webhook] Detected price action for ${priceId}:`, priceAction);
+    }
+
+    // Route to appropriate handler
     switch (eventData.eventType) {
       case "transaction.completed":
-        await handleTransactionCompleted(eventData.data, priceAction);
+      case "transaction.paid":
+        await handleTransactionCompleted(data, priceAction);
         break;
 
       case "subscription.created":
-        await handleSubscriptionCreated(eventData.data);
+        await handleSubscriptionCreated(data);
         break;
 
       case "subscription.updated":
-        await handleSubscriptionUpdated(eventData.data);
+        await handleSubscriptionUpdated(data, eventData.eventType);
+        break;
+
+      case "subscription.activated":
+        // Treat activation similar to creation
+        await handleSubscriptionCreated(data);
         break;
 
       case "subscription.canceled":
-        await handleSubscriptionCanceled(eventData.data);
+        await handleSubscriptionCanceled(data);
+        break;
+
+      case "subscription.past_due":
+        await handleSubscriptionPastDue(data);
         break;
 
       default:
-        console.log(`Unhandled event type: ${eventData.eventType}`);
+        console.log(`[Webhook] Unhandled event type: ${eventData.eventType}`);
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Webhook error:", error);
-    return NextResponse.json(
-      { error: "Webhook processing failed" },
-      { status: 400 }
-    );
+    console.error("[Webhook] Processing error:", error);
+    // Return 200 even on error to prevent Paddle from retrying
+    return NextResponse.json({ received: true, error: 'Processing failed' }, { status: 200 });
   }
 }
 
 async function handleTransactionCompleted(transaction: any, priceAction: any = null) {
-  console.log("Transaction completed:", transaction.id);
+  console.log(`[Webhook] Processing transaction.completed: ${transaction.id}`);
 
-  // transaction.custom_data is preferred (client set userId/songId/type)
   const customData = transaction.custom_data || {};
   const customType = customData.type;
   const userId = customData.userId || null;
 
-  // Handle credit purchases: either explicitly marked in custom_data or detected
-  // via priceAction mapping from Paddle price ids.
+  if (!userId) {
+    console.warn(`[Webhook] No userId in transaction ${transaction.id} - skipping user-specific actions`);
+  }
+
+  // Handle credit purchases
   if (customType === 'credit_purchase' || (priceAction && priceAction.kind === 'credits')) {
     const credits = Number(customData.creditsAmount) || Number(priceAction?.creditsAmount) || 0;
     if (userId && credits > 0) {
       await refillCredits(userId, credits);
-      console.log(`Refilled ${credits} credits for user ${userId} from transaction ${transaction.id}`);
+      console.log(`[Webhook] Refilled ${credits} credits for user ${userId}`);
     } else {
-      console.warn('Credit purchase detected but missing userId or credits amount; skipping refill');
+      console.warn(`[Webhook] Credit purchase detected but missing userId or credits amount`);
     }
-    // Continue — a transaction can be both a credit purchase and include song info
   }
 
-  // If transaction includes a song purchase, unlock it
+  // Handle song purchases
   if (customData.songId) {
     const songId = customData.songId;
-    const songResult = await db.select().from(songs).where(eq(songs.id, songId)).limit(1);
+    const songResult = await db.select()
+      .from(songs)
+      .where(eq(songs.id, songId))
+      .limit(1);
 
     if (songResult.length === 0) {
-      console.error(`Song ${songId} not found for transaction ${transaction.id}`);
+      console.error(`[Webhook] Song ${songId} not found for transaction ${transaction.id}`);
       return;
     }
 
     const song = songResult[0];
 
     if (song.isPurchased) {
-      console.log(`Song ${songId} already purchased - skipping`);
+      console.log(`[Webhook] Song ${songId} already purchased - skipping`);
       return;
     }
 
@@ -136,26 +174,27 @@ async function handleTransactionCompleted(transaction: any, priceAction: any = n
       .set({
         isPurchased: true,
         purchaseTransactionId: transaction.id,
-        userId: userId || null,
+        userId: userId || song.userId,
         updatedAt: new Date(),
       })
       .where(eq(songs.id, songId));
 
-    console.log(`Song ${songId} unlocked for user ${userId || 'anonymous'}`);
+    console.log(`[Webhook] Song ${songId} unlocked for transaction ${transaction.id}`);
   }
 }
 
 async function handleSubscriptionCreated(subscription: any) {
-  console.log("Subscription created:", subscription.id);
+  console.log(`[Webhook] Processing subscription.created: ${subscription.id}`);
   
   const userId = subscription.custom_data?.userId;
   
   if (!userId) {
-    console.warn("No userId in subscription custom_data");
+    console.error(`[Webhook] No userId in subscription ${subscription.id} custom_data`);
     return;
   }
 
   const tier = subscription.custom_data?.tier || 'unlimited';
+  const initialCredits = tier === 'unlimited' ? 20 : 0;
   
   await db
     .insert(subscriptions)
@@ -163,8 +202,8 @@ async function handleSubscriptionCreated(subscription: any) {
       userId,
       paddleSubscriptionId: subscription.id,
       tier,
-      status: 'active',
-      creditsRemaining: tier === 'unlimited' ? 20 : 0,
+      status: subscription.status || 'active',
+      creditsRemaining: initialCredits,
       renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
     })
     .onConflictDoUpdate({
@@ -172,37 +211,38 @@ async function handleSubscriptionCreated(subscription: any) {
       set: {
         paddleSubscriptionId: subscription.id,
         tier,
-        status: 'active',
-        creditsRemaining: tier === 'unlimited' ? 20 : 0,
+        status: subscription.status || 'active',
+        creditsRemaining: initialCredits,
         renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
         updatedAt: new Date(),
       }
     });
   
-  console.log(`Subscription created for user ${userId} with ${tier === 'unlimited' ? '20 credits' : '0 credits'}`);
+  console.log(`[Webhook] Subscription created for user ${userId} with ${initialCredits} credits`);
 }
 
-async function handleSubscriptionUpdated(subscription: any) {
-  console.log("Subscription updated:", subscription.id);
+async function handleSubscriptionUpdated(subscription: any, eventType: string) {
+  console.log(`[Webhook] Processing subscription.updated: ${subscription.id}`);
   
   const userId = subscription.custom_data?.userId;
   
   if (!userId) {
-    console.warn("No userId in subscription custom_data");
+    console.error(`[Webhook] No userId in subscription ${subscription.id} custom_data`);
     return;
   }
 
   const tier = subscription.custom_data?.tier || 'unlimited';
   const status = subscription.status;
 
-  if (status === 'active' && subscription.billing_cycle) {
-    const isRenewal = subscription.event_type === 'subscription.renewed' || 
-                      (subscription.billing_cycle?.count && subscription.billing_cycle.count > 1);
-    
-    if (isRenewal && tier === 'unlimited') {
-      await refillCredits(userId, 20);
-      console.log(`Refilled 20 credits for user ${userId} on subscription renewal (rollover enabled)`);
-    }
+  // Check if this is a renewal by looking at billing_cycle or scheduled_change
+  const isRenewal = subscription.billing_cycle && 
+                    subscription.current_billing_period?.starts_at &&
+                    new Date(subscription.current_billing_period.starts_at) > new Date(subscription.created_at);
+
+  // Refill credits on renewal for unlimited tier
+  if (isRenewal && status === 'active' && tier === 'unlimited') {
+    await refillCredits(userId, 20);
+    console.log(`[Webhook] Refilled 20 credits for user ${userId} on subscription renewal`);
   }
 
   await db
@@ -214,10 +254,12 @@ async function handleSubscriptionUpdated(subscription: any) {
       updatedAt: new Date(),
     })
     .where(eq(subscriptions.paddleSubscriptionId, subscription.id));
+
+  console.log(`[Webhook] Subscription ${subscription.id} updated - status: ${status}`);
 }
 
 async function handleSubscriptionCanceled(subscription: any) {
-  console.log("Subscription canceled:", subscription.id);
+  console.log(`[Webhook] Processing subscription.canceled: ${subscription.id}`);
   
   await db
     .update(subscriptions)
@@ -227,5 +269,19 @@ async function handleSubscriptionCanceled(subscription: any) {
     })
     .where(eq(subscriptions.paddleSubscriptionId, subscription.id));
   
-  console.log(`Subscription ${subscription.id} marked as canceled`);
+  console.log(`[Webhook] Subscription ${subscription.id} marked as canceled`);
+}
+
+async function handleSubscriptionPastDue(subscription: any) {
+  console.log(`[Webhook] Processing subscription.past_due: ${subscription.id}`);
+  
+  await db
+    .update(subscriptions)
+    .set({
+      status: 'past_due',
+      updatedAt: new Date(),
+    })
+    .where(eq(subscriptions.paddleSubscriptionId, subscription.id));
+  
+  console.log(`[Webhook] Subscription ${subscription.id} marked as past_due`);
 }
