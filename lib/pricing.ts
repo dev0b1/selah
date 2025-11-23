@@ -11,11 +11,17 @@ export const PREMIUM_AMOUNT = Number(process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIU
 export const PREMIUM_LABEL = process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM_LABEL || `$${PREMIUM_AMOUNT.toFixed(2)}/mo`;
 export const PREMIUM_BUTTON_TEXT = process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM_BUTTON_TEXT || `Unlimited Roasts + History`;
 
+export const WEEKLY_PRICE_ID = process.env.NEXT_PUBLIC_PADDLE_PRICE_WEEKLY || "";
+export const WEEKLY_AMOUNT = Number(process.env.NEXT_PUBLIC_PADDLE_PRICE_WEEKLY_AMOUNT) || 7.99;
+export const WEEKLY_LABEL = process.env.NEXT_PUBLIC_PADDLE_PRICE_WEEKLY_LABEL || `$${WEEKLY_AMOUNT.toFixed(2)}/week`;
+export const WEEKLY_BUTTON_TEXT = process.env.NEXT_PUBLIC_PADDLE_PRICE_WEEKLY_BUTTON_TEXT || `Weekly - 3 Credits`;
+
 // Server-side Paddle price ids (no NEXT_PUBLIC_) — exported here for convenience if server imports this file.
 // Prefer explicit names using SINGLE / PREMIUM so envs are readable.
 // Fall back to legacy NEXT_PADDLE_PRICE_ID_1/_2 if present.
 export const SERVER_PRICE_ID_SINGLE = process.env.NEXT_PADDLE_PRICE_ID_SINGLE || process.env.NEXT_PADDLE_PRICE_ID_1 || "";
 export const SERVER_PRICE_ID_PREMIUM = process.env.NEXT_PADDLE_PRICE_ID_PREMIUM || process.env.NEXT_PADDLE_PRICE_ID_2 || "";
+export const SERVER_PRICE_ID_WEEKLY = process.env.NEXT_PADDLE_PRICE_ID_WEEKLY || process.env.NEXT_PADDLE_PRICE_ID_WEEKLY || "";
 
 // Backwards-compatible aliases (some places previously referenced SERVER_PRICE_ID_1/2)
 export const SERVER_PRICE_ID_1 = SERVER_PRICE_ID_SINGLE;

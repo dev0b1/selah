@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { openTierCheckout } from '@/lib/checkout';
 import { motion } from "framer-motion";
 import { FaSpinner, FaMusic, FaFire } from "react-icons/fa";
@@ -33,8 +33,10 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
   const [isPro, setIsPro] = useState(false);
   const [demoAudioSrc, setDemoAudioSrc] = useState<string | null>(null);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
-  const audioRef = typeof window !== 'undefined' ? (null as HTMLAudioElement | null) : null;
-  let previewTimer: ReturnType<typeof setTimeout> | null = null;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // No polling necessary: daily check-ins use demo templates that are saved
+  // immediately on the server and returned as `motivationAudioUrl`.
 
   useEffect(() => {
     if (hasCheckedInToday) {
@@ -148,6 +150,8 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
     }
     setShowOptInModal(false);
   };
+
+  // (No polling required — server returns demo template audio immediately.)
 
   // Opt-in banner component
   const OptInBanner = () => (
@@ -268,37 +272,14 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
               <div className="flex-1 w-full">
                 <div className="bg-black/50 border border-white/10 rounded-lg p-4">
                   <div className="flex items-center gap-3">
-                    <audio
-                      ref={(el) => {
-                        if (el) {
-                          // attach play listener to cut at 15s
-                          el.onplay = () => {
-                            // clear any existing timer
-                            if (previewTimer) clearTimeout(previewTimer as any);
-                            previewTimer = setTimeout(() => {
-                              try {
-                                el.pause();
-                                // show upsell once the 15s demo has played
-                                setShowUpsellModal(true);
-                              } catch (e) {
-                                // ignore
-                              }
-                            }, 15000);
-                          };
-                          el.onpause = () => {
-                            if (previewTimer) {
-                              clearTimeout(previewTimer as any);
-                              previewTimer = null;
-                            }
-                          };
-                        }
-                      }}
+                        <audio
+                      ref={(el) => { audioRef.current = el || null; }}
                       controls
                       src={demoAudioSrc}
                       className="w-full"
                     />
                   </div>
-                  <div className="text-xs text-gray-300 mt-2">15s demo nudge — play to preview. Upgrade to Pro to unlock full personalized audio nudges.</div>
+                  <div className="text-xs text-gray-300 mt-2">Play to listen — personalized audio nudges available.</div>
                 </div>
               </div>
 

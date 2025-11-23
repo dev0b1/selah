@@ -60,6 +60,8 @@ export const subscriptions = pgTable('subscriptions', {
   status: text('status').default('active').notNull(),
   songsRemaining: integer('songs_remaining').default(0).notNull(),
   creditsRemaining: integer('credits_remaining').default(0).notNull(),
+  // Optional expiry for short-term benefits like weekly trials or weekly plans
+  dailyCheckinsExpiresAt: timestamp('daily_checkins_expires_at'),
   renewsAt: timestamp('renews_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),

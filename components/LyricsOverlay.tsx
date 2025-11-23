@@ -1,46 +1,35 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 interface LyricsOverlayProps {
   lyrics?: string | null;
   duration?: number;
   isPlaying: boolean;
+  currentTime?: number;
 }
 
-export function LyricsOverlay({ lyrics, duration = 60, isPlaying }: LyricsOverlayProps) {
-  const [scrollPosition, setScrollPosition] = useState(0);
+export function LyricsOverlay({ lyrics, duration = 60, isPlaying, currentTime = 0 }: LyricsOverlayProps) {
 
   // Guard against undefined/null lyrics coming from the server
   const safeLyrics = typeof lyrics === 'string' ? lyrics : '';
   const lyricsLines = safeLyrics.split('\n').filter(line => line.trim() !== '');
 
+  // We'll compute the active line based on currentTime to keep lyrics in sync
+  // with the audio source. currentTime is passed in from the player.
+  const lineHeight = 80; // pixels per line as used in the previous impl
+
+  // Reset or react to duration/lyrics changes if needed in the future.
   useEffect(() => {
-    if (!isPlaying) {
-      setScrollPosition(0);
-      return;
-    }
+    // noop placeholder to ensure component updates when duration/lyrics change
+  }, [duration, lyrics]);
 
-    const totalLines = lyricsLines.length;
-    const pixelsPerSecond = (totalLines * 80) / duration;
-
-    const interval = setInterval(() => {
-      setScrollPosition(prev => {
-        const newPosition = prev + (pixelsPerSecond / 30);
-        if (newPosition >= totalLines * 80) {
-          return 0;
-        }
-        return newPosition;
-      });
-    }, 1000 / 30);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, duration, lyricsLines.length]);
-
-  useEffect(() => {
-    setScrollPosition(0);
-  }, [duration]);
+  // compute active line from currentTime
+  const totalLines = lyricsLines.length || 1;
+  const secondsPerLine = (duration || 1) / totalLines;
+  const activeIndex = Math.min(totalLines - 1, Math.max(0, Math.floor((currentTime || 0) / secondsPerLine)));
+  const scrollPositionPx = activeIndex * lineHeight;
 
   return (
     <div className="relative w-full h-64 md:h-96 overflow-hidden rounded-2xl bg-gradient-to-br from-heartbreak-50 to-white border border-heartbreak-200">
@@ -49,40 +38,22 @@ export function LyricsOverlay({ lyrics, duration = 60, isPlaying }: LyricsOverla
         <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-white opacity-80"></div>
       </div>
 
-      <motion.div
-        className="relative px-8 py-12"
-        animate={{
-          y: -scrollPosition,
-        }}
-        transition={{
-          duration: 0,
-        }}
-      >
-        <div className="space-y-6">
-          {lyricsLines.map((line, index) => (
-            <motion.p
-              key={index}
-              initial={{ opacity: 0.3 }}
-              animate={{
-                opacity: isPlaying ? [0.3, 1, 1, 0.3] : 0.5,
-                scale: isPlaying ? [1, 1.05, 1.05, 1] : 1,
-              }}
-              transition={{
-                duration: duration / lyricsLines.length,
-                delay: (index * duration) / lyricsLines.length,
-                repeat: Infinity,
-                repeatDelay: 0,
-              }}
-              className="text-xl md:text-3xl font-bold text-center text-gray-800 leading-relaxed"
-              style={{
-                textShadow: '2px 2px 4px rgba(255,255,255,0.8)',
-              }}
-            >
-              {line}
-            </motion.p>
-          ))}
+      <div className="relative px-8 py-12">
+        <div className="space-y-6" style={{ transform: `translateY(-${scrollPositionPx}px)`, transition: 'transform 400ms ease-out' }}>
+          {lyricsLines.map((line, index) => {
+            const isActive = index === activeIndex;
+            return (
+              <p
+                key={index}
+                className={`text-xl md:text-3xl font-bold text-center leading-relaxed transition-all duration-300 ${isActive ? 'text-gray-900 scale-105' : 'text-gray-700'}`} 
+                style={{ textShadow: '2px 2px 4px rgba(255,255,255,0.8)' }}
+              >
+                {line}
+              </p>
+            );
+          })}
         </div>
-      </motion.div>
+      </div>
 
       {!isPlaying && (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -91,12 +62,11 @@ export function LyricsOverlay({ lyrics, duration = 60, isPlaying }: LyricsOverla
             animate={{ scale: 1, opacity: 1 }}
             className="text-center"
           >
-            <p className="text-2xl md:text-3xl font-bold text-gray-500">
-              ▶️ Press play to see lyrics
-            </p>
+            <p className="text-2xl md:text-3xl font-bold text-gray-500">▶️ Press play to see lyrics</p>
           </motion.div>
         </div>
       )}
+
     </div>
   );
 }

@@ -14,7 +14,7 @@ import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { LyricsOverlay } from "@/components/LyricsOverlay";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import Link from "next/link";
-import { FaLock, FaDownload, FaPlay, FaPause, FaFire, FaDumbbell } from "react-icons/fa";
+import { FaLock, FaDownload, FaPlay, FaPause, FaFire, FaDumbbell, FaTiktok, FaInstagram, FaWhatsapp, FaTwitter, FaLink } from "react-icons/fa";
 import { getDailySavageQuote } from "@/lib/suno-nudge";
 import { openSingleCheckout } from '@/lib/checkout';
 
@@ -259,12 +259,6 @@ export default function PreviewContent() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <LyricsOverlay 
-                lyrics={song.lyrics} 
-                duration={song.isPurchased ? actualDuration : 10}
-                isPlaying={isPlaying}
-              />
-
               <div className="card bg-black">
                 <h3 className="text-xl font-bold text-gradient mb-4">
                   Your Breakup Story
@@ -281,7 +275,7 @@ export default function PreviewContent() {
             <div className="space-y-6">
               <div className="card sticky top-24">
                 <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-lg text-gradient">{song.title}</h3>
                     {song.isTemplate ? (
                       <span className="text-xs bg-exroast-pink text-white px-3 py-1 rounded-full font-medium">
@@ -290,55 +284,100 @@ export default function PreviewContent() {
                     ) : null}
                   </div>
 
+                  <div>
+                    <LyricsOverlay 
+                      lyrics={song.lyrics}
+                      duration={song.isPurchased ? actualDuration : 10}
+                      isPlaying={isPlaying}
+                      currentTime={currentTime}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-center gap-4 mt-6">
+                    <button
+                      onClick={togglePlay}
+                      className="bg-exroast-pink text-white px-6 py-3 rounded-full font-bold"
+                    >
+                      {isPlaying ? <><FaPause className="inline mr-2"/> Pause</> : <><FaPlay className="inline mr-2"/> Play</>}
+                    </button>
+
+                    {song?.isPurchased ? (
+                      <a href={song.fullUrl} download className="bg-white text-black px-6 py-3 rounded-full font-bold inline-flex items-center gap-2">
+                        <FaDownload /> Download MP3
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => setShowUpsellModal(true)}
+                        className="bg-white/10 text-white px-6 py-3 rounded-full font-bold inline-flex items-center gap-2 border border-white/10"
+                        aria-disabled={!song?.isPurchased}
+                        title="Upgrade to download the full MP3"
+                      >
+                        <FaLock className="mr-2" /> Download MP3
+                      </button>
+                    )}
+                  </div>
+
                   <audio
                     ref={audioRef}
                     src={song.isPurchased ? song.fullUrl : song.previewUrl}
                     onTimeUpdate={handleTimeUpdate}
                     onLoadedMetadata={handleLoadedMetadata}
                     onEnded={handleAudioEnded}
+                    className="hidden"
                   />
 
-                  <div className="flex items-center space-x-4">
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={togglePlay}
-                      className="w-14 h-14 rounded-full bg-exroast-pink hover:bg-exroast-gold text-white flex items-center justify-center transition-colors flex-shrink-0"
-                    >
-                      {isPlaying ? <FaPause className="text-xl" /> : <FaPlay className="text-xl ml-1" />}
-                    </motion.button>
-
-                    <div className="flex-1">
-                      <input
-                        type="range"
-                        min="0"
-                        max={duration}
-                        value={currentTime}
-                        onChange={(e) => {
-                          if (audioRef.current) {
-                            audioRef.current.currentTime = parseFloat(e.target.value);
-                            setCurrentTime(parseFloat(e.target.value));
-                          }
-                        }}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-heartbreak-500"
-                      />
-                      <div className="flex justify-between text-xs text-white mt-2">
-                        <span>{formatTime(currentTime)}</span>
-                        <span>{formatTime(duration)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {song.isPurchased && (
-                    <div className="border-t border-white/10 pt-6">
-                      <h4 className="text-sm font-semibold text-white mb-3">Share Your Song</h4>
+                  <div className="border-t border-white/10 pt-6">
+                    <h4 className="text-sm font-semibold text-white mb-3">Share Your Song</h4>
+                    {song.isPurchased ? (
                       <SocialShareButtons 
                         url={shareUrl}
                         title={song.title}
                         message={`I just paid $4.99 to have my ex roasted by AI and it’s the best money I’ve ever spent 🔥🎵`}
                       />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={() => setShowUpsellModal(true)}
+                          className="bg-black text-white px-6 py-3 rounded-full flex items-center space-x-2 shadow-lg transition-all duration-300 opacity-80"
+                        >
+                          <FaTiktok className="text-xl" />
+                          <span className="font-medium">TikTok</span>
+                        </button>
+
+                        <button
+                          onClick={() => setShowUpsellModal(true)}
+                          className="bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white px-6 py-3 rounded-full flex items-center space-x-2 shadow-lg transition-all duration-300 opacity-80"
+                        >
+                          <FaInstagram className="text-xl" />
+                          <span className="font-medium">Instagram</span>
+                        </button>
+
+                        <button
+                          onClick={() => setShowUpsellModal(true)}
+                          className="bg-green-500 text-white px-6 py-3 rounded-full flex items-center space-x-2 shadow-lg transition-all duration-300 opacity-80"
+                        >
+                          <FaWhatsapp className="text-xl" />
+                          <span className="font-medium">WhatsApp</span>
+                        </button>
+
+                        <button
+                          onClick={() => setShowUpsellModal(true)}
+                          className="bg-blue-400 text-white px-6 py-3 rounded-full flex items-center space-x-2 shadow-lg transition-all duration-300 opacity-80"
+                        >
+                          <FaTwitter className="text-xl" />
+                          <span className="font-medium">Twitter</span>
+                        </button>
+
+                        <button
+                          onClick={() => setShowUpsellModal(true)}
+                          className="bg-gray-200 text-gray-700 px-6 py-3 rounded-full flex items-center space-x-2 shadow-lg transition-all duration-300"
+                        >
+                          <FaLink className="text-xl" />
+                          <span className="font-medium">Copy Link</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

@@ -28,96 +28,38 @@ export async function POST(request: NextRequest) {
 
     const motivation = MOTIVATIONS[mood] || MOTIVATIONS.unstoppable;
 
-    // Save the daily check-in first so we have a check-in id to reference from the job.
+    // For daily check-ins we use local demo templates (no server audio generation).
     let motivationAudioUrl: string | undefined = undefined;
     let audioLimitReached = false;
     let audioLimitReason: string | null = null;
+
+    // Choose a demo audio file based on mood
+    const moodToFile = (m: string) => {
+      if (!m) return 'hurting';
+      if (m === 'unstoppable') return 'feeling-unstoppable';
+      return m; // 'hurting', 'confidence', 'angry'
+    };
+    const demoFileName = moodToFile(mood);
+    motivationAudioUrl = `/demo-nudges/${demoFileName}.mp3`;
 
     const savedCheckInId = await saveDailyCheckIn({
       userId,
       mood,
       message,
       motivationText: motivation,
-      motivationAudioUrl: undefined
+      motivationAudioUrl
     });
 
     if (!savedCheckInId) {
       return NextResponse.json({ error: 'already_checked_in', message: 'User already checked in today' }, { status: 409 });
     }
 
-    // Fetch preferences/subscription once and reuse below
-    const prefs = await getUserPreferences(userId);
-    const sub = await getUserSubscriptionStatus(userId);
-    const audioAllowed = !!(sub?.isPro) || !!(prefs?.audioNudgesEnabled);
+  // We do not generate audio server-side for daily check-ins. The saved check-in
+  // already contains a demo template audio URL (motivationAudioUrl) that the UI
+  // will surface immediately. This avoids enqueueing audio generation jobs.
 
-    if (preferAudio && audioAllowed) {
-      try {
-        // Check user's credits / free usage before enqueueing a job to avoid wasted API consumption
-        const credits = await getUserCredits(userId);
-        const isFree = credits.tier === 'free';
-        const isPro = credits.tier === 'unlimited' || credits.tier === 'one-time';
-
-        if (isFree && credits.audioNudgesThisWeek >= 1) {
-          // free user exhausted weekly free audio nudges: skip generation and continue with text-only
-          console.log('Free user weekly audio nudge limit reached, skipping audio generation');
-          audioLimitReached = true;
-          audioLimitReason = 'free_weekly_limit_reached';
-        } else if (isPro && credits.creditsRemaining <= 0) {
-          // pro user has no credits remaining
-          console.log('Pro user has no credits remaining, skipping audio generation');
-          audioLimitReached = true;
-          audioLimitReason = 'pro_no_credits';
-        } else {
-          // Use streak as a basic day number context
-          const streakData = await getUserStreak(userId);
-          const dayNumber = (streakData?.currentStreak || 0) + 1;
-
-          // Reserve a credit for pro users so we don't over-commit. For free users we
-          // increment their weekly usage counter now.
-          let reservedCredit = false;
-          if (isPro) {
-            const ok = await reserveCredit(userId);
-            if (!ok) {
-              console.log('Failed to reserve credit for user', userId);
-              audioLimitReached = true;
-              audioLimitReason = 'pro_no_credits';
-            } else {
-              reservedCredit = true;
-            }
-          } else if (isFree) {
-            // increment their weekly count now (best-effort)
-            try { await incrementAudioNudgeCount(userId); } catch (e) { console.warn('Failed to increment free nudge count', e); }
-          }
-
-          if (!audioLimitReached) {
-            const payload = {
-              userId,
-              mood,
-              message,
-              motivationText: motivation,
-              dayNumber,
-              checkInId: savedCheckInId,
-              reservedCredit
-            };
-
-            const jobId = await enqueueAudioJob({ userId, type: 'daily', payload });
-            if (!jobId) {
-              console.error('Failed to enqueue audio job');
-              // if we reserved a credit, refund it
-              if (reservedCredit) {
-                try { await reserveCredit(userId); } catch (e) { console.warn('Failed to refund reserved credit after enqueue failure', e); }
-              }
-            } else {
-              console.log('Enqueued audio job', jobId);
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Failed to enqueue audio generation job:', err);
-      }
-    }
-
-    const streakData = await getUserStreak(userId);
+  const sub = await getUserSubscriptionStatus(userId);
+  const streakData = await getUserStreak(userId);
 
     // If user row missing or streak still 0 after saving, report a client-visible streak of 1
     // so the UI reflects the first-day check-in even if the users table hasn't been initialized.

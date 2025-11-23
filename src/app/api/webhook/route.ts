@@ -194,7 +194,14 @@ async function handleSubscriptionCreated(subscription: any) {
   }
 
   const tier = subscription.custom_data?.tier || 'unlimited';
-  const initialCredits = tier === 'unlimited' ? 20 : 0;
+  let initialCredits = 0;
+
+  if (tier === 'unlimited') {
+    initialCredits = 20;
+  } else if (tier === 'weekly') {
+    // Weekly subscription grants 3 credits (for song generation). Daily motivation is free for all users.
+    initialCredits = 3;
+  }
   
   await db
     .insert(subscriptions)
@@ -203,8 +210,8 @@ async function handleSubscriptionCreated(subscription: any) {
       paddleSubscriptionId: subscription.id,
       tier,
       status: subscription.status || 'active',
-      creditsRemaining: initialCredits,
-      renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
+  creditsRemaining: initialCredits,
+  renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
     })
     .onConflictDoUpdate({
       target: subscriptions.userId,
@@ -212,8 +219,8 @@ async function handleSubscriptionCreated(subscription: any) {
         paddleSubscriptionId: subscription.id,
         tier,
         status: subscription.status || 'active',
-        creditsRemaining: initialCredits,
-        renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
+  creditsRemaining: initialCredits,
+  renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
         updatedAt: new Date(),
       }
     });
@@ -240,9 +247,19 @@ async function handleSubscriptionUpdated(subscription: any, eventType: string) {
                     new Date(subscription.current_billing_period.starts_at) > new Date(subscription.created_at);
 
   // Refill credits on renewal for unlimited tier
-  if (isRenewal && status === 'active' && tier === 'unlimited') {
-    await refillCredits(userId, 20);
-    console.log(`[Webhook] Refilled 20 credits for user ${userId} on subscription renewal`);
+  if (isRenewal && status === 'active') {
+    if (tier === 'unlimited') {
+      await refillCredits(userId, 20);
+      console.log(`[Webhook] Refilled 20 credits for user ${userId} on subscription renewal`);
+    } else if (tier === 'weekly') {
+      // Refill 3 credits for weekly subscription renewals and extend daily checkin expiry
+      await refillCredits(userId, 3);
+      console.log(`[Webhook] Refilled 3 credits for user ${userId} on weekly subscription renewal`);
+      // extend daily checkin expiry to 7 days from next_billed_at or now
+      const newExpiry = subscription.next_billed_at ? new Date(subscription.next_billed_at) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      await db.update(subscriptions).set({ dailyCheckinsExpiresAt: newExpiry, updatedAt: new Date() }).where(eq(subscriptions.userId, userId));
+      console.log(`[Webhook] Extended daily checkin expiry for user ${userId} to ${newExpiry}`);
+    }
   }
 
   await db

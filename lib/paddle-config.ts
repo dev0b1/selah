@@ -14,7 +14,7 @@ type PriceMapping = {
   [priceId: string]: {
     kind: 'subscription' | 'credits' | 'purchase';
     // 'purchase' denotes a one-time product (e.g. single song unlock)
-    tier?: 'unlimited' | 'one-time' | 'free';
+    tier?: 'unlimited' | 'one-time' | 'free' | 'weekly';
     creditsAmount?: number;
   };
 };
@@ -23,6 +23,7 @@ export function getPaddlePriceMapping(): PriceMapping {
   // Prefer explicit names that use SINGLE / PREMIUM for clarity.
   const p1 = process.env.NEXT_PADDLE_PRICE_ID_SINGLE || process.env.NEXT_PADDLE_PRICE_ID_1 || process.env.PADDLE_PRICE_ID_1 || '';
   const p2 = process.env.NEXT_PADDLE_PRICE_ID_PREMIUM || process.env.NEXT_PADDLE_PRICE_ID_2 || process.env.PADDLE_PRICE_ID_2 || '';
+  const pw = process.env.NEXT_PADDLE_PRICE_ID_WEEKLY || process.env.NEXT_PUBLIC_PADDLE_PRICE_WEEKLY || '';
 
   const mapping: PriceMapping = {};
 
@@ -34,6 +35,11 @@ export function getPaddlePriceMapping(): PriceMapping {
   if (p2) {
     // Map PREMIUM -> subscription/credits pack (default: grant 20 credits for example)
     mapping[p2] = { kind: 'credits', tier: 'one-time', creditsAmount: 20 };
+  }
+
+  if (pw) {
+    // Map WEEKLY -> weekly subscription granting a small credits bundle and temporary daily checkin access
+    mapping[pw] = { kind: 'subscription', tier: 'weekly', creditsAmount: 3 };
   }
 
   return mapping;

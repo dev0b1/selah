@@ -7,7 +7,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import AuthAwareCTA from "@/components/AuthAwareCTA";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { SINGLE_LABEL, SINGLE_AMOUNT, PREMIUM_LABEL, PREMIUM_AMOUNT } from '@/lib/pricing';
+import { SINGLE_LABEL, SINGLE_AMOUNT, PREMIUM_LABEL, PREMIUM_AMOUNT, WEEKLY_LABEL, WEEKLY_AMOUNT, WEEKLY_PRICE_ID } from '@/lib/pricing';
 import { openSingleCheckout, openTierCheckout } from '@/lib/checkout';
 
 export default function PricingPage() {
@@ -44,6 +44,45 @@ export default function PricingPage() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20">
+            {/* Weekly plan: 3 credits + 7 days daily check-in */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
+              whileHover={{ y: -10 }}
+              className="card text-center relative overflow-hidden tier-card"
+            >
+              <h3 className="text-2xl font-bold text-gradient mb-2">Weekly</h3>
+              <div className="text-5xl font-bold text-exroast-gold mb-6">
+                {`$${WEEKLY_AMOUNT.toFixed(2)}`}
+                <span className="text-white text-sm"> / week</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-6">3 song-generation credits (use for full personalized songs)</p>
+              <ul className="space-y-4 text-left mb-8">
+                <li className="flex items-start space-x-3">
+                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <span>3 song generation credits</span>
+                </li>
+                <li className="flex items-start space-x-3">
+                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <span>3 credits for full song generations</span>
+                </li>
+                <li className="flex items-start space-x-3">
+                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <span>Download MP3s for unlocked songs</span>
+                </li>
+              </ul>
+              <button
+                className="btn-primary w-full"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    openTierCheckout('weekly', WEEKLY_PRICE_ID);
+                  }
+                }}
+              >
+                Subscribe Weekly
+              </button>
+            </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

@@ -2,7 +2,7 @@ import { getUserSubscriptionStatus } from './db-service';
 
 export async function checkProStatus(userId?: string): Promise<{
   isPro: boolean;
-  tier: 'free' | 'one-time' | 'unlimited';
+  tier: 'free' | 'one-time' | 'unlimited' | 'weekly';
   userId?: string;
 }> {
   try {

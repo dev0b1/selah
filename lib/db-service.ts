@@ -48,7 +48,7 @@ export async function createTemplate(template: {
 
 export async function getUserSubscriptionStatus(userId: string): Promise<{
   isPro: boolean;
-  tier: 'free' | 'one-time' | 'unlimited';
+  tier: 'free' | 'one-time' | 'unlimited' | 'weekly';
   subscriptionId?: string;
 }> {
   try {
@@ -63,7 +63,7 @@ export async function getUserSubscriptionStatus(userId: string): Promise<{
     }
 
     const subscription = data[0];
-    const tier = (subscription.tier || 'free') as 'free' | 'one-time' | 'unlimited';
+  const tier = (subscription.tier || 'free') as 'free' | 'one-time' | 'unlimited' | 'weekly';
     
     return {
       isPro: subscription.status === 'active',

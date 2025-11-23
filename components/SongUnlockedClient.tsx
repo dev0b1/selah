@@ -31,6 +31,7 @@ export default function SongUnlockedClient() {
   const [polling, setPolling] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration, setDuration] = useState<number>(60);
+  const [currentTime, setCurrentTime] = useState<number>(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -157,20 +158,11 @@ export default function SongUnlockedClient() {
                 <LoadingAnimation message={polling ? 'Finalizing your song...' : 'Loading your song...'} />
               ) : (
                 <>
-                  <audio
-                    ref={audioRef}
-                    src={song?.isPurchased ? song.fullUrl : (song?.previewUrl || '')}
-                    onEnded={() => setIsPlaying(false)}
-                    onLoadedMetadata={(e) => {
-                      try {
-                        const d = (e.target as HTMLAudioElement).duration || 60;
-                        setDuration(d);
-                        track('song_unlocked_loaded', { songId, duration: d });
-                      } catch (e) {}
-                    }}
-                  />
+                  <div className="mt-2">
+                    <LyricsOverlay lyrics={song?.lyrics} duration={duration} isPlaying={isPlaying} currentTime={currentTime} />
+                  </div>
 
-                  <div className="flex items-center justify-center gap-4">
+                  <div className="flex items-center justify-center gap-4 mt-6">
                     <button
                       onClick={() => {
                         if (!audioRef.current) return;
@@ -188,10 +180,20 @@ export default function SongUnlockedClient() {
                       </a>
                     )}
                   </div>
-
-                  <div className="mt-6">
-                    <LyricsOverlay lyrics={song?.lyrics} duration={duration} isPlaying={isPlaying} />
-                  </div>
+                  
+                  <audio
+                    ref={audioRef}
+                    src={song?.isPurchased ? song.fullUrl : (song?.previewUrl || '')}
+                    onEnded={() => setIsPlaying(false)}
+                    onLoadedMetadata={(e) => {
+                      try {
+                        const d = (e.target as HTMLAudioElement).duration || 60;
+                        setDuration(d);
+                        track('song_unlocked_loaded', { songId, duration: d });
+                      } catch (e) {}
+                    }}
+                    onTimeUpdate={(e) => setCurrentTime((e.target as HTMLAudioElement).currentTime)}
+                  />
 
                   <p className="text-gray-400 mt-4">Share this masterpiece and watch them cry</p>
 
