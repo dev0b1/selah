@@ -61,6 +61,25 @@ export default function AuthCompleteClient() {
           // ignore parse errors
         }
 
+        // Attempt to claim any pending credits stored in localStorage by the
+        // same-browser checkout success flow (pendingCredits is set on /success).
+        try {
+          const pendingRaw = localStorage.getItem('pendingCredits');
+          if (pendingRaw) {
+            const credits = Number(pendingRaw);
+            if (credits && credits > 0) {
+              await fetch('/api/local-claim', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credits })
+              });
+              localStorage.removeItem('pendingCredits');
+            }
+          }
+        } catch (e) {
+          console.error('Local claim failed', e);
+        }
+
         const finalPath = resumePath || decodeURIComponent(returnToRaw || '/');
         if (!finalPath.startsWith('/')) {
           router.push('/');

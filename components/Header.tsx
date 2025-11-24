@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { FaUserCircle } from 'react-icons/fa';
 import { usePathname, useRouter } from 'next/navigation';
@@ -195,6 +195,20 @@ export function Header({ userProp }: { userProp?: any }) {
     }
   }, [user, pathname, router]);
 
+  const profileRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      const el = profileRef.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) {
+        setShowSettingsMenu(false);
+      }
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, []);
+
   return (
     <motion.header
       initial={{ y: -100, opacity: 0 }}
@@ -246,7 +260,7 @@ export function Header({ userProp }: { userProp?: any }) {
 
             {/* Auth area */}
             {user ? (
-              <div className="relative flex items-center gap-3">
+        <div className="relative flex items-center gap-3" ref={profileRef}>
                 {/* Desktop credits + upgrade/buy UI - non-navigable account area */}
                 <div className="hidden md:flex items-center gap-4">
                   <div className="text-sm text-white/90">Credits: <span className="font-bold text-exroast-pink">{mobileCredits ?? 0}</span></div>
@@ -272,7 +286,7 @@ export function Header({ userProp }: { userProp?: any }) {
 
                 {/* avatar + email (click opens settings on desktop) */}
                 <button
-                  onClick={() => setShowSettingsMenu(true)}
+                  onClick={() => setShowSettingsMenu((s) => !s)}
                   onMouseDown={(e) => e.preventDefault()}
                   aria-haspopup="menu"
                   aria-expanded={showSettingsMenu}

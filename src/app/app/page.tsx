@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from "next/navigation";
@@ -25,6 +25,8 @@ export default function AppPage() {
   const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const profileRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     // Allow ?tab=roast or ?tab=daily to pre-select the tab when linking from preview
@@ -97,6 +99,19 @@ export default function AppPage() {
       authSubscription?.unsubscribe();
     };
   }, [router, supabase]);
+
+  // close profile menu when clicking outside (so mobile taps will dismiss)
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      const el = profileRef.current;
+      if (!el) return;
+      if (!el.contains(e.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, []);
 
   const fetchStreak = async (userId: string) => {
     try {
@@ -173,8 +188,13 @@ export default function AppPage() {
           </h1>
           
           {/* Profile Avatar Dropdown */}
-          <div className="relative group">
-            <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <div className="relative" ref={profileRef}>
+            <button
+              onClick={() => setShowProfileMenu((s) => !s)}
+              aria-haspopup="true"
+              aria-expanded={showProfileMenu}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
               {userAvatar ? (
                 <img 
                   src={userAvatar} 
@@ -188,8 +208,8 @@ export default function AppPage() {
               )}
             </button>
             
-            {/* Dropdown Menu */}
-            <div className="absolute right-0 top-full mt-2 w-48 bg-black border-2 border-exroast-gold rounded-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 shadow-xl">
+            {/* Dropdown Menu (click-toggle for mobile) */}
+            <div className={`${showProfileMenu ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-1'} absolute right-0 top-full mt-2 w-48 bg-black border-2 border-exroast-gold rounded-xl overflow-hidden transition-all duration-200 shadow-xl`}>
               <div className="p-3 border-b border-white/10">
                 <p className="text-white font-bold text-sm truncate">{user?.email}</p>
               </div>

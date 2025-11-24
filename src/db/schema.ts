@@ -5,6 +5,9 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   name: text('name'),
   avatarUrl: text('avatar_url'),
+  // Per-user demo variant order (comma-separated filenames) and index for round-robin
+  demoVariantOrder: text('demo_variant_order'),
+  demoVariantIndex: integer('demo_variant_index').default(0).notNull(),
   currentStreak: integer('current_streak').default(0).notNull(),
   longestStreak: integer('longest_streak').default(0).notNull(),
   lastCheckInDate: timestamp('last_check_in_date'),

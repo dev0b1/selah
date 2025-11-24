@@ -76,6 +76,75 @@ export async function getUserSubscriptionStatus(userId: string): Promise<{
   }
 }
 
+// Demo-variant helpers: persist a per-user randomized order and advance index
+export async function getUserDemoVariantOrder(userId: string): Promise<{ order: string | null; index: number } | null> {
+  try {
+    const res = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!res || res.length === 0) return null;
+    const row = res[0] as any;
+    return { order: row.demoVariantOrder || null, index: row.demoVariantIndex || 0 };
+  } catch (err) {
+    console.error('Failed to read demoVariantOrder for user', userId, err);
+    return null;
+  }
+}
+
+export async function setUserDemoVariantOrder(userId: string, order: string, index: number): Promise<boolean> {
+  try {
+    await db.update(users).set({ demoVariantOrder: order, demoVariantIndex: index, updatedAt: new Date() }).where(eq(users.id, userId));
+    return true;
+  } catch (err) {
+    console.error('Failed to set demoVariantOrder for user', userId, err);
+    return false;
+  }
+}
+
+/**
+ * Choose the next demo variant filename for a user in round-robin order.
+ * - candidates: array of filenames (e.g. ['hurting-1.mp3','hurting-2.mp3'])
+ * - returns selected filename (not path)
+ */
+export async function pickNextDemoVariantForUser(userId: string, candidates: string[]): Promise<string | null> {
+  try {
+    if (!candidates || candidates.length === 0) return null;
+
+    // Ensure user row exists
+    try { await ensureUserRow(userId); } catch (e) {}
+
+    const current = await getUserDemoVariantOrder(userId);
+
+    // If there is no persisted order, create a randomized order from candidates
+    if (!current || !current.order) {
+      const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+      const orderStr = shuffled.join(',');
+      // persist with next index = 1 (we'll use 0 now and advance to 1)
+      await setUserDemoVariantOrder(userId, orderStr, 1);
+      return shuffled[0];
+    }
+
+    const orderArr = current.order.split(',').filter(Boolean);
+    // If persisted order doesn't match available candidates, rebuild a shuffled order
+    const missing = orderArr.some(o => !candidates.includes(o));
+    if (missing || orderArr.length !== candidates.length) {
+      const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+      const orderStr = shuffled.join(',');
+      await setUserDemoVariantOrder(userId, orderStr, 1);
+      return shuffled[0];
+    }
+
+    const idx = (current.index || 0) % orderArr.length;
+    const pick = orderArr[idx];
+    // advance index for next time
+    const nextIndex = (idx + 1) % orderArr.length;
+    await setUserDemoVariantOrder(userId, orderArr.join(','), nextIndex);
+    return pick;
+  } catch (err) {
+    console.error('Failed to pick next demo variant for user', userId, err);
+    // fallback to first candidate
+    return candidates[0] || null;
+  }
+}
+
 export async function createOrUpdateSubscription(
   userId: string,
   paddleData: {
