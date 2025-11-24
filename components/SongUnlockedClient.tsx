@@ -9,6 +9,7 @@ import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
 import { LyricsOverlay } from "@/components/LyricsOverlay";
 import { FaDownload, FaPlay, FaPause } from "react-icons/fa";
+import { saveSongAudio, getSongObjectURL } from '../lib/offline-store';
 
 interface Song {
   id: string;
@@ -107,6 +108,44 @@ export default function SongUnlockedClient() {
       // no auto-download: user should click Download manually
     }
   }, [song?.isPurchased]);
+
+  // When the song becomes purchased and a full URL is present, download and save it locally
+  const savedLocalRef = useRef(false);
+  useEffect(() => {
+    if (!song?.isPurchased || !song.fullUrl) return;
+    if (typeof window === 'undefined') return;
+    if (savedLocalRef.current) return;
+
+    (async () => {
+      try {
+        // fetch the full mp3 and save to IndexedDB for offline access
+        const res = await fetch(song.fullUrl);
+        if (!res.ok) throw new Error('Failed to fetch full audio');
+        const blob = await res.blob();
+        await saveSongAudio(song.id, blob);
+        // update song to use local object URL for playback
+        const objectUrl = URL.createObjectURL(blob);
+        setSong((s) => s ? ({ ...s, fullUrl: objectUrl }) : s);
+
+        // Add/refresh recentRoasts entry so this purchased song shows in Recent
+        try {
+          const raw = localStorage.getItem('recentRoasts');
+          let recentRoasts = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(recentRoasts)) recentRoasts = [];
+          // remove existing entry for this id
+          recentRoasts = recentRoasts.filter((r: any) => r.id !== song.id);
+          recentRoasts.unshift({ id: song.id, title: song.title, timestamp: new Date().toISOString() });
+          localStorage.setItem('recentRoasts', JSON.stringify(recentRoasts.slice(0, 3)));
+        } catch (e) {
+          console.warn('Failed to update recentRoasts', e);
+        }
+
+        savedLocalRef.current = true;
+      } catch (e) {
+        console.warn('Failed to save song locally', e);
+      }
+    })();
+  }, [song?.isPurchased, song?.fullUrl]);
 
   const track = (eventName: string, props?: Record<string, any>) => {
     try {

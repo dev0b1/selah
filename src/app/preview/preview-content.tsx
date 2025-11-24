@@ -13,7 +13,7 @@ import { SocialShareButtons } from "@/components/SocialShareButtons";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { LyricsOverlay } from "@/components/LyricsOverlay";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { getSongObjectURL, saveSongAudio, getSongAudio } from '@/lib/offline-store';
+import { getSongObjectURL } from '../../lib/offline-store';
 import Link from "next/link";
 import { FaLock, FaDownload, FaPlay, FaPause, FaFire, FaDumbbell, FaTiktok, FaInstagram, FaWhatsapp, FaTwitter, FaLink } from "react-icons/fa";
 import { getDailySavageQuote } from "@/lib/suno-nudge";
@@ -191,6 +191,15 @@ export default function PreviewContent() {
     } else {
       // reset the shown-modal flag so replays can show the upsell again
       hasShownModalRef.current = false;
+      // If we're at the preview cap, rewind to 0 so the demo can play full 20s on replay.
+      try {
+        const PREVIEW_MAX = 20;
+        if (song && !song.isPurchased && audioRef.current.currentTime >= PREVIEW_MAX - 0.05) {
+          audioRef.current.currentTime = 0;
+          setCurrentTime(0);
+        }
+      } catch (e) {}
+
       audioRef.current.play();
       setIsPlaying(true);
     }
@@ -208,6 +217,8 @@ export default function PreviewContent() {
       } catch (e) {}
       setIsPlaying(false);
       setCurrentTime(PREVIEW_MAX);
+      // Ensure end-of-preview behavior runs (upsell modal etc.)
+      try { handleAudioEnded(); } catch (e) {}
       return;
     }
 
@@ -218,7 +229,7 @@ export default function PreviewContent() {
     setIsPlaying(false);
     
     // Show subscription modal for first-time users after preview ends
-    // Only for unpurchased songs
+    // For any unpurchased song (not only templates), show the upsell after the demo finishes.
     if (!song.isPurchased && !hasShownModalRef.current && typeof window !== 'undefined') {
       // Prioritize first-time modal for anonymous first generation
       const hasGeneratedFirstSong = localStorage.getItem('hasGeneratedFirstSong');
@@ -230,61 +241,17 @@ export default function PreviewContent() {
         }, 500);
         return;
       }
-
-      // If this is a demo/template track, always show the upsell modal after it finishes.
-      // We allow it on every replay by resetting hasShownModalRef when playback starts.
-      if (song.isTemplate) {
-        setTimeout(() => {
-          setShowUpsellModal(true);
-          hasShownModalRef.current = true;
-        }, 500);
-        return;
-      }
+      // Otherwise, show the upsell modal after preview ends.
+      setTimeout(() => {
+        setShowUpsellModal(true);
+        hasShownModalRef.current = true;
+      }, 500);
+      return;
     }
   };
 
-  // If a pending single-song purchase exists for this song (guest flow), poll for webhook fulfillment
-  useEffect(() => {
-    let polling = true;
-    let attempts = 0;
-
-    const pendingId = typeof window !== 'undefined' ? localStorage.getItem('pendingSingleSongId') : null;
-    if (!pendingId || !song || pendingId !== song.id) return;
-
-    const poll = async () => {
-      while (polling && attempts < 40) {
-        attempts++;
-        try {
-          const res = await fetch(`/api/song/${song.id}`);
-          if (res.ok) {
-            const body = await res.json();
-            if (body.success && body.song && body.song.isPurchased && body.song.fullUrl) {
-              // Fetch full audio and store it locally
-              try {
-                const audioRes = await fetch(body.song.fullUrl);
-                const blob = await audioRes.blob();
-                await saveSongAudio(song.id, blob);
-                const objectUrl = URL.createObjectURL(blob);
-                setSong((s) => s ? ({ ...s, fullUrl: objectUrl, isPurchased: true }) : s);
-                try { localStorage.removeItem('pendingSingleSongId'); } catch (e) {}
-                break;
-              } catch (e) {
-                console.warn('Failed to fetch and store full audio', e);
-              }
-            }
-          }
-        } catch (e) {
-          console.debug('Polling /api/song failed:', e);
-        }
-
-        await new Promise((r) => setTimeout(r, 3000));
-      }
-    };
-
-    poll();
-
-    return () => { polling = false; };
-  }, [song]);
+  // Polling for pending guest purchases was removed per request —
+  // purchases will be handled server-side and the client can refetch song state as needed.
 
   const handleLoadedMetadata = () => {
     if (!audioRef.current) return;
@@ -305,13 +272,19 @@ export default function PreviewContent() {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  const shareUrl = typeof window !== 'undefined'
-    ? (song
-        ? (!song.isPurchased
-            ? song.previewUrl || `${window.location.origin}/share/${song.id}`
-            : song.fullUrl || `${window.location.origin}/share/${song.id}`)
-        : `${window.location.origin}/share/${song?.id}`)
-    : '';
+  let shareUrl = '';
+  if (typeof window !== 'undefined') {
+    if (song) {
+      if (!song.isPurchased) {
+        shareUrl = song.previewUrl ?? `${window.location.origin}/share/${song.id}`;
+      } else {
+        shareUrl = song.fullUrl ?? `${window.location.origin}/share/${song.id}`;
+      }
+    } else {
+      // fallback to share by songId from query params when song object is not yet loaded
+      shareUrl = `${window.location.origin}/share/${songId ?? ""}`;
+    }
+  }
 
   return (
     <div>
@@ -377,54 +350,80 @@ export default function PreviewContent() {
                     />
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col gap-3 mt-6 w-full">
+                    <div className="flex items-center gap-4 w-full">
                       <button
                         onClick={togglePlay}
-                        className="bg-exroast-pink text-white px-6 py-3 rounded-full font-bold"
+                        className="bg-exroast-pink text-white px-6 py-3 rounded-full font-bold flex-shrink-0"
                       >
                         {isPlaying ? <><FaPause className="inline mr-2"/> Pause</> : <><FaPlay className="inline mr-2"/> Play</>}
                       </button>
 
-                      {/* Progress + timer */}
-                      <div className="w-56">
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div
-                            className="h-2 bg-exroast-pink"
-                            style={{ width: `${Math.min(100, (currentTime / (song?.isPurchased ? (actualDuration || 1) : 20)) * 100)}%` }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-300 mt-1">
-                          <span>{formatTime(Math.min(currentTime, song && !song.isPurchased ? 20 : (actualDuration || 0)))}</span>
-                          <span>{formatTime(song && !song.isPurchased ? 20 : Math.floor(actualDuration || 0))}</span>
+                      {/* Progress + timer: responsive and uses computed maxDuration */}
+                      <div className="flex-1 min-w-0">
+                        <div className="w-full">
+                          <div className="h-2 bg-white/10 rounded-full overflow-hidden w-full">
+                            <div
+                              className="h-2 bg-exroast-pink"
+                              style={{ width: `${Math.max(0, Math.min(100, (() => {
+                                const maxDuration = song && !song.isPurchased ? 20 : (duration || actualDuration || 0);
+                                const denom = maxDuration || 1;
+                                return (currentTime / denom) * 100;
+                              })()))}%`, transition: 'width 180ms linear' }}
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-300 mt-1">
+                            {(() => {
+                              const maxDuration = song && !song.isPurchased ? 20 : (duration || actualDuration || 0);
+                              if (song && !song.isPurchased) {
+                                return (
+                                  <>
+                                    <span>{Math.floor(Math.min(currentTime, maxDuration || 0))}s</span>
+                                    <span>{Math.ceil(maxDuration || 0)}s</span>
+                                  </>
+                                );
+                              }
+                              return (
+                                <>
+                                  <span>{formatTime(Math.min(currentTime, maxDuration || 0))}</span>
+                                  <span>{formatTime(Math.ceil(maxDuration || 0))}</span>
+                                </>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Allow downloading the 20s preview/demo for free users */}
-                    <a href={song.previewUrl} download className="bg-white/10 text-white px-6 py-3 rounded-full font-bold inline-flex items-center gap-2 border border-white/10">
-                      <FaDownload /> Download 20s Demo
-                    </a>
-
-                    {/* Full MP3 download remains locked until purchase */}
-                    {song?.isPurchased ? (
-                      <a href={song.fullUrl} download className="bg-white text-black px-6 py-3 rounded-full font-bold inline-flex items-center gap-2">
-                        <FaDownload /> Download Full MP3
+                    {/* Downloads & upgrade: placed below to give horizontal space for controls */}
+                    <div className="flex items-center gap-3">
+                      <a href={song.previewUrl} download className="bg-white/10 text-white px-4 py-2 rounded-full font-bold inline-flex items-center gap-2 border border-white/10" style={{ transform: 'scale(0.87)' }}>
+                        <FaDownload /> Download 20s Demo
                       </a>
-                    ) : (
-                      <button
-                        onClick={() => setShowUpsellModal(true)}
-                        className="bg-white/10 text-white px-6 py-3 rounded-full font-bold inline-flex items-center gap-2 border border-white/10"
-                        title="Upgrade to download the full MP3"
-                      >
-                        <FaLock className="mr-2" /> Full MP3
-                      </button>
-                    )}
+
+                      {song?.isPurchased ? (
+                        <a href={song.fullUrl} download className="bg-white text-black px-4 py-2 rounded-full font-bold inline-flex items-center gap-2" style={{ transform: 'scale(0.87)' }}>
+                          <FaDownload /> Download Full MP3
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => setShowUpsellModal(true)}
+                          className="bg-white/10 text-white px-4 py-2 rounded-full font-bold inline-flex items-center gap-2 border border-white/10"
+                          title="Upgrade to download the full MP3"
+                          style={{ transform: 'scale(0.87)' }}
+                        >
+                          <FaLock className="mr-2" /> Upgrade for Full MP3
+                        </button>
+                      )}
+                    </div>
                   </div>
 
+                  {/* Use a clipped audio fragment for public demos to ensure playback stops at 20s.
+                      Appending a media fragment (#t=0,20) encourages browsers to limit playback to that range.
+                      Keep timeupdate handler as a safety net for browsers that don't honor fragments. */}
                   <audio
                     ref={audioRef}
-                    src={song.isPurchased ? song.fullUrl : song.previewUrl}
+                    src={song && !song.isPurchased && song.previewUrl ? `${song.previewUrl}#t=0,20` : (song.fullUrl || song.previewUrl)}
                     onTimeUpdate={handleTimeUpdate}
                     onLoadedMetadata={handleLoadedMetadata}
                     onEnded={handleAudioEnded}

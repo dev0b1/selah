@@ -154,6 +154,17 @@ export default function TemplatePage() {
     }
   };
 
+  const getFireEmojis = () => {
+    if (streak === 0) return "";
+    if (streak <= 12) return "🔥".repeat(streak);
+    return `🔥×${streak}`;
+  };
+
+  const getStreakMessage = () => {
+    if (streak === 0) return "Ready to start your streak today?";
+    return `Day ${streak} strong`;
+  };
+
   const handleStreakUpdate = (newStreak: number) => {
     setStreak(newStreak);
     setHasCheckedInToday(true);
@@ -272,11 +283,27 @@ export default function TemplatePage() {
           <div className="flex items-center justify-between md:justify-start gap-4">
             <div className="flex-1 md:flex-initial">
               <h2 className="text-lg sm:text-xl md:text-2xl font-black text-white leading-tight drop-shadow-lg">
-                {user ? (streak === 0 ? 'Ready to start your streak today?' : `Day ${streak} strong`) : 'Generate a mock roast — no sign-in required'}
+                {getStreakMessage()}
               </h2>
+              {!hasCheckedInToday && streak > 0 && (
+                <button 
+                  onClick={() => setCurrentTab("daily")}
+                  className="text-xs md:text-sm text-amber-300 hover:text-amber-100 transition-colors mt-0.5 font-bold"
+                >
+                  Check in to make it {streak + 1} →
+                </button>
+              )}
+              {!hasCheckedInToday && streak === 0 && (
+                <button 
+                  onClick={() => setCurrentTab("daily")}
+                  className="text-xs md:text-sm text-amber-300 hover:text-amber-100 transition-colors mt-0.5 font-bold"
+                >
+                  Check in today →
+                </button>
+              )}
             </div>
             <div className="text-xl sm:text-2xl md:text-3xl drop-shadow-lg">
-              {user ? (streak > 0 ? '🔥'.repeat(Math.min(streak, 12)) : '') : ''}
+              {getFireEmojis()}
             </div>
           </div>
         </div>

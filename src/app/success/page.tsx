@@ -11,8 +11,6 @@ import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { useEffect } from 'react';
 
 export default function SuccessPage() {
-  // If this redirect was triggered by a single-song checkout, immediately
-  // route the user to the unlocked victory screen so they see the full-song UI.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -20,8 +18,10 @@ export default function SuccessPage() {
       const type = params.get('type');
       const songId = params.get('songId');
       if (type === 'single' && songId) {
-        // Replace the current history entry with the unlocked page
-        window.location.replace(`/song-unlocked?songId=${encodeURIComponent(songId)}`);
+        // show a minimal success message then redirect to the unlocked page
+        setTimeout(() => {
+          window.location.replace(`/song-unlocked?songId=${encodeURIComponent(songId)}`);
+        }, 1200);
       }
     } catch (e) {
       // ignore
@@ -29,86 +29,13 @@ export default function SuccessPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Magic-link claim flow removed. Pending credits are handled by PendingClaimBanner
   return (
-    <div className="min-h-screen bg-black">
-      <AnimatedBackground />
-      <Header />
-      
-      <main className="pt-32 pb-20">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center space-y-8"
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-            >
-              <div className="text-8xl mx-auto">👑</div>
-            </motion.div>
-
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-bold text-gradient">
-                Payment Successful! 👑
-              </h1>
-              <p className="text-xl text-white">
-                Thank you for your purchase. Your full song is now unlocked!
-              </p>
-            </div>
-
-            <div className="card space-y-6">
-              <div className="flex items-center justify-center space-x-4">
-                <FaMusic className="text-4xl text-exroast-gold" />
-                <div className="text-left">
-                  <h3 className="font-bold text-lg text-gradient">What's Next?</h3>
-                  <p className="text-white">Your song is ready to download and share</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Link href="/preview">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="btn-primary w-full flex items-center justify-center space-x-2"
-                  >
-                    <FaDownload />
-                    <span>Download Song</span>
-                  </motion.button>
-                </Link>
-                
-                <AuthAwareCTA className="btn-primary w-full flex items-center justify-center space-x-2">
-                  <FaMusic />
-                  <span>Create Another</span>
-                </AuthAwareCTA>
-              </div>
-            </div>
-
-            <div className="card">
-              <h3 className="font-semibold text-gradient mb-2">
-                Receipt & Account Info
-              </h3>
-              <p className="text-sm text-white">
-                A receipt has been sent to your email. You can manage your subscription 
-                and downloads from your account dashboard.
-              </p>
-
-              {/* If user is not signed in, we'll persist pending credits to localStorage
-                  and prompt them to sign in to claim. The legacy magic-link claim UI
-                  was removed to simplify the flow. */}
-              <div className="mt-4">
-                <PendingClaimBanner />
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </main>
-
-      <Footer />
+    <div className="min-h-screen bg-black flex items-center justify-center">
+      <div className="text-center">
+        <div className="text-6xl mb-4">✅</div>
+        <h1 className="text-2xl font-bold text-white">Payment successful</h1>
+        <p className="text-gray-400 mt-2">Redirecting you to your full song…</p>
+      </div>
     </div>
   );
 }
