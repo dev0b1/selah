@@ -199,9 +199,19 @@ export default function PreviewContent() {
   const handleTimeUpdate = () => {
     if (!audioRef.current) return;
     const current = audioRef.current.currentTime;
+    const PREVIEW_MAX = 20; // seconds for public demo clips
+    // If this is not purchased, cap playback to the preview max and update UI accordingly.
+    if (song && !song.isPurchased && current >= PREVIEW_MAX) {
+      try {
+        audioRef.current.pause();
+        audioRef.current.currentTime = PREVIEW_MAX;
+      } catch (e) {}
+      setIsPlaying(false);
+      setCurrentTime(PREVIEW_MAX);
+      return;
+    }
+
     setCurrentTime(current);
-    // No truncation: templates (demos) and purchased songs play fully.
-    // We simply update the current time and let the audio end naturally.
   };
 
   const handleAudioEnded = () => {
@@ -280,8 +290,13 @@ export default function PreviewContent() {
     if (!audioRef.current) return;
     const loadedDuration = audioRef.current.duration;
     setActualDuration(loadedDuration);
-    // Always use the real loaded duration; there is no preview truncation.
-    setDuration(loadedDuration);
+    // For previews, limit the displayed duration to the preview maximum so UI shows 0/20s.
+    const PREVIEW_MAX = 20;
+    if (song && !song.isPurchased) {
+      setDuration(Math.min(loadedDuration || PREVIEW_MAX, PREVIEW_MAX));
+    } else {
+      setDuration(loadedDuration);
+    }
   };
 
   const formatTime = (time: number) => {
@@ -363,12 +378,28 @@ export default function PreviewContent() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
-                    <button
-                      onClick={togglePlay}
-                      className="bg-exroast-pink text-white px-6 py-3 rounded-full font-bold"
-                    >
-                      {isPlaying ? <><FaPause className="inline mr-2"/> Pause</> : <><FaPlay className="inline mr-2"/> Play</>}
-                    </button>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={togglePlay}
+                        className="bg-exroast-pink text-white px-6 py-3 rounded-full font-bold"
+                      >
+                        {isPlaying ? <><FaPause className="inline mr-2"/> Pause</> : <><FaPlay className="inline mr-2"/> Play</>}
+                      </button>
+
+                      {/* Progress + timer */}
+                      <div className="w-56">
+                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-2 bg-exroast-pink"
+                            style={{ width: `${Math.min(100, (currentTime / (song?.isPurchased ? (actualDuration || 1) : 20)) * 100)}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-300 mt-1">
+                          <span>{formatTime(Math.min(currentTime, song && !song.isPurchased ? 20 : (actualDuration || 0)))}</span>
+                          <span>{formatTime(song && !song.isPurchased ? 20 : Math.floor(actualDuration || 0))}</span>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Allow downloading the 20s preview/demo for free users */}
                     <a href={song.previewUrl} download className="bg-white/10 text-white px-6 py-3 rounded-full font-bold inline-flex items-center gap-2 border border-white/10">
