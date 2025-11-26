@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Header } from "@/components/Header";
 import { SubscriptionCTA } from "@/components/SubscriptionCTA";
-import { SubscriptionModal } from "@/components/SubscriptionModal";
+// import { SubscriptionModal } from "@/components/SubscriptionModal";
 import { UpsellModal } from "@/components/UpsellModal";
 import { DailyQuoteOptInModal } from "@/components/DailyQuoteOptInModal";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
@@ -42,7 +42,6 @@ export default function PreviewContent() {
   const [song, setSong] = useState<Song | null>(null);
   const [loading, setLoading] = useState(true);
   const [showSubscription, setShowSubscription] = useState(false);
-  const [showFirstTimeModal, setShowFirstTimeModal] = useState(false);
   const [showUpsellModal, setShowUpsellModal] = useState(false);
   const [showDailyQuoteOptIn, setShowDailyQuoteOptIn] = useState(false);
   const [showPreGenModal, setShowPreGenModal] = useState(false);
@@ -214,22 +213,11 @@ export default function PreviewContent() {
   const handleAudioEnded = () => {
     setIsPlaying(false);
     
-    // Show subscription modal for first-time users after preview ends
-    // For any unpurchased song (not only templates), show the upsell after the demo finishes.
+    // Show the upsell modal after preview ends for any unpurchased song.
     if (!song.isPurchased && !hasShownModalRef.current && typeof window !== 'undefined') {
-      // Prioritize first-time modal for anonymous first generation
-      const hasGeneratedFirstSong = localStorage.getItem('hasGeneratedFirstSong');
-      if (!hasGeneratedFirstSong) {
-        setTimeout(() => {
-          setShowFirstTimeModal(true);
-          try { localStorage.setItem('hasGeneratedFirstSong', 'true'); } catch (e) {}
-          hasShownModalRef.current = true;
-        }, 500);
-        return;
-      }
-      // Otherwise, show the upsell modal after preview ends.
       setTimeout(() => {
         setShowUpsellModal(true);
+        try { localStorage.setItem('hasGeneratedFirstSong', 'true'); } catch (e) {}
         hasShownModalRef.current = true;
       }, 500);
       return;
@@ -564,10 +552,6 @@ export default function PreviewContent() {
       </div>
       </main>
 
-      <SubscriptionModal 
-        isOpen={showFirstTimeModal} 
-        onClose={() => setShowFirstTimeModal(false)} 
-      />
       
       <UpsellModal
         isOpen={showUpsellModal}
