@@ -1,173 +1,93 @@
-# 💔 HeartHeal
+# DailyMotiv
 
-Transform your heartbreak into healing songs. A Next.js web application that generates personalized AI songs with emotional healing features, multiple moods, and social sharing.
+DailyMotiv is a lightweight Next.js app for short daily check-ins, motivational nudges, and saved personal history. This repository is a pivot from the original Breakup-music project — key differences and setup notes are below.
 
 ## Features
 
-- 🎵 **AI-Powered Song Generation**: Create unique breakup songs from your story
-- 💳 **Paddle Billing Integration**: Subscription tiers and single song purchases
-- 📱 **Social Sharing**: Share on TikTok, Instagram, WhatsApp, and Twitter
-- 🎨 **Five Emotional Modes**: Sad, Savage, Healing, Vibe, or Meme
-- 🎧 **Audio Preview**: 10-second previews before purchase
-- 💎 **Premium Features**: AI breakup advice and no-contact guidance
-- 📱 **Mobile-First Design**: Responsive and beautiful on all devices
+- Quick daily check-ins and history saving
+- Motivational AI nudges (ElevenLabs TTS + OpenRouter prompts)
+- Supabase authentication and storage
+- Paddle billing for paid tiers and subscriptions
+- Shareable previews and downloadable tracks for paid users
+- Mobile-first UI with Tailwind and Framer Motion
 
 ## Tech Stack
 
-- **Framework**: Next.js 16 with App Router
-- **Styling**: Tailwind CSS with custom heartbreak theme
-- **Animations**: Framer Motion for smooth transitions
-- **Payments**: Paddle Billing for subscriptions and one-time purchases
-- **Audio**: React-H5-Audio-Player for playback
-- **Icons**: React Icons
+- **Framework**: Next.js (App Router)
+- **DB/ORM**: Drizzle + Postgres (migrations in `migrations/`)
+- **Auth/Storage**: Supabase
+- **Payments**: Paddle
+- **TTS / Audio**: ElevenLabs (synchronous nudges); Suno worker retired
+- **Styling**: Tailwind CSS
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 20 or higher
-- npm or yarn
+- Node.js 20+ and `npm`
+- A Postgres database for Drizzle (or local dev DB)
 
-### Installation
+### Install
 
-1. Clone the repository
-2. Install dependencies:
-   \`\`\`bash
-   npm install
-   \`\`\`
+```bash
+git clone https://github.com/dev0b1/daily-motiv.git
+cd daily-motiv
+npm install
+cp .env.example .env
+```
 
-3. Copy the environment variables:
-   \`\`\`bash
-   cp .env.example .env
-   \`\`\`
+### Important environment variables
 
-4. Configure your environment variables:
-   - Get Paddle credentials from [Paddle Dashboard](https://vendors.paddle.com/)
-   - Get ElevenLabs API key from [ElevenLabs](https://elevenlabs.io/)
+- `SUPABASE_URL` and `SUPABASE_ANON_KEY` — Supabase project
+- `DATABASE_URL` — Postgres connection for Drizzle
+- `PADDLE_API_KEY` and `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` — Paddle
+- `ELEVENLABS_API_KEY` — ElevenLabs TTS
+- `SITE_DOMAIN` — used to build callback/webhook URLs
 
 ### Development
 
-Run the development server:
-
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
 
-Open [http://localhost:5000](http://localhost:5000) in your browser.
+Open http://localhost:5000
 
-## Paddle Integration
+### Database migrations & seeds
 
-This app uses Paddle Billing for payments. To set up:
+Drizzle is configured via `drizzle.config.ts` and migrations live in `migrations/`.
 
-1. **Sandbox Mode** (for testing):
-   - Set \`NEXT_PUBLIC_PADDLE_ENVIRONMENT=sandbox\`
-   - Use sandbox credentials from Paddle Dashboard
+To push schema changes (dev):
 
-2. **Create Products & Prices** in Paddle Dashboard:
-   - Standard Plan: $9/month (5 songs)
-   - Premium Plan: $19/month (20 songs + advice)
-   - Single Song: $2.99 one-time
+```bash
+npm run db:push
+npm run db:seed
+```
 
-3. **Webhook Setup**:
-   - Add webhook URL: \`your-domain.com/api/webhook\`
-   - Copy the webhook secret to \`.env\`
+## Notes about audio & providers
 
-## ElevenLabs Music API Integration
+- The Suno-based background worker and some Suno API routes have been retired for this pivot — the app uses ElevenLabs for short TTS nudges and OpenRouter for prompt shaping.
+- For preview/paid-generation flows, the codebase contains compatibility stubs and a migration that archives legacy `songs`/`audio_generation_jobs` tables.
 
-The app is scaffolded for ElevenLabs Music API integration:
+## Project layout (high level)
 
-1. Get your API key from [ElevenLabs](https://elevenlabs.io/)
-2. Add it to \`.env\` as \`ELEVENLABS_API_KEY\`
-3. Implement the song generation in \`lib/elevenlabs.ts\`
-4. Update the API route in \`app/api/generate-song/route.ts\`
-
-### Integration Points:
-
-\`\`\`typescript
-// lib/elevenlabs.ts
-const elevenlabs = new ElevenLabsMusicAPI(process.env.ELEVENLABS_API_KEY);
-
-const song = await elevenlabs.generateSong({
-  prompt: userStory,
-  duration: 120, // 2 minutes
-  style: selectedStyle,
-});
-\`\`\`
-
-## Project Structure
-
-\`\`\`
-├── app/
-│   ├── api/
-│   │   ├── generate-song/    # Song generation endpoint
-│   │   └── song/[id]/         # Song retrieval endpoint
-│   ├── story/                 # Story input page
-│   ├── preview/               # Song preview page
-│   ├── success/               # Payment success page
-│   ├── layout.tsx             # Root layout
-│   ├── page.tsx               # Landing page
-│   └── globals.css            # Global styles
-├── components/
-│   ├── Header.tsx             # Navigation header
-│   ├── Footer.tsx             # Site footer
-│   ├── StyleSelector.tsx      # Song style picker
-│   ├── SongPlayer.tsx         # Audio player
-│   ├── SubscriptionCTA.tsx    # Pricing/checkout
-│   ├── LoadingAnimation.tsx   # Loading states
-│   ├── SocialShareButtons.tsx # Share functionality
-│   └── PaddleLoader.tsx       # Paddle.js loader
-├── lib/
-│   └── elevenlabs.ts          # ElevenLabs API client
-└── public/
-    └── audio/                 # Audio files
-\`\`\`
-
-## Subscription Tiers
-
-### Free
-- 10-second song previews
-- All song styles
-- Share previews
-
-### Standard ($9/month)
-- 5 full songs per month
-- HD audio quality
-- Download MP3 files
-- Social sharing
-
-### Premium ($19/month)
-- 20 full songs per month
-- HD audio quality
-- Download MP3 files
-- Social sharing
-- AI breakup advice
-- No-contact tips & guidance
-- Priority support
+- `src/app/` — App Router pages & API routes
+- `src/components/` — UI components
+- `lib/` — thin provider clients and helpers (Eleven, OpenRouter, file-storage, db-service)
+- `server/` — background worker (archived/stubbed)
+- `migrations/` — Drizzle migrations
 
 ## Deployment
 
-This app is ready to deploy to Vercel:
+- Push the `main` branch to GitHub and connect the repo to Vercel (or your host of choice).
+- Ensure environment variables are set in the deployment environment.
+- Switch Paddle to production keys and update webhook URLs (`SITE_DOMAIN/api/*`).
 
-1. Push to GitHub
-2. Import to Vercel
-3. Add environment variables
-4. Deploy
+## Contributing
 
-Remember to:
-- Switch Paddle to production mode
-- Update webhook URLs to production domain
-- Test the full payment flow
-
-## License
-
-MIT
-
-## Support
-
-For issues or questions, please open a GitHub issue or contact support.
+- Keep changes small and focused.
+- Preserve the insert-then-enqueue pattern used for async generation flows unless intentionally reworking the pipeline.
 
 ---
 
-Made with 💔 and AI
-# Breakup-music
-# daily-motiv
+Maintainers: `dev0b1` — if you'd like a different README structure, tell me what to add.
+
