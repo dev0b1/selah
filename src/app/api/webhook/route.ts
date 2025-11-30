@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Environment, Paddle } from '@paddle/paddle-node-sdk';
 import { db } from "@/server/db";
-import { transactions, songs, subscriptions } from "@/src/db/schema";
+import { transactions, subscriptions } from "@/src/db/schema";
 import { eq } from "drizzle-orm";
 import { refillCredits } from "@/lib/db-service";
 import { mapPriceIdToAction } from '@/lib/paddle-config';
@@ -57,14 +57,15 @@ export async function POST(request: NextRequest) {
     const data = eventData.data as any;
 
     // Insert transaction record first to claim this event
+    const amountTotal = Number(data.details?.totals?.total || 0);
+    const amountStr = String(amountTotal || '0');
     await db.insert(transactions).values({
       id: transactionId,
-      songId: data.custom_data?.songId || null,
       userId: data.custom_data?.userId || null,
-      amount: data.details?.totals?.total || "0",
-      currency: data.currency_code || "USD",
-      status: data.status || eventData.eventType,
+      amount: amountStr,
+      currency: data.currency_code || 'USD',
       paddleData: JSON.stringify(data),
+      status: data.status || eventData.eventType,
     });
 
     // Extract price_id from items array (Paddle structure)
@@ -150,37 +151,9 @@ async function handleTransactionCompleted(transaction: any, priceAction: any = n
     }
   }
 
-  // Handle song purchases
-  if (customData.songId) {
-    const songId = customData.songId;
-    const songResult = await db.select()
-      .from(songs)
-      .where(eq(songs.id, songId))
-      .limit(1);
-
-    if (songResult.length === 0) {
-      console.error(`[Webhook] Song ${songId} not found for transaction ${transaction.id}`);
-      return;
-    }
-
-    const song = songResult[0];
-
-    if (song.isPurchased) {
-      console.log(`[Webhook] Song ${songId} already purchased - skipping`);
-      return;
-    }
-
-    await db.update(songs)
-      .set({
-        isPurchased: true,
-        purchaseTransactionId: transaction.id,
-        userId: userId || song.userId,
-        updatedAt: new Date(),
-      })
-      .where(eq(songs.id, songId));
-
-    console.log(`[Webhook] Song ${songId} unlocked for transaction ${transaction.id}`);
-  }
+  // Note: song purchases are deprecated in DailyMotiv; historic song rows (if any)
+  // are archived by migrations. For purchases that map to daily credits, we
+  // handle credits above. If you need custom fulfillment, extend this handler.
 }
 
 async function handleSubscriptionCreated(subscription: any) {
@@ -210,8 +183,8 @@ async function handleSubscriptionCreated(subscription: any) {
       paddleSubscriptionId: subscription.id,
       tier,
       status: subscription.status || 'active',
-  creditsRemaining: initialCredits,
-  renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
+      creditsRemaining: initialCredits,
+      renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
     })
     .onConflictDoUpdate({
       target: subscriptions.userId,
@@ -219,8 +192,8 @@ async function handleSubscriptionCreated(subscription: any) {
         paddleSubscriptionId: subscription.id,
         tier,
         status: subscription.status || 'active',
-  creditsRemaining: initialCredits,
-  renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
+        creditsRemaining: initialCredits,
+        renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
         updatedAt: new Date(),
       }
     });
@@ -255,10 +228,13 @@ async function handleSubscriptionUpdated(subscription: any, eventType: string) {
       // Refill 3 credits for weekly subscription renewals and extend daily checkin expiry
       await refillCredits(userId, 3);
       console.log(`[Webhook] Refilled 3 credits for user ${userId} on weekly subscription renewal`);
-      // extend daily checkin expiry to 7 days from next_billed_at or now
-      const newExpiry = subscription.next_billed_at ? new Date(subscription.next_billed_at) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      await db.update(subscriptions).set({ dailyCheckinsExpiresAt: newExpiry, updatedAt: new Date() }).where(eq(subscriptions.userId, userId));
-      console.log(`[Webhook] Extended daily checkin expiry for user ${userId} to ${newExpiry}`);
+        // The current Drizzle schema does not include `dailyCheckinsExpiresAt`.
+        // Persisting this field would require a schema migration. For now,
+        // compute the intended expiry, update the subscription's `updatedAt`
+        // timestamp and log the intended expiry (do not persist the expiry).
+        const newExpiry = subscription.next_billed_at ? new Date(subscription.next_billed_at) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        await db.update(subscriptions).set({ updatedAt: new Date() }).where(eq(subscriptions.userId, userId));
+        console.log(`[Webhook] Intended to extend daily checkin expiry for user ${userId} to ${newExpiry} (schema missing - not persisted)`);
     }
   }
 

@@ -32,12 +32,12 @@ export default function PricingPage() {
             </p>
             
             <div className="flex flex-wrap justify-center gap-6 mb-4">
-              <div className="flex items-center gap-2 text-white bg-gray-900/50 px-6 py-3 rounded-full border border-exroast-gold/30">
-                <FaShieldAlt className="text-exroast-gold" />
+              <div className="flex items-center gap-2 text-white bg-gray-900/50 px-6 py-3 rounded-full border border-daily-gold/30">
+                <FaShieldAlt className="text-daily-gold" />
                 <span className="text-sm">Cancel Anytime</span>
               </div>
-              <div className="flex items-center gap-2 text-white bg-gray-900/50 px-6 py-3 rounded-full border border-exroast-gold/30">
-                <FaLock className="text-exroast-gold" />
+              <div className="flex items-center gap-2 text-white bg-gray-900/50 px-6 py-3 rounded-full border border-daily-gold/30">
+                <FaLock className="text-daily-gold" />
                 <span className="text-sm">Secure Paddle Payments</span>
               </div>
             </div>
@@ -53,22 +53,22 @@ export default function PricingPage() {
               className="card text-center relative overflow-hidden tier-card"
             >
               <h3 className="text-2xl font-bold text-gradient mb-2">Weekly</h3>
-              <div className="text-5xl font-bold text-exroast-gold mb-6">
+              <div className="text-5xl font-bold text-daily-accent mb-6">
                 {`$${WEEKLY_AMOUNT.toFixed(2)}`}
                 <span className="text-white text-sm"> / week</span>
               </div>
               <p className="text-gray-400 text-sm mb-6">3 song-generation credits (use for full personalized songs)</p>
               <ul className="space-y-4 text-left mb-8">
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-accent mt-1 flex-shrink-0" />
                   <span>3 song generation credits</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>3 credits for full song generations</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>Download MP3s for unlocked songs</span>
                 </li>
               </ul>
@@ -91,25 +91,25 @@ export default function PricingPage() {
               className="card text-center relative overflow-hidden tier-card"
             >
               <h3 className="text-2xl font-bold text-gradient mb-2">Free</h3>
-              <div className="text-5xl font-bold text-exroast-gold mb-6">
+              <div className="text-5xl font-bold text-daily-accent mb-6">
                 $0
               </div>
               <p className="text-gray-400 text-sm mb-6">Instant Vibe-Matched Teasers</p>
               <ul className="space-y-4 text-left mb-8">
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-accent mt-1 flex-shrink-0" />
                   <span>Fun library templates</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>Matched to your vibe & mode</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>15-second previews</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>Watermarked shares</span>
                 </li>
                 <li className="flex items-start space-x-3">
@@ -134,29 +134,29 @@ export default function PricingPage() {
               className="card text-center relative overflow-hidden tier-card"
             >
               <h3 className="text-2xl font-bold text-gradient mb-2">One-Time Pro</h3>
-              <div className="text-5xl font-bold text-exroast-gold mb-6">
+              <div className="text-5xl font-bold text-daily-accent mb-6">
                 {`$${SINGLE_AMOUNT.toFixed(2)}`}
               </div>
               <p className="text-gray-400 text-sm mb-6">Unlock Your Custom Diss (One-Time Flex)</p>
               <ul className="space-y-4 text-left mb-8">
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
-                  <span className="font-medium">Tailored Suno AI song</span>
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
+                  <span className="font-medium">Tailored AI song (ElevenLabs)</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>Personalized from YOUR story</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>Full 30-35s song</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>No watermark</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>Download MP3</span>
                 </li>
                 <li className="flex items-start space-x-3">
@@ -182,46 +182,46 @@ export default function PricingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
               whileHover={{ y: -10 }}
-              className="card text-center border-4 border-exroast-pink relative shadow-2xl overflow-hidden tier-card"
+              className="card text-center border-4 border-daily-pink relative shadow-2xl overflow-hidden tier-card"
             >
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-exroast-pink text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg z-10">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-daily-pink text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg z-10">
                 Most Popular
               </div>
-              <div className="absolute top-12 right-4 bg-exroast-gold text-black px-3 py-1 rounded-full text-xs font-bold z-10">
+              <div className="absolute top-12 right-4 bg-daily-gold text-black px-3 py-1 rounded-full text-xs font-bold z-10">
                 Cancel Anytime
               </div>
               <div className="flex items-center justify-center mb-2">
-                <FaCrown className="text-exroast-gold text-2xl mr-2" />
+                <FaCrown className="text-daily-accent text-2xl mr-2" />
                 <h3 className="text-2xl font-bold text-gradient">Unlimited Pro</h3>
               </div>
-              <div className="text-5xl font-bold text-exroast-gold mb-6">
+              <div className="text-5xl font-bold text-daily-accent mb-6">
                 {`$${PREMIUM_AMOUNT.toFixed(2)}`}
                 <span className="text-xl text-white">/month</span>
               </div>
               <p className="text-gray-400 text-sm mb-6">Unlimited Everything</p>
               <ul className="space-y-4 text-left mb-8">
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span className="font-medium">UNLIMITED personalized songs</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span className="font-medium">Upload chat screenshots</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>AI reads chats for ultra-petty lines 💅</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>Ultra-petty digs on ex's exact crimes</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span className="font-medium">Unlimited history & saves</span>
                 </li>
                 <li className="flex items-start space-x-3">
-                  <FaCheck className="text-exroast-gold mt-1 flex-shrink-0" />
+                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
                   <span>Clean MP3 downloads (no watermark)</span>
                 </li>
               </ul>
@@ -245,18 +245,18 @@ export default function PricingPage() {
             transition={{ duration: 0.6, delay: 0.4 }}
             className="max-w-5xl mx-auto mb-16"
           >
-            <div className="card bg-gradient-to-r from-gray-900 to-black border-2 border-exroast-pink/30">
-              <h3 className="text-3xl font-black text-exroast-gold mb-8 text-center">
+            <div className="card bg-gradient-to-r from-gray-900 to-black border-2 border-daily-pink/30">
+              <h3 className="text-3xl font-black text-daily-gold mb-8 text-center">
                 Why Upgrade to Pro? 🔥
               </h3>
               
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b-2 border-exroast-gold/30">
+                    <tr className="border-b-2 border-daily-gold/30">
                       <th className="pb-4 text-white font-bold text-lg">Feature</th>
                       <th className="pb-4 text-gray-400 font-bold text-lg text-center">Free</th>
-                      <th className="pb-4 text-exroast-gold font-bold text-lg text-center">Pro</th>
+                      <th className="pb-4 text-daily-gold font-bold text-lg text-center">Pro</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
@@ -273,12 +273,12 @@ export default function PricingPage() {
                     <tr>
                       <td className="py-4 text-white">Screenshot Upload</td>
                       <td className="py-4 text-gray-400 text-center">❌</td>
-                      <td className="py-4 text-exroast-gold text-center font-medium">✅</td>
+                      <td className="py-4 text-daily-gold text-center font-medium">✅</td>
                     </tr>
                     <tr>
                       <td className="py-4 text-white">AI Reads Chats for Ultra-Petty Lines 💅</td>
                       <td className="py-4 text-gray-400 text-center">❌</td>
-                      <td className="py-4 text-exroast-gold text-center font-medium">✅</td>
+                      <td className="py-4 text-daily-gold text-center font-medium">✅</td>
                     </tr>
                     <tr>
                       <td className="py-4 text-white">Song Length</td>
@@ -288,12 +288,12 @@ export default function PricingPage() {
                     <tr>
                       <td className="py-4 text-white">Watermark</td>
                       <td className="py-4 text-gray-400 text-center">Yes</td>
-                      <td className="py-4 text-exroast-gold text-center font-medium">None</td>
+                      <td className="py-4 text-daily-gold text-center font-medium">None</td>
                     </tr>
                     <tr>
                       <td className="py-4 text-white">MP3 Download</td>
                       <td className="py-4 text-gray-400 text-center">❌</td>
-                      <td className="py-4 text-exroast-gold text-center font-medium">✅</td>
+                      <td className="py-4 text-daily-gold text-center font-medium">✅</td>
                     </tr>
                   </tbody>
                 </table>
@@ -346,12 +346,12 @@ export default function PricingPage() {
             <div className="flex items-center gap-3 bg-gray-900/50 px-8 py-4 rounded-lg border border-gray-800">
               <div className="text-3xl">🎵</div>
               <div>
-                <div className="text-white font-bold">Powered by Suno</div>
-                <div className="text-gray-400 text-sm">AI Music Generation</div>
+                <div className="text-white font-bold">Powered by ElevenLabs</div>
+                <div className="text-gray-400 text-sm">AI Audio Generation</div>
               </div>
             </div>
             <div className="flex items-center gap-3 bg-gray-900/50 px-8 py-4 rounded-lg border border-gray-800">
-              <FaLock className="text-exroast-gold text-2xl" />
+                <FaLock className="text-daily-accent text-2xl" />
               <div>
                 <div className="text-white font-bold">Secure Paddle</div>
                 <div className="text-gray-400 text-sm">Safe Payments</div>

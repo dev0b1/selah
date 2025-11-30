@@ -11,8 +11,10 @@ import { UpsellModal } from "@/components/UpsellModal";
 const MOOD_OPTIONS = [
   { id: "hurting", label: "Still hurting", emoji: "💔", color: "from-red-500 to-pink-500" },
   { id: "confidence", label: "Need confidence", emoji: "✨", color: "from-purple-500 to-pink-500" },
-  { id: "angry", label: "Angry AF", emoji: "😤", color: "from-orange-500 to-red-600" },
-  { id: "unstoppable", label: "Feeling unstoppable", emoji: "🚀", color: "from-green-500 to-blue-500" }
+  { id: "frustrated", label: "Fired up", emoji: "😤", color: "from-orange-500 to-red-600" },
+  { id: "unstoppable", label: "Feeling unstoppable", emoji: "🚀", color: "from-green-500 to-blue-500" },
+  { id: "anxious", label: "Feeling anxious", emoji: "😟", color: "from-indigo-500 to-gray-500" },
+  { id: "calm", label: "Need calm", emoji: "🧘", color: "from-teal-400 to-blue-400" }
 ];
 
 interface DailyCheckInTabProps {
@@ -45,93 +47,117 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
   }, [hasCheckedInToday, userId]);
 
   useEffect(() => {
-    (async () => {
+    const loadStatus = async () => {
       try {
-        const res = await fetch('/api/user/pro-status', { 
-          headers: { 
-            'Content-Type': 'application/json', 
-            'x-user-id': userId 
-          } 
+        const res = await fetch('/api/user/pro-status', {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': userId,
+          },
         });
-        if (res.ok) {
-          const data = await res.json();
-          setIsPro(!!data.isPro);
-        }
-      } catch (err) {
-        console.error('Failed to fetch pro status:', err);
-      }
-    })();
-  }, [userId]);
+        if (!res.ok) return;
+        const data = await res.json();
 
-  const fetchTodayMotivation = async () => {
-    try {
-      const response = await fetch(`/api/daily/check-in?userId=${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.checkIn?.motivationText) {
-          setTodayMotivation(data.checkIn.motivationText);
-        }
-        // if today has an audio nudge saved, surface it in the UI
-        if (data.checkIn?.motivationAudioUrl) {
-          setDemoAudioSrc(data.checkIn.motivationAudioUrl);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching today's motivation:", error);
-    }
-  };
-
-  const handleGetMotivation = async () => {
-    if (!selectedMood || !message.trim()) return;
-
-    setIsLoading(true);
-
-    try {
-      const response = await fetch("/api/daily/motivation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          mood: selectedMood,
-          message: message.trim(),
-          preferAudio: true
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setMotivation(data.motivation);
-        // prefer server-generated audio when available, otherwise fall back to local demo file
         const serverAudio: string | null = data.motivationAudioUrl || null;
         if (serverAudio) {
           setDemoAudioSrc(serverAudio);
+        } else if (data.audioLimitReached) {
+          setDemoAudioSrc(null);
+          setShowUpsellModal(true);
         } else {
-          // pick demo nudge based on selected mood; file names live in public/demo-nudges/
-          // filenames: hurting.mp3, confidence.mp3, angry.mp3, feeling-unstoppable.mp3
           const moodToFile = (m: string) => {
             if (!m) return 'hurting';
             if (m === 'unstoppable') return 'feeling-unstoppable';
-            return m; // 'hurting', 'confidence', 'angry'
+            return m;
           };
-          const fileName = moodToFile(selectedMood || data.mood || 'hurting');
-          setDemoAudioSrc(`/demo-nudges/${fileName}.mp3`);
+          const baseFile = moodToFile(selectedMood || data.mood || 'hurting');
+          const folderName = selectedMood === 'unstoppable' ? 'unstoppable' : (selectedMood || baseFile);
+          const tryUrls = [`/demo-nudges/${folderName}/${baseFile}.mp3`, `/demo-nudges/${baseFile}.mp3`];
+
+          for (const u of tryUrls) {
+            try {
+              const head = await fetch(u, { method: 'HEAD' });
+              if (head && head.ok) {
+                setDemoAudioSrc(u);
+                break;
+              }
+            } catch (_) {
+              try {
+                const r2 = await fetch(u, { method: 'GET', headers: { Range: 'bytes=0-1' } });
+                if (r2 && r2.ok) {
+                  setDemoAudioSrc(u);
+                  break;
+                }
+              } catch (_) {
+                // ignore and continue
+              }
+            }
+          }
+
+          if (!demoAudioSrc) {
+            setDemoAudioSrc(`/demo-nudges/${baseFile}.mp3`);
+          }
         }
+
         setShowConfetti(true);
-        if (data.streak !== undefined) {
-          onStreakUpdate(data.streak);
-        }
+        if (data.streak !== undefined) onStreakUpdate(data.streak);
+      } catch (err) {
+        console.error('Error getting motivation:', err);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error getting motivation:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    loadStatus();
+  }, [hasCheckedInToday, userId, selectedMood]);
 
   const handleDone = () => {
     setMotivation(null);
     setSelectedMood("");
     setMessage("");
+  };
+
+  const fetchTodayMotivation = async () => {
+    try {
+      setIsLoading(true);
+      const res = await fetch('/api/daily/motivation/today', {
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId }
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.motivation) setTodayMotivation(data.motivation);
+      if (data.motivationAudioUrl) setDemoAudioSrc(data.motivationAudioUrl);
+    } catch (err) {
+      console.error('Failed to fetch today motivation', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGetMotivation = async () => {
+    if (!selectedMood || !message.trim()) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/daily/motivation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-user-id': userId },
+        body: JSON.stringify({ mood: selectedMood, message }),
+      });
+      if (!res.ok) {
+        console.error('Failed to get motivation', await res.text());
+        return;
+      }
+      const data = await res.json();
+      setMotivation(data.motivation || null);
+      if (data.motivationAudioUrl) setDemoAudioSrc(data.motivationAudioUrl);
+      if (data.motivation) setTodayMotivation(data.motivation);
+      if (data.streak !== undefined) onStreakUpdate(data.streak);
+      setShowConfetti(true);
+    } catch (err) {
+      console.error('Error getting motivation:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleConvertToSong = () => {
@@ -158,7 +184,7 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
     <div className="p-4 md:p-6 border-b border-white/10">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3 md:gap-4">
-          <div className="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-br from-exroast-pink to-exroast-gold flex items-center justify-center">
+          <div className="w-10 h-10 flex-shrink-0 rounded-full bg-gradient-to-br from-daily-pink to-daily-accent flex items-center justify-center">
             <FaFire className="text-white text-lg" />
           </div>
           <div>
@@ -182,7 +208,7 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
         <motion.div
           initial={{ opacity: 0, translateY: 8 }}
           animate={{ opacity: 1, translateY: 0 }}
-          className="bg-black/60 backdrop-blur-xl border-2 border-exroast-gold rounded-lg shadow-xl overflow-hidden"
+          className="bg-black/60 backdrop-blur-xl border-2 border-daily-accent rounded-lg shadow-xl overflow-hidden"
         >
           <OptInBanner />
           
@@ -208,7 +234,7 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
                 className="space-y-4"
               >
                 {todayMotivation ? (
-                  <div className="bg-white/5 border-2 border-exroast-gold rounded-lg p-4 md:p-6 space-y-4">
+                  <div className="bg-white/5 border-2 border-daily-accent rounded-lg p-4 md:p-6 space-y-4">
                     <p className="text-base md:text-lg lg:text-xl text-white leading-relaxed">
                       {todayMotivation}
                     </p>
@@ -245,12 +271,12 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-black/60 backdrop-blur-xl border-4 border-exroast-gold rounded-lg shadow-2xl p-6 md:p-8 space-y-6 md:space-y-8"
+          className="bg-black/60 backdrop-blur-xl border-4 border-daily-accent rounded-lg shadow-2xl p-6 md:p-8 space-y-6 md:space-y-8"
         >
           <motion.h2
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl sm:text-4xl md:text-5xl font-black text-center bg-gradient-to-r from-purple-400 to-exroast-gold bg-clip-text text-transparent"
+            className="text-3xl sm:text-4xl md:text-5xl font-black text-center bg-gradient-to-r from-purple-400 to-daily-accent bg-clip-text text-transparent"
           >
             Your Daily Glow-Up 🔥
           </motion.h2>
@@ -259,7 +285,7 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="bg-white/5 border-2 border-exroast-gold rounded-lg p-6 md:p-8"
+            className="bg-white/5 border-2 border-daily-accent rounded-lg p-6 md:p-8"
           >
             <p className="text-lg sm:text-xl md:text-2xl text-white leading-relaxed font-medium">
               {motivation}
@@ -364,21 +390,21 @@ export function DailyCheckInTab({ userId, onStreakUpdate, hasCheckedInToday }: D
         <div className="bg-black/60 backdrop-blur-xl border border-white/10 rounded-lg shadow-xl p-4 sm:p-6 md:p-8 space-y-6 md:space-y-8">
           <OptInBanner />
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-4">
             {MOOD_OPTIONS.map((mood) => (
               <motion.button
                 key={mood.id}
                 onClick={() => setSelectedMood(mood.id)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`p-4 md:p-6 rounded-lg border-2 md:border-4 transition-all duration-300 ${
+                className={`p-6 md:p-6 rounded-xl border-2 md:border-4 transition-all duration-300 ${
                   selectedMood === mood.id
                     ? `bg-gradient-to-br ${mood.color} border-white shadow-lg`
                     : "bg-white/5 border-white/20 hover:border-white/40"
                 }`}
               >
                 <div className="text-3xl md:text-4xl mb-2">{mood.emoji}</div>
-                <div className="text-white font-bold text-xs md:text-sm">{mood.label}</div>
+                <div className="text-white font-bold text-xs md:text-sm whitespace-normal leading-tight text-center">{mood.label}</div>
               </motion.button>
             ))}
           </div>

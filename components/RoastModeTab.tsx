@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { FaSpinner, FaFire, FaPlay, FaDownload } from "react-icons/fa";
-import RoastCreator from "@/components/RoastCreator";
 
 interface RoastModeTabProps {
   userId: string;
@@ -75,9 +74,16 @@ export function RoastModeTab({ userId }: RoastModeTabProps) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-12">
-      {/* Embedded Roast Creator (shared component) */}
+      {/* Create new entry action (History is read-only; creation lives in Story/Template flows) */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-        <RoastCreator userId={userId} />
+        <div className="bg-black/60 backdrop-blur-sm border border-white/10 rounded-lg p-6 text-center">
+          <h3 className="text-2xl md:text-3xl font-black text-white mb-2">Create a New Boost</h3>
+          <p className="text-gray-400 mb-4">History shows previously created entries. To create a new personalized boost, use the creation flow below.</p>
+          <div className="flex items-center justify-center gap-3">
+            <button onClick={handleCreateRoast} className="bg-daily-primary text-white font-bold px-5 py-3 rounded-xl">Create New Boost</button>
+            <button onClick={() => router.push('/template')} className="bg-white/5 text-white px-4 py-3 rounded-xl border border-white/10">Browse Templates</button>
+          </div>
+        </div>
       </motion.div>
 
       {/* Divider */}

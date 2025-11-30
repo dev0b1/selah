@@ -15,7 +15,6 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
     setLoading(true);
     try {
       await supabase.auth.signOut();
-      try { localStorage.removeItem('intendedPurchase'); } catch (e) {}
       router.push('/');
     } catch (e) {
       console.error('Sign out failed', e);
@@ -127,29 +126,29 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
       <div
         id="settings-menu"
         ref={containerRef}
-        className="w-full max-w-5xl bg-gradient-to-br from-[#0a0a0c] via-[#0f0a12] to-[#0a0a0c] border-2 border-exroast-pink/40 rounded-2xl shadow-[0_0_50px_rgba(255,0,110,0.3)] overflow-auto max-h-[calc(100vh-96px)] sm:max-h-[calc(100vh-128px)] animate-in fade-in slide-in-from-bottom-4 duration-300"
+        className="w-full max-w-5xl bg-gradient-to-br from-[#0a0a0c] via-[#0f0a12] to-[#0a0a0c] border-2 border-daily-pink/40 rounded-2xl shadow-[0_0_50px_rgba(255,0,110,0.3)] overflow-auto max-h-[calc(100vh-96px)] sm:max-h-[calc(100vh-128px)] animate-in fade-in slide-in-from-bottom-4 duration-300"
       >
         {/* Header */}
-        <div className="relative flex items-center justify-between p-6 border-b border-exroast-pink/20 bg-gradient-to-r from-exroast-pink/5 to-transparent">
+        <div className="relative flex items-center justify-between p-6 border-b border-daily-pink/20 bg-gradient-to-r from-daily-pink/5 to-transparent">
           <div className="flex items-center gap-4">
             {user?.user_metadata?.avatar_url ? (
               <div className="relative">
                 <img 
                   src={user.user_metadata.avatar_url} 
                   alt="avatar" 
-                  className="w-16 h-16 rounded-full object-cover border-2 border-exroast-pink/50 shadow-lg" 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-daily-pink/50 shadow-lg" 
                 />
                 <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-[#0a0a0c]"></div>
               </div>
             ) : (
-              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-exroast-pink/20 to-purple-500/20 flex items-center justify-center text-3xl border-2 border-exroast-pink/50">
+              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-daily-pink/20 to-purple-500/20 flex items-center justify-center text-3xl border-2 border-daily-pink/50">
                 👤
               </div>
             )}
             <div>
               <div id="settings-menu-title" className="text-white font-black text-xl tracking-tight">{user?.email || 'Account'}</div>
               <div className="text-sm text-white/60 mt-1">
-                Credits: <span className="font-bold text-exroast-pink">{credits ?? 0}</span>
+                Credits: <span className="font-bold text-daily-pink">{credits ?? 0}</span>
               </div>
             </div>
           </div>
@@ -182,13 +181,13 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
           <div className="space-y-4">
             {/* Account panel removed per UX: we don't expose an account nav here */}
 
-            <div className="relative bg-gradient-to-br from-[#1a0f1f] via-[#0f0a15] to-[#0a0a0c] p-6 rounded-xl border border-exroast-pink/30 shadow-lg overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-exroast-pink/10 rounded-full blur-3xl"></div>
+            <div className="relative bg-gradient-to-br from-[#1a0f1f] via-[#0f0a15] to-[#0a0a0c] p-6 rounded-xl border border-daily-pink/30 shadow-lg overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-daily-pink/10 rounded-full blur-3xl"></div>
               <div className="relative">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <div className="text-sm text-white/70 font-medium">Credits available</div>
-                    <div className="text-4xl font-black mt-2 bg-gradient-to-r from-exroast-pink to-yellow-400 bg-clip-text text-transparent">
+                    <div className="text-4xl font-black mt-2 bg-gradient-to-r from-daily-pink to-yellow-400 bg-clip-text text-transparent">
                       {credits ?? 0}
                     </div>
                   </div>
@@ -197,7 +196,7 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
                 <button
                   type="button"
                   onClick={async () => { onClose?.(); try { await openTierCheckout('unlimited'); } catch (e) { console.error('Open checkout failed', e); window.location.href = '/pricing'; } }}
-                  className="w-full bg-gradient-to-r from-exroast-pink to-purple-600 px-5 py-3 rounded-xl font-bold text-white shadow-lg hover:shadow-[0_0_20px_rgba(255,0,110,0.4)] hover:scale-[1.02] transition-all duration-200"
+                  className="w-full bg-gradient-to-r from-daily-pink to-purple-600 px-5 py-3 rounded-xl font-bold text-white shadow-lg hover:shadow-[0_0_20px_rgba(255,0,110,0.4)] hover:scale-[1.02] transition-all duration-200"
                 >
                   Go Unlimited 🚀
                 </button>
@@ -211,13 +210,13 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
                 <button
                   type="button"
                   onClick={async () => { onClose?.(); try { await openSingleCheckout(); } catch (e) { console.error('Open single checkout failed', e); window.location.href = '/pricing'; } }}
-                  className="group w-full text-left px-5 py-4 rounded-xl bg-gradient-to-r from-white/5 to-white/[0.02] hover:from-exroast-pink/10 hover:to-purple-500/10 border border-white/10 hover:border-exroast-pink/30 transition-all duration-200 flex items-center justify-between"
+                  className="group w-full text-left px-5 py-4 rounded-xl bg-gradient-to-r from-white/5 to-white/[0.02] hover:from-daily-pink/10 hover:to-purple-500/10 border border-white/10 hover:border-daily-pink/30 transition-all duration-200 flex items-center justify-between"
                 >
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">💎</span>
                     <span className="font-semibold text-white">Upgrade - Buy full roast</span>
                   </div>
-                  <svg className="w-5 h-5 text-white/40 group-hover:text-exroast-pink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-white/40 group-hover:text-daily-pink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -227,7 +226,7 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
                     onClose?.();
                     try {
                       // prefer an explicit credits price id env var, fall back to premium price
-                      const creditsPrice = (process.env.NEXT_PUBLIC_PADDLE_PRICE_CREDITS || process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM) as string | undefined;
+                      const creditsPrice = (process.env.NEXT_PUBLIC_PADDLE_PRICE_CREDITS || process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO || process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM) as string | undefined;
                       if (creditsPrice) {
                         await openTierCheckout('credits', creditsPrice);
                       } else {
@@ -245,7 +244,7 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
                     <span className="text-2xl">➕</span>
                     <span className="font-semibold text-white">Buy Credits</span>
                   </div>
-                  <svg className="w-5 h-5 text-white/40 group-hover:text-exroast-pink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-white/40 group-hover:text-daily-pink transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -267,7 +266,7 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
               {roasts === null ? (
                 <div className="flex items-center justify-center h-32">
                   <div className="text-white/60 flex items-center gap-2">
-                    <div className="w-5 h-5 border-2 border-exroast-pink border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-5 h-5 border-2 border-daily-pink border-t-transparent rounded-full animate-spin"></div>
                     <span>Loading…</span>
                   </div>
                 </div>
@@ -284,20 +283,20 @@ export default function SettingsMenu({ user, onClose }: { user?: any; onClose?: 
                       type="button"
                       key={r.id}
                       onClick={() => { onClose?.(); router.push('/app?tab=history'); }}
-                      className="group w-full text-left px-4 py-3 rounded-lg bg-white/[0.02] hover:bg-gradient-to-r hover:from-exroast-pink/10 hover:to-purple-500/10 border border-white/5 hover:border-exroast-pink/30 transition-all duration-200 flex items-center justify-between"
+                      className="group w-full text-left px-4 py-3 rounded-lg bg-white/[0.02] hover:bg-gradient-to-r hover:from-daily-pink/10 hover:to-purple-500/10 border border-white/5 hover:border-daily-pink/30 transition-all duration-200 flex items-center justify-between"
                     >
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-exroast-pink/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-daily-pink/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
                           <span className="text-lg">🎵</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-white truncate group-hover:text-exroast-pink transition-colors">
+                          <div className="text-sm font-bold text-white truncate group-hover:text-daily-pink transition-colors">
                             {r.title || 'Untitled Vent'}
                           </div>
                           <div className="text-xs text-white/50">{new Date(r.createdAt).toLocaleDateString()}</div>
                         </div>
                       </div>
-                      <svg className="w-5 h-5 text-white/30 group-hover:text-exroast-pink transition-colors flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 text-white/30 group-hover:text-daily-pink transition-colors flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                     </button>

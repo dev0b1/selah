@@ -19,13 +19,8 @@ export default function PendingClaimBanner() {
       else if (tier === 'weekly') credits = 3;
 
       if (credits > 0) {
-        // Persist pending credits for same-browser sign-in as a plain number
-        try {
-          const existing = localStorage.getItem('pendingCredits');
-          if (!existing) {
-            localStorage.setItem('pendingCredits', String(credits));
-          }
-        } catch (e) {}
+        // Do not persist pending credits in browser storage; rely on server-side
+        // fulfillment and require the user to sign in to claim credits.
         setPending(credits);
       }
     } catch (e) {

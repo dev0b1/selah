@@ -10,8 +10,10 @@ import { FaSpinner } from "react-icons/fa";
 const MOOD_OPTIONS = [
   { id: "hurting", label: "Still hurting", emoji: "💔", color: "from-red-500 to-pink-500" },
   { id: "confidence", label: "Need confidence", emoji: "✨", color: "from-purple-500 to-pink-500" },
-  { id: "angry", label: "Angry AF", emoji: "😤", color: "from-orange-500 to-red-600" },
-  { id: "unstoppable", label: "Feeling unstoppable", emoji: "🚀", color: "from-green-500 to-blue-500" }
+  { id: "frustrated", label: "Fired up", emoji: "😤", color: "from-orange-500 to-red-600" },
+  { id: "unstoppable", label: "Feeling unstoppable", emoji: "🚀", color: "from-green-500 to-blue-500" },
+  { id: "anxious", label: "Feeling anxious", emoji: "😟", color: "from-indigo-500 to-gray-500" },
+  { id: "calm", label: "Need calm", emoji: "🧘", color: "from-teal-400 to-blue-400" }
 ];
 
 export default function DailyMotivationPage() {
@@ -28,17 +30,17 @@ export default function DailyMotivationPage() {
 
     setTimeout(() => {
       const motivations: Record<string, string> = {
-        hurting: "Listen… it's okay to hurt. But don't let that pain define you. They couldn't handle your energy, your growth, your realness. You're not broken — you're becoming. Keep choosing yourself. You're literally unstoppable right now.",
-        confidence: "You know what? You're doing better than you think. Every day without them is a day you choose YOU. They're out there questioning everything while you're out here leveling up. Keep that crown on. You earned it.",
-        angry: "Channel that anger into power. They thought they could play you? Watch you turn that rage into motivation. Every workout, every win, every glow-up is a reminder: you're the catch they couldn't keep. Now go be unstoppable.",
-        unstoppable: "THAT'S the energy! You're not just moving on — you're moving UP. They're somewhere crying while you're out here thriving. You didn't lose a partner — you lost a liability. Keep choosing yourself. Elite behavior only."
+        hurting: "Listen… it's okay to hurt. But don't let that pain define you. You're not broken — you're becoming. Keep choosing yourself.",
+        confidence: "You know what? You're doing better than you think. Every day without them is a day you choose YOU. Keep that crown on — you earned it.",
+        frustrated: "Channel that energy into power. Use it to move forward — workouts, wins, small victories. Turn the heat into momentum.",
+        unstoppable: "THAT'S the energy! You're not just moving on — you're moving UP. Keep choosing yourself and thrive.",
+        anxious: "Breathe. This moment doesn't define your future. Small steps, steady breaths — you have what it takes to keep moving forward.",
+        calm: "Find a quiet moment to breathe and reset. You're allowed rest — it's part of getting stronger. Center, then continue."
       };
 
       setMotivation(motivations[selectedMood] || motivations.unstoppable);
       setIsLoading(false);
-
-      localStorage.setItem("pendingSignupReason", "save_streak");
-      localStorage.setItem("dailyCheckIn", JSON.stringify({ mood: selectedMood, message }));
+      // Removed guest/local persistence — encourage sign-up to save streaks/server-side.
     }, 2000);
   };
 
@@ -59,20 +61,20 @@ export default function DailyMotivationPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="max-w-3xl mx-auto"
             >
-              <div className="card border-4 border-exroast-gold bg-gradient-to-br from-purple-900/30 to-black space-y-8">
+              <div className="card border-4 border-daily-accent bg-gradient-to-br from-purple-900/30 to-black space-y-8">
                 <motion.h2
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-4xl md:text-5xl font-black text-center bg-gradient-to-r from-purple-400 to-exroast-gold bg-clip-text text-transparent"
+                  className="text-4xl md:text-5xl font-black text-center bg-gradient-to-r from-purple-400 to-daily-accent bg-clip-text text-transparent"
                 >
-                  Your Daily Glow-Up 🔥
+                  Your Daily Boost 🔥
                 </motion.h2>
 
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.3 }}
-                  className="bg-white/5 border-2 border-exroast-gold rounded-xl p-8"
+                  className="bg-white/5 border-2 border-daily-accent rounded-xl p-8"
                 >
                   <p className="text-xl md:text-2xl text-white leading-relaxed font-medium">
                     {motivation}
@@ -122,7 +124,7 @@ export default function DailyMotivationPage() {
             className="max-w-3xl mx-auto space-y-8"
           >
             <div className="text-center space-y-4">
-              <h1 className="text-5xl md:text-6xl font-black bg-gradient-to-r from-purple-400 to-exroast-gold bg-clip-text text-transparent">
+              <h1 className="text-5xl md:text-6xl font-black bg-gradient-to-r from-purple-400 to-daily-accent bg-clip-text text-transparent drop-shadow-sm antialiased">
                 How are you feeling today? 💭
               </h1>
               <p className="text-xl text-white font-bold">
@@ -146,7 +148,7 @@ export default function DailyMotivationPage() {
                     }`}
                   >
                     <div className="text-4xl mb-2">{mood.emoji}</div>
-                    <div className="text-white font-bold text-sm">{mood.label}</div>
+                    <div className="text-white font-bold text-sm whitespace-normal leading-tight text-center">{mood.label}</div>
                   </motion.button>
                 ))}
               </div>
@@ -160,7 +162,7 @@ export default function DailyMotivationPage() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Let it all out... write as much as you need — this is your private space"
-                  className="w-full min-h-[220px] bg-black border-2 border-white/20 rounded-xl px-6 py-4 text-white placeholder-gray-500 focus:border-exroast-gold focus:outline-none resize-vertical text-lg"
+                  className="w-full min-h-[220px] bg-black border-2 border-white/20 rounded-xl px-6 py-4 text-white placeholder-gray-500 focus:border-daily-accent focus:outline-none resize-vertical text-lg"
                 />
               </div>
 

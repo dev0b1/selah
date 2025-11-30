@@ -89,29 +89,7 @@ export default function RoastCreator({ userId, initialMode, onComplete }: RoastC
         setLoadingStep('complete');
         setLoadingProgress(100);
         setShowConfetti(true);
-        // Persist last preview song id so upgrade flows can find it later (guest/local flow)
-        if (!isPro && typeof window !== 'undefined' && data.songId) {
-          try {
-            localStorage.setItem('pendingPreviewSongId', data.songId);
-            if (data.previewUrl) localStorage.setItem('pendingPreviewUrl', data.previewUrl);
-          } catch (e) {
-            console.warn('Failed to write pending preview to localStorage', e);
-          }
-        }
-        if (!isPro && typeof window !== 'undefined') {
-          let recentHistory: any[] = [];
-          try {
-            const raw = localStorage.getItem('recentHistory');
-            if (raw) recentHistory = JSON.parse(raw);
-            if (!Array.isArray(recentHistory)) recentHistory = [];
-          } catch (err) {
-            console.warn('Invalid recentHistory in localStorage, resetting it.', err);
-            recentHistory = [];
-          }
-
-          recentHistory.unshift({ id: data.songId, title: data.title, timestamp: new Date().toISOString() });
-          localStorage.setItem('recentHistory', JSON.stringify(recentHistory.slice(0, 3)));
-        }
+        // Guest/local preview persistence removed. Recent history is server-side now.
 
         // daily opt-in is handled in the Daily tab; creation flow no longer contains the opt-in card
 
@@ -167,14 +145,14 @@ export default function RoastCreator({ userId, initialMode, onComplete }: RoastC
 
         <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Tooltip content="Petty = Brutal diss; Glow-Up = Victory banger">
+            <Tooltip content="Petty = Brutal diss; Boost = Victory banger">
               <div>
                 <StyleSelector selected={style} onChange={setStyle} />
               </div>
             </Tooltip>
           </div>
           <div>
-            <label className="block text-xl font-black text-exroast-gold">Choose Music Style</label>
+            <label className="block text-xl font-black text-daily-gold">Choose Music Style</label>
             <div className="mt-2">
               <CustomSelect
                 value={musicStyle}
@@ -228,7 +206,7 @@ export default function RoastCreator({ userId, initialMode, onComplete }: RoastC
                // As a safe fallback, navigate to pricing so user can sign in / choose a plan.
                try { window.location.href = '/pricing'; } catch (e) { }
              }
-           }} className="bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black font-bold px-6 py-3 rounded-md focus:outline-none focus:ring-4 focus:ring-exroast-gold/60">Upgrade for a personalized song</button>
+           }} className="bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black font-bold px-6 py-3 rounded-md focus:outline-none focus:ring-4 focus:ring-daily-gold/60">Upgrade for a personalized song</button>
         </div>
       </div>
 

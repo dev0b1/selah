@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createOrUpdateUserPreferences } from '@/lib/db-service';
-import { getDailySavageQuote } from '@/lib/suno-nudge';
+import { getDailySavageQuote } from '@/lib/daily-nudge';
 
 export async function POST(request: NextRequest) {
   try {

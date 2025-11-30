@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { openSingleCheckout, openTierCheckout } from "../lib/checkout";
-import { PREMIUM_PRICE_ID } from "../lib/pricing";
+import { openSingleCheckout, openTierCheckout } from "@/lib/checkout";
+import { PREMIUM_PRICE_ID } from "@/lib/pricing";
 
 type Props = {
   onClose: () => void;

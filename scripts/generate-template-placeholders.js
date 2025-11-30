@@ -7,7 +7,7 @@
  * Each file is ~1KB and plays ~1 second of silence
  * 
  * Usage: node scripts/generate-template-placeholders.js
- * Output: public/templates/*.mp3
+ * Output: public/demo-nudges/*.mp3
  */
 
 const fs = require('fs');
@@ -22,36 +22,20 @@ const MP3_FRAME = Buffer.from([
   // Repeat this pattern to make a ~1KB file
 ]);
 
+
+// Demo nudges used as audio fallbacks for DailyMotiv
 const TEMPLATES = [
-  // ROAST MODE
-  {
-    filename: 'petty-breakup.mp3',
-    description: 'Petty Breakup - Maximum pettiness and disrespect',
-  },
-  {
-    filename: 'ghosted-diss.mp3',
-    description: 'Ghosted Diss - Disrespectful roast for ghosting',
-  },
-  {
-    filename: 'savage-confidence.mp3',
-    description: 'Savage Mode - Pure fire bars and confidence',
-  },
-  // GLOWUP MODE
-  {
-    filename: 'healing-journey.mp3',
-    description: 'Healing Journey - Powerful glow-up anthem',
-  },
-  {
-    filename: 'self-love-anthem.mp3',
-    description: 'Self Love Anthem - Confident flex and thriving',
-  },
-  {
-    filename: 'vibe-check.mp3',
-    description: 'Glow-Up Vibes - Funny, chill glow-up energy',
-  },
+  { filename: 'angry-1.mp3', description: 'Angry - fallback 1' },
+  { filename: 'angry-2.mp3', description: 'Angry - fallback 2' },
+  { filename: 'confidence-1.mp3', description: 'Confidence - fallback 1' },
+  { filename: 'confidence-2.mp3', description: 'Confidence - fallback 2' },
+  { filename: 'hurting-1.mp3', description: 'Hurting - fallback 1' },
+  { filename: 'hurting-2.mp3', description: 'Hurting - fallback 2' },
+  { filename: 'feeling-unstoppable-1.mp3', description: 'Unstoppable - fallback 1' },
+  { filename: 'feeling-unstoppable-2.mp3', description: 'Unstoppable - fallback 2' },
 ];
 
-const OUTPUT_DIR = path.join(__dirname, '../public/templates');
+const OUTPUT_DIR = path.join(__dirname, '../public/demo-nudges');
 
 function generatePlaceholders() {
   // Create output directory if it doesn't exist
@@ -75,11 +59,11 @@ function generatePlaceholders() {
     }
   });
 
-  console.log(`\n✨ Placeholder templates created in ${OUTPUT_DIR}`);
+  console.log(`\n✨ Placeholder demo nudges created in ${OUTPUT_DIR}`);
   console.log(`\n📝 Next steps:`);
-  console.log(`   1. Replace placeholders with real MP3 files (30-35 seconds)`);
-  console.log(`   2. Run: npm run db:seed`);
-  console.log(`   3. Test on: http://localhost:5000/story`);
+  console.log(`   1. Replace placeholders with real MP3 files (8-30 seconds)`);
+  console.log(`   2. Run: npm run dev`);
+  console.log(`   3. Test on: http://localhost:5000/daily`);
 }
 
 generatePlaceholders();

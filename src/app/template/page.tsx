@@ -248,7 +248,7 @@ export default function TemplatePage() {
           {isGenerating ? (
             <LoadingProgress currentStep={loadingStep} progress={loadingProgress} />
           ) : (
-            <FaSpinner className="animate-spin text-exroast-gold text-6xl" />
+            <FaSpinner className="animate-spin text-daily-gold text-6xl" />
           )}
         </div>
       </div>
@@ -307,7 +307,7 @@ export default function TemplatePage() {
               onClick={() => setCurrentTab("history")}
               className={`relative px-8 py-4 font-black text-lg transition-all duration-200 ${
                 currentTab === "history"
-                  ? "text-exroast-pink border-b-4 border-exroast-pink"
+                  ? "text-daily-pink border-b-4 border-daily-pink"
                   : "text-gray-500 hover:text-white border-b-4 border-transparent"
               }`}
             >
@@ -321,7 +321,7 @@ export default function TemplatePage() {
                   : "text-gray-500 hover:text-white border-b-4 border-transparent"
               }`}
             >
-              <span className="flex items-center gap-3">💪 Daily Glow-Up</span>
+              <span className="flex items-center gap-3">💪 Daily Boost</span>
             </button>
           </div>
         </div>
@@ -371,8 +371,8 @@ export default function TemplatePage() {
           <button
             onClick={() => router.push('/history')}
             className={`flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
-              currentTab === "roast"
-                ? "bg-gradient-to-t from-red-600/20 to-transparent text-exroast-pink"
+              currentTab === "history"
+                ? "bg-gradient-to-t from-red-600/20 to-transparent text-daily-pink"
                 : "text-gray-400"
             }`}
           >

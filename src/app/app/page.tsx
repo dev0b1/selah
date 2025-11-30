@@ -156,14 +156,14 @@ export default function AppPage() {
   };
 
   const getStreakMessage = () => {
-    if (streak === 0) return "Ready to start your streak today?";
+    if (streak === 0) return "";
     return `Day ${streak} strong`;
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <FaSpinner className="animate-spin text-exroast-gold text-6xl" />
+        <FaSpinner className="animate-spin text-daily-gold text-6xl" />
       </div>
     );
   }
@@ -171,7 +171,7 @@ export default function AppPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <FaSpinner className="animate-spin text-exroast-gold text-6xl" />
+        <FaSpinner className="animate-spin text-daily-gold text-6xl" />
       </div>
     );
   }
@@ -196,20 +196,20 @@ export default function AppPage() {
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
               {userAvatar ? (
-                <img 
+                  <img 
                   src={userAvatar} 
                   alt="Profile" 
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-exroast-gold"
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-daily-accent"
                 />
               ) : (
-                <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-exroast-pink to-exroast-gold flex items-center justify-center text-white font-black text-sm">
+                <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-daily-pink to-daily-accent flex items-center justify-center text-white font-black text-sm">
                   {user?.email?.[0]?.toUpperCase() || "U"}
                 </div>
               )}
             </button>
             
             {/* Dropdown Menu (click-toggle for mobile) */}
-            <div className={`${showProfileMenu ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-1'} absolute right-0 top-full mt-2 w-48 bg-black border-2 border-exroast-gold rounded-xl overflow-hidden transition-all duration-200 shadow-xl`}>
+            <div className={`${showProfileMenu ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-1'} absolute right-0 top-full mt-2 w-48 bg-black border-2 border-daily-gold rounded-xl overflow-hidden transition-all duration-200 shadow-xl`}>
               <div className="p-3 border-b border-white/10">
                 <p className="text-white font-bold text-sm truncate">{user?.email}</p>
               </div>
@@ -240,26 +240,22 @@ export default function AppPage() {
       <div className="fixed top-14 md:top-16 left-0 right-0 z-40 bg-gradient-to-r from-purple-900/80 via-purple-700/70 to-amber-500/60 backdrop-blur-md border-b-2 border-amber-500/30 h-16 md:h-[70px] shadow-lg">
         <div className="max-w-7xl mx-auto px-4 h-full flex flex-col justify-center">
           <div className="flex items-center justify-between md:justify-start gap-4">
-            {/* Left: Streak Text */}
+            {/* Left: Streak Text (hidden when streak === 0) */}
             <div className="flex-1 md:flex-initial">
-              <h2 className="text-lg sm:text-xl md:text-2xl font-black text-white leading-tight drop-shadow-lg">
-                {getStreakMessage()}
-              </h2>
-              {!hasCheckedInToday && streak > 0 && (
-                <button 
-                  onClick={() => setCurrentTab("daily")}
-                  className="text-xs md:text-sm text-amber-300 hover:text-amber-100 transition-colors mt-0.5 font-bold"
-                >
-                  Check in to make it {streak + 1} →
-                </button>
-              )}
-              {!hasCheckedInToday && streak === 0 && (
-                <button 
-                  onClick={() => setCurrentTab("daily")}
-                  className="text-xs md:text-sm text-amber-300 hover:text-amber-100 transition-colors mt-0.5 font-bold"
-                >
-                  Check in today →
-                </button>
+              {streak > 0 && (
+                <>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-black text-white leading-tight drop-shadow-lg">
+                    {getStreakMessage()}
+                  </h2>
+                  {!hasCheckedInToday && (
+                    <button 
+                      onClick={() => setCurrentTab("daily")}
+                      className="text-xs md:text-sm text-amber-300 hover:text-amber-100 transition-colors mt-0.5 font-bold"
+                    >
+                      Check in to make it {streak + 1} →
+                    </button>
+                  )}
+                </>
               )}
             </div>
             
@@ -276,32 +272,33 @@ export default function AppPage() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-center gap-8">
             <button
-              onClick={() => setCurrentTab("history")}
-              className={`relative px-8 py-4 font-black text-lg transition-all duration-200 ${
-                currentTab === "history"
-                  ? "text-exroast-pink border-b-4 border-exroast-pink"
-                  : "text-gray-500 hover:text-white border-b-4 border-transparent"
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                🔥 History
-              </span>
-            </button>
-            <button
               onClick={() => setCurrentTab("daily")}
               className={`relative px-8 py-4 font-black text-lg transition-all duration-200 ${
                 currentTab === "daily"
-                  ? "text-purple-400 border-b-4 border-purple-400"
+                  ? "text-daily-primary border-b-4 border-daily-primary"
                   : "text-gray-500 hover:text-white border-b-4 border-transparent"
               }`}
             >
               <span className="flex items-center gap-3">
-                💪 Daily Glow-Up
+                💪 Daily Boost
                 {!hasCheckedInToday && (
                   <span className="flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs font-black rounded-full">
                     1
                   </span>
                 )}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab("history")}
+              className={`relative px-8 py-4 font-black text-lg transition-all duration-200 ${
+                currentTab === "history"
+                  ? "text-daily-pink border-b-4 border-daily-pink"
+                  : "text-gray-500 hover:text-white border-b-4 border-transparent"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                🔥 History
               </span>
             </button>
           </div>
@@ -312,9 +309,9 @@ export default function AppPage() {
       <main className="pt-32 md:pt-40 lg:pt-48 px-3 sm:px-4 md:px-6 pb-8 relative z-10">
         <div className={`max-w-5xl mx-auto transition-colors duration-300 ${
           currentTab === "daily" 
-            ? "bg-gradient-to-b from-purple-900/30 via-purple-800/20 to-purple-900/30" 
+            ? "bg-black/60 backdrop-blur-xl"
             : "bg-gradient-to-b from-red-900/30 via-red-800/20 to-black/60"
-        } rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl border border-white/10`}>
+        } rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl`}>
           <AnimatePresence mode="wait">
             {currentTab === "daily" && (
               <motion.div
@@ -349,25 +346,24 @@ export default function AppPage() {
       {/* Mobile Bottom Navigation Bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-lg border-t border-white/20 h-20">
         <div className="h-full flex items-stretch">
-          {/* Left: History Tab */}
+          {/* Left: Daily Tab */}
           <button
-            onClick={() => setCurrentTab("history")}
+            onClick={() => setCurrentTab("daily")}
             className={`relative flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
-              currentTab === "history"
-                ? "bg-gradient-to-t from-red-600/20 to-transparent text-exroast-pink"
+              currentTab === "daily"
+                ? "bg-gradient-to-t from-daily-primary/20 to-transparent text-daily-primary"
                 : "text-gray-400"
             }`}
           >
-            {/* Active indicator bar (keeps display consistent across Android browsers) */}
-            <span className={`${currentTab === 'history' ? 'block' : 'hidden'} absolute top-0 left-1/4 right-1/4 h-1 rounded-t-md bg-exroast-pink`} />
-            <FaHistory className="text-2xl" />
-            <span className="text-xs font-bold">History</span>
+            <span className={`${currentTab === 'daily' ? 'block' : 'hidden'} absolute top-0 left-1/4 right-1/4 h-1 rounded-t-md bg-daily-primary`} />
+            <FaDumbbell className="text-2xl" />
+            <span className="text-xs font-bold">Daily</span>
           </button>
-          
+
           {/* Center: Streak (Tappable to Daily) */}
           <button
             onClick={() => setCurrentTab("daily")}
-            className="w-32 flex flex-col items-center justify-center bg-gradient-to-t from-purple-900/20 to-transparent border-x border-white/10"
+            className="w-32 flex flex-col items-center justify-center bg-gradient-to-t from-daily-primary/10 to-transparent border-x border-white/10"
           >
             <div className="text-lg font-black text-white leading-tight">
               Day {streak}
@@ -375,23 +371,19 @@ export default function AppPage() {
             <div className="text-xs text-gray-400 font-bold">strong</div>
             <div className="text-base mt-0.5">{getFireEmojis()}</div>
           </button>
-          
-          {/* Right: Daily Tab */}
+
+          {/* Right: History Tab */}
           <button
-            onClick={() => setCurrentTab("daily")}
+            onClick={() => setCurrentTab("history")}
             className={`relative flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
-              currentTab === "daily"
-                ? "bg-gradient-to-t from-purple-600/20 to-transparent text-purple-400"
+              currentTab === "history"
+                ? "bg-gradient-to-t from-daily-pink/20 to-transparent text-daily-pink"
                 : "text-gray-400"
             }`}
           >
-            {/* Active indicator bar for Daily */}
-            <span className={`${currentTab === 'daily' ? 'block' : 'hidden'} absolute top-0 left-1/4 right-1/4 h-1 rounded-t-md bg-purple-400`} />
-            {!hasCheckedInToday && (
-              <span className="absolute top-3 right-1/4 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
-            )}
-            <FaDumbbell className="text-2xl" />
-            <span className="text-xs font-bold">Daily</span>
+            <span className={`${currentTab === 'history' ? 'block' : 'hidden'} absolute top-0 left-1/4 right-1/4 h-1 rounded-t-md bg-daily-pink`} />
+            <FaHistory className="text-2xl" />
+            <span className="text-xs font-bold">History</span>
           </button>
         </div>
       </nav>

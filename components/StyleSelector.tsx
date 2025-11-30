@@ -14,13 +14,13 @@ interface StyleSelectorProps {
 
 const styles = [
   { id: "petty" as SongStyle, name: "Petty Roast", description: "Savage, brutal, hilarious roast 🔥" },
-  { id: "glowup" as SongStyle, name: "Glow-Up Flex", description: "Upbeat victory anthem 👑" },
+  { id: "glowup" as SongStyle, name: "Boost Flex", description: "Upbeat victory anthem 👑" },
 ];
 
 export function StyleSelector({ selected, onChange }: StyleSelectorProps) {
   return (
     <div className="space-y-2">
-      <label className="block text-xl font-black text-exroast-gold">Choose Your Vibe</label>
+      <label className="block text-xl font-black text-daily-gold">Choose Your Vibe</label>
       <CustomSelect
         value={selected}
         onChange={(v) => onChange(v as SongStyle)}

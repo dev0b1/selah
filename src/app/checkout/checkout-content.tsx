@@ -18,7 +18,8 @@ const tiers: { [key: string]: { priceId: string; name: string } } = {
     name: "Standard",
   },
   premium: {
-    priceId: process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM || "pri_premium",
+    // Premium now uses the PRO price id
+    priceId: process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO || process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM || "pri_premium",
     name: "Premium",
   },
 };
@@ -79,12 +80,12 @@ export default function CheckoutContent() {
         const songId = searchParams.get('songId');
 
         if (type === "single") {
-          priceId = SINGLE_PRICE_ID || process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE || "pri_single";
+          priceId = SINGLE_PRICE_ID || process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO || process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE || "pri_single";
           successUrl = `${window.location.origin}/success?type=single${songId ? `&songId=${songId}` : ''}`;
         } else {
           // support 'premium' and 'standard' tiers; prefer centralized PREMIUM_PRICE_ID for premium
           if (tier === 'premium') {
-            priceId = PREMIUM_PRICE_ID || process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM || tiers['premium'].priceId;
+            priceId = PREMIUM_PRICE_ID || process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO || process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM || tiers['premium'].priceId;
           } else {
             const tierConfig = tiers[tier];
             if (!tierConfig) {
@@ -148,7 +149,7 @@ export default function CheckoutContent() {
           animate={{ opacity: 1, scale: 1 }}
           className="relative z-10 text-center space-y-4"
         >
-          <FaSpinner className="text-5xl text-exroast-gold animate-spin mx-auto" />
+          <FaSpinner className="text-5xl text-daily-gold animate-spin mx-auto" />
           <h2 className="text-3xl font-bold text-white">Opening checkout...</h2>
           {userEmail ? (
             <div className="text-sm text-gray-400">Signed in as {userEmail}</div>
@@ -196,7 +197,7 @@ export default function CheckoutContent() {
         animate={{ opacity: 1, scale: 1 }}
         className="relative z-10 text-center space-y-4"
       >
-        <FaSpinner className="text-5xl text-exroast-gold animate-spin mx-auto" />
+        <FaSpinner className="text-5xl text-daily-gold animate-spin mx-auto" />
         <h2 className="text-3xl font-bold text-white">Opening checkout...</h2>
         <p className="text-gray-400">Redirecting to Paddle</p>
       </motion.div>

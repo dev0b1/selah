@@ -2,7 +2,7 @@
 
 # Quick orientation for AI coding agents
 
-This repo builds a Next.js (App Router) service that turns short user stories into short audio tracks using external providers (Suno, ElevenLabs, etc.) and persists metadata in Postgres via Drizzle.
+This repo builds a Next.js (App Router) service that turns short user stories into short audio tracks using external providers (OpenRouter, ElevenLabs, etc.) and persists metadata in Postgres via Drizzle.
 
 Core architecture (big picture)
 - Frontend: `src/app` — App Router pages and client components. Key client flows call `/api/generate-preview` and `/api/generate-song`.
@@ -13,17 +13,17 @@ Core architecture (big picture)
 Important patterns and conventions (do not break these lightly)
 - Insert-then-enqueue: API handlers insert a placeholder `songs` row (with placeholder `previewUrl`/`fullUrl`) and then call `enqueueAudioJob`. The worker updates the row when audio is ready. See `src/app/api/generate-song/route.ts` and `lib/db-service.ts`.
 - Provider task mapping: Persist provider task IDs on `audio_generation_jobs.providerTaskId` so callback handlers can find the job. The worker prefers callback-first flows but will fall back to polling/mp4 packaging as needed (`server/audio-worker.ts`).
-- Flexible callback shapes: `src/app/api/suno/callback/route.ts` accepts multiple callback shapes (nested `data`, `task_id`, or top-level `id`) — follow its normalization logic when sending test callbacks.
+-- Flexible callback shapes: older Suno callbacks have been removed. New generation flows use OpenRouter + ElevenLabs.
 - Template previews: Free previews use templates (short demo mp3s). See `src/app/api/generate-preview/route.ts` and `lib/lyrics-data.ts`.
 
 Where to add or modify provider integrations
-- Keep provider clients thin and side-effect free. Place under `lib/` (e.g., `lib/suno.ts`, `lib/suno-nudge.ts`, `lib/eleven.ts`). Export a factory and methods like `generateSong`, `generateMp4`, `pollForMp4`.
-- Prefer callback-first if provider supports it. Use `process.env.SUNO_CALLBACK_URL` or derive from `SITE_DOMAIN` for callback URLs.
+- Keep provider clients thin and side-effect free. Place under `lib/` (e.g., `lib/openrouter.ts`, `lib/eleven.ts`). Export a factory and methods like `generateAudio`, `generateLyrics`, `generateSong`.
+-- Prefer callback-first if provider supports it. Use `SITE_DOMAIN` for callback URLs when needed. Suno-specific callbacks are deprecated.
 
 Key files to inspect (starter list)
 - `src/app/api/generate-song/route.ts` — personalized generation flow (insert + enqueue + optional reserveCredit)
 - `src/app/api/generate-preview/route.ts` — template preview path
-- `src/app/api/suno/generate/route.ts` and `src/app/api/suno/callback/route.ts` — Suno integration & webhook
+-- The legacy Suno integration was removed. Use `src/app/api/generate-motivation/route.ts` for OpenRouter+ElevenLabs audio generation.
 - `server/audio-worker.ts` — background processing and mp4 packaging flows
 - `src/db/schema.ts` — Drizzle tables (notable columns: `songs.isTemplate`, `songs.previewUrl`, `audio_generation_jobs.providerTaskId`, `subscriptions.songsRemaining`)
 - `lib/db-service.ts` — enqueue/claim/mark job helpers; `reserveCredit` / `refundCredit`
@@ -36,11 +36,11 @@ Dev workflow & commands
 - DB: `npm run db:push` then `npm run db:seed` (seeds templates used by preview)
 
 Environment variables to check
-- Suno: `SUNO_API_KEY`, `SUNO_CALLBACK_URL`, `SUNO_MP4_CALLBACK`, `SITE_DOMAIN`
+-- OpenRouter / ElevenLabs: `OPENROUTER_API_KEY`, `ELEVENLABS_API_KEY`, `ELEVEN_VOICE_ID`, `SITE_DOMAIN`
 - Payments/Paddle: `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`, `PADDLE_API_KEY`, `PADDLE_NOTIFICATION_WEBHOOK_SECRET`, `NEXT_PUBLIC_PADDLE_ENVIRONMENT`
 
 Testing & debugging tips
-- Simulate provider callbacks: POST a JSON payload to `/api/suno/callback` with one of the accepted shapes (e.g., `{ "task_id": "...", "data": [...] }` or `{ "id": "...", "audio_url": "..." }`). The handler will match job by `providerTaskId` and update `songs`.
+- Simulate LLM responses by testing the OpenRouter client or by calling `/api/generate-motivation` directly with sample input. The new pipeline returns an MP3 audio response generated via OpenRouter → SSML → ElevenLabs → ffmpeg mix.
 - Run the worker locally: `node server/audio-worker.ts` (or `tsx server/audio-worker.ts`) after configuring DB and env vars; watch logs for `markJobSucceeded`/`markJobFailed` traces.
 - Logs: use the console output from `next dev` and the worker for diagnostics. Many modules use `console.info/warn/error`.
 
@@ -85,7 +85,7 @@ Environment & secrets (where to look)
 - Provider keys: check `lib/*` for exact env var names for OpenRouter, Suno, OpenAI, ElevenLabs, etc.
 
 Data & control flows (concrete examples)
-- Generation flow: POST body { story, style } → `generate-song/route.ts` constructs prompt (via `lib/openrouter`), calls `lib/suno` to create audio, then inserts into `songs` with `isPurchased=false` and preview/full URLs.
+- Generation flow (current): POST body { text, mood } → `src/app/api/generate-motivation/route.ts` constructs prompt via `lib/openrouter`, receives a structured script, converts to SSML, synthesizes speech via ElevenLabs, mixes with background music using ffmpeg, and returns an MP3 response (and/or persists preview URLs as needed).
 - Purchase flow: frontend initiates Paddle checkout; Paddle sends webhook → `webhook/route.ts` verifies signature, writes `transactions`, and calls fulfillment helpers to mark `songs.isPurchased = true` and set `purchaseTransactionId`.
 
 Conventions & repository patterns

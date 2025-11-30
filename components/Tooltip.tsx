@@ -37,9 +37,9 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
             transition={{ duration: 0.2 }}
             className={`absolute ${positionClasses[position]} z-50 whitespace-nowrap`}
           >
-            <div className="bg-gradient-to-r from-exroast-pink to-exroast-gold text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg border border-exroast-gold/50">
+            <div className="bg-gradient-to-r from-daily-pink to-daily-gold text-white px-3 py-2 rounded-lg text-sm font-bold shadow-lg border border-daily-gold/50">
               {content}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-exroast-pink"></div>
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-daily-pink"></div>
             </div>
           </motion.div>
         )}

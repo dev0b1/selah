@@ -43,62 +43,18 @@ export default function AuthCompleteClient() {
           return;
         }
 
-        // Check if we persisted an intended purchase (resume flow)
-        let resumePath: string | null = null;
-        try {
-          const raw = localStorage.getItem('intendedPurchase');
-          if (raw) {
-            const payload = JSON.parse(raw);
-            if (payload && payload.type) {
-              if (payload.type === 'single') {
-                resumePath = payload.songId ? `/checkout?type=single&songId=${encodeURIComponent(payload.songId)}` : `/checkout?type=single`;
-              } else if (payload.type === 'tier') {
-                resumePath = payload.tierId ? `/checkout?tier=${encodeURIComponent(payload.tierId)}` : `/pricing`;
-              }
-            }
-          }
-        } catch (e) {
-          // ignore parse errors
-        }
+        // Intentionally removed same-browser guest resume and
+        // claim flows. Purchases and credit grants are handled server-side
+        // and will be reflected on the user's account after webhook
+        // fulfillment. Continue to the return path.
 
-        // Attempt to claim any pending credits stored in localStorage by the
-        // same-browser checkout success flow (pendingCredits is set on /success).
-        try {
-          const pendingRaw = localStorage.getItem('pendingCredits');
-          if (pendingRaw) {
-            const credits = Number(pendingRaw);
-            if (credits && credits > 0) {
-              const res = await fetch('/api/local-claim', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ credits })
-              });
-              if (res.ok) {
-                // persist a short-lived local marker so the header can show a toast
-                try {
-                  localStorage.setItem('claimedCredits', String(credits));
-                  // also set justSignedIn for legacy behavior
-                  localStorage.setItem('justSignedIn', 'true');
-                } catch (e) {}
-              }
-              localStorage.removeItem('pendingCredits');
-            }
-          }
-        } catch (e) {
-          console.error('Local claim failed', e);
-        }
-
-        const finalPath = resumePath || decodeURIComponent(returnToRaw || '/');
+        const finalPath = decodeURIComponent(returnToRaw || '/');
         if (!finalPath.startsWith('/')) {
           router.push('/');
           return;
         }
 
-        try {
-          localStorage.setItem('justSignedIn', 'true');
-          // Clear intended purchase so it doesn't trigger repeatedly
-          localStorage.removeItem('intendedPurchase');
-        } catch (e) {}
+        // legacy local markers removed
         router.push(finalPath);
       } catch (err) {
         console.error('Auth finalize error', err);
@@ -111,7 +67,7 @@ export default function AuthCompleteClient() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="text-center">
-        <div className="text-exroast-gold text-4xl mb-4">Finalizing sign-in…</div>
+        <div className="text-daily-accent text-4xl mb-4">Finalizing sign-in…</div>
         <div className="text-gray-400">You will be redirected shortly.</div>
       </div>
     </div>

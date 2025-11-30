@@ -17,7 +17,7 @@ DailyMotiv is a lightweight Next.js app for short daily check-ins, motivational 
 - **DB/ORM**: Drizzle + Postgres (migrations in `migrations/`)
 - **Auth/Storage**: Supabase
 - **Payments**: Paddle
-- **TTS / Audio**: ElevenLabs (synchronous nudges); Suno worker retired
+- **TTS / Audio**: ElevenLabs (synchronous nudges); legacy Suno worker retired
 - **Styling**: Tailwind CSS
 
 ## Getting Started

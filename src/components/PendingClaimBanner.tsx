@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
-// This component also attempts to claim pending single-song purchases when
-// a user signs in and a `pendingSingleSongId` exists in localStorage.
+// This component shows a banner when the checkout success page indicates
+// there are pending credits to claim; users must sign in to claim them.
 
 export default function PendingClaimBanner() {
   const [pending, setPending] = useState<number | null>(null);
@@ -23,57 +22,15 @@ export default function PendingClaimBanner() {
       else if (tier === 'weekly') credits = 3;
 
       if (credits > 0) {
-        // Persist pending credits for same-browser sign-in as a plain number
-        try {
-          const existing = localStorage.getItem('pendingCredits');
-          if (!existing) {
-            localStorage.setItem('pendingCredits', String(credits));
-          }
-        } catch (e) {}
+        // Show a banner indicating there are pending credits to claim after sign-in.
         setPending(credits);
       }
     } catch (e) {
       console.error('PendingClaimBanner error', e);
     }
   }, []);
-
-  useEffect(() => {
-    // Attempt to claim a pending single-song purchase when the user signs in.
-    try {
-      if (typeof window === 'undefined') return;
-      const pendingSongId = localStorage.getItem('pendingSingleSongId');
-      if (!pendingSongId) return;
-
-      const supabase = createClientComponentClient();
-      (async () => {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) return; // not signed in yet
-
-          // Call claim endpoint to attach the purchase to this user
-          const res = await fetch('/api/credits/claim', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ songId: pendingSongId })
-          });
-
-          const body = await res.json();
-          if (body && body.success) {
-            // Clear pending markers and refresh UI
-            try { localStorage.removeItem('pendingSingleSongId'); } catch (e) {}
-            try { localStorage.removeItem('pendingCredits'); } catch (e) {}
-            setPending(null);
-            // Optionally reload to reflect unlocked song
-            window.location.reload();
-          }
-        } catch (e) {
-          console.warn('Auto-claim pending purchase failed', e);
-        }
-      })();
-    } catch (e) {
-      console.error('PendingClaimBanner claim effect failed', e);
-    }
-  }, []);
+  // Note: auto-claim for guest purchases has been removed. Users should sign in
+  // to claim credits or single purchases via server-side fulfillment.
 
   if (!pending) return null;
 

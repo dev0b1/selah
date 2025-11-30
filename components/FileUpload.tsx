@@ -109,8 +109,8 @@ export default function FileUpload({
             exit={{ opacity: 0, y: -10 }}
             className={`
               relative border-3 border-dashed rounded-xl p-8 md:p-12 text-center cursor-pointer
-              transition-all duration-300 bg-exroast-black/50
-              ${isDragging ? 'border-exroast-pink bg-exroast-pink/10' : 'border-gray-700'}
+              transition-all duration-300 bg-daily-bg/50
+              ${isDragging ? 'border-daily-pink bg-daily-pink/10' : 'border-gray-700'}
               ${error ? 'border-red-500' : ''}
             `}
             onDragEnter={handleDragEnter}
@@ -131,15 +131,15 @@ export default function FileUpload({
               animate={isDragging ? { scale: 1.1 } : { scale: 1 }}
               className="flex flex-col items-center gap-4"
             >
-              <div className="w-16 h-16 rounded-full bg-exroast-pink/20 flex items-center justify-center">
-                <FiUpload className="w-8 h-8 text-exroast-pink" />
+              <div className="w-16 h-16 rounded-full bg-daily-pink/20 flex items-center justify-center">
+                <FiUpload className="w-8 h-8 text-daily-pink" />
               </div>
 
               <div>
                 <h3 className="text-lg font-black text-white mb-2">
                   {isDragging ? 'Drop the receipts! 🔥' : 'Drop Those Receipts 📸'}
                 </h3>
-                <p className="text-exroast-gold text-sm mb-1 font-bold">
+                <p className="text-daily-accent text-sm mb-1 font-bold">
                   Drag & drop or click to upload
                 </p>
                 <p className="text-gray-400 text-xs">
@@ -161,7 +161,7 @@ export default function FileUpload({
             exit={{ opacity: 0, scale: 0.95 }}
             className="relative"
           >
-            <div className="relative rounded-xl overflow-hidden border-2 border-exroast-gold bg-exroast-black">
+            <div className="relative rounded-xl overflow-hidden border-2 border-daily-accent bg-daily-bg">
               <img
                 src={preview}
                 alt="Chat screenshot preview"
@@ -173,14 +173,14 @@ export default function FileUpload({
                   e.stopPropagation();
                   handleClear();
                 }}
-                className="absolute top-3 right-3 w-10 h-10 bg-exroast-pink hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors shadow-lg"
+                className="absolute top-3 right-3 w-10 h-10 bg-daily-pink hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors shadow-lg"
                 aria-label="Remove image"
               >
                 <FiX className="w-6 h-6" />
               </button>
             </div>
 
-            <p className="text-center text-sm text-exroast-gold mt-3 font-bold">
+            <p className="text-center text-sm text-daily-accent mt-3 font-bold">
               Receipts uploaded! Ready to roast 🔥
             </p>
           </motion.div>

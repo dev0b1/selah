@@ -34,7 +34,7 @@ export function UpsellModal({ isOpen, onClose, onUpgrade }: UpsellModalProps) {
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[95%] max-w-2xl max-h-[90vh] overflow-y-auto px-4"
           >
-            <div className="bg-gradient-to-br from-[#0b0710] to-[#120816] rounded-2xl p-6 sm:p-8 border border-exroast-pink/30 shadow-2xl">
+            <div className="bg-gradient-to-br from-[#0b0710] to-[#120816] rounded-2xl p-6 sm:p-8 border border-daily-pink/30 shadow-2xl">
               <button
                 onClick={onClose}
                 className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -57,15 +57,15 @@ with your names, your story, and your chosen vibe.`}
               <div className="space-y-3 sm:space-y-4 mb-4">
                 <ul className="max-w-[48rem] mx-auto space-y-2 text-gray-200 text-sm sm:text-base text-left">
                   <li className="flex items-start gap-3">
-                    <FaCheck className="text-exroast-pink mt-1 flex-shrink-0" />
+                    <FaCheck className="text-daily-pink mt-1 flex-shrink-0" />
                     <span>✓ Lyrics about "he cheated" + your exact details</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <FaCheck className="text-exroast-pink mt-1 flex-shrink-0" />
+                    <FaCheck className="text-daily-pink mt-1 flex-shrink-0" />
                     <span>✓ High-quality vocals + clean mastering</span>
                   </li>
                   <li className="flex items-start gap-3">
-                    <FaCheck className="text-exroast-pink mt-1 flex-shrink-0" />
+                    <FaCheck className="text-daily-pink mt-1 flex-shrink-0" />
                     <span>✓ Downloadable MP3 + no watermark</span>
                   </li>
                 </ul>

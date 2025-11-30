@@ -9,6 +9,14 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // New DailyMotiv palette (kept exroast for compatibility)
+        daily: {
+          bg: "#0f1724",
+          primary: "#6d28d9",
+          accent: "#f59e0b",
+          pink: "#ff4d7e",
+          soft: "#7c3aed",
+        },
         exroast: {
           bg: "#0b1020",
           primary: "#7c3aed",

@@ -100,31 +100,10 @@ export default function SuccessPage() {
               setIsGranting(false);
             }
           } else {
-            // Guest: persist a local token and pendingCredits so they can use the credit immediately in this browser
-            try {
-              const existing = localStorage.getItem('pendingCredits');
-              const existingNum = existing ? parseInt(existing, 10) : 0;
-              localStorage.setItem('pendingCredits', String(existingNum + creditsToGrant));
-              // store a one-time token to indicate this browser has an available paid credit
-              const makeToken = () => {
-                try {
-                  // prefer crypto.randomUUID when available
-                  // @ts-ignore
-                  if (typeof crypto !== 'undefined' && typeof (crypto as any).randomUUID === 'function') {
-                    // @ts-ignore
-                    return (crypto as any).randomUUID();
-                  }
-                } catch (e) {}
-                return 'local-' + Math.random().toString(36).slice(2, 12);
-              };
-              const token = makeToken();
-              localStorage.setItem('pendingCreditToken', token);
-              setGrantMessage(`Saved ${creditsToGrant} demo credit locally — you can use it now in this browser.`);
-              setIsConfirmed(true);
-            } catch (e) {
-              console.warn('Failed to persist pending credit locally', e);
-              setGrantMessage('Saved pending credit failed locally — please sign in to claim after confirmation.');
-            }
+            // Guest/local persistence removed: inform user they can sign in to
+            // claim credits immediately. Credits will be applied to the account
+            // after webhook confirmation.
+            setGrantMessage('Credits will be applied after confirmation. Please sign in to claim them immediately.');
           }
         } catch (e) {
           console.warn('Failed to detect user session for immediate grant', e);
@@ -132,7 +111,7 @@ export default function SuccessPage() {
 
         // If this is a single-song checkout, persist songId so guest can claim after sign-in
         if (params.get('type') === 'single' && songId) {
-          try { localStorage.setItem('pendingSingleSongId', songId); } catch (e) { console.warn('Failed to save pendingSingleSongId', e); }
+          // Guest/local claim removed; server will attach purchase to account after webhook
         }
       } catch (e) {
         console.warn('Success page init error', e);
@@ -195,8 +174,8 @@ export default function SuccessPage() {
           return;
         }
 
-        // Persist pending song id so app can find it later
-        try { localStorage.setItem('pendingSingleSongId', data.songId); } catch (e) {}
+        // Removed client-side persistence of pendingSingleSongId; server will
+        // attach purchases after webhook fulfillment.
 
         // If server returned a final video URL, redirect to the unlocked page immediately
         if (data.videoUrl) {

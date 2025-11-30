@@ -9,7 +9,7 @@ import { LoadingAnimation } from "@/components/LoadingAnimation";
 import { SocialShareButtons } from "@/components/SocialShareButtons";
 import { LyricsOverlay } from "@/components/LyricsOverlay";
 import { FaDownload, FaPlay, FaPause } from "react-icons/fa";
-import { saveSongAudio, getSongObjectURL } from '../lib/offline-store';
+import { saveSongAudio, getSongObjectURL } from '@/lib/offline-store';
 
 interface Song {
   id: string;
@@ -63,7 +63,7 @@ export default function SongUnlockedClient() {
   // Clear any pending single-song id once the song is purchased/viewed
   useEffect(() => {
     if (!song?.isPurchased) return;
-    try { localStorage.removeItem('pendingSingleSongId'); } catch (e) { /* ignore */ }
+    // Pending single-song guest flows removed — rely on server-side fulfillment.
   }, [song?.isPurchased]);
 
   // Check if a generated video exists in `public/generated/<songId>.mp4`
@@ -204,17 +204,7 @@ export default function SongUnlockedClient() {
         setSong((s) => s ? ({ ...s, fullUrl: objectUrl }) : s);
 
         // Add/refresh recentRoasts entry so this purchased song shows in Recent
-        try {
-          const raw = localStorage.getItem('recentRoasts');
-          let recentRoasts = raw ? JSON.parse(raw) : [];
-          if (!Array.isArray(recentRoasts)) recentRoasts = [];
-          // remove existing entry for this id
-          recentRoasts = recentRoasts.filter((r: any) => r.id !== song.id);
-          recentRoasts.unshift({ id: song.id, title: song.title, timestamp: new Date().toISOString() });
-          localStorage.setItem('recentRoasts', JSON.stringify(recentRoasts.slice(0, 3)));
-        } catch (e) {
-          console.warn('Failed to update recentRoasts', e);
-        }
+        // Recent items are persisted server-side; client-side persistence removed.
 
         savedLocalRef.current = true;
       } catch (e) {
@@ -278,7 +268,7 @@ export default function SongUnlockedClient() {
                     <div className="mt-3">
                       <span className="inline-flex items-center gap-2 text-sm text-gray-300">
                         Powered by
-                        <span className="ml-1 inline-block bg-white text-black text-xs font-semibold uppercase px-2 py-1 rounded">exroast.ai</span>
+                        <span className="ml-1 inline-block bg-white text-black text-xs font-semibold uppercase px-2 py-1 rounded">DailyMotiv</span>
                       </span>
                     </div>
                   </div>
@@ -290,7 +280,7 @@ export default function SongUnlockedClient() {
                         if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
                         else { audioRef.current.play().catch(() => {}); setIsPlaying(true); }
                       }}
-                      className="bg-exroast-pink text-white px-6 py-3 rounded-full font-bold"
+                      className="bg-daily-pink text-white px-6 py-3 rounded-full font-bold"
                     >
                       {isPlaying ? <><FaPause className="inline mr-2"/> Pause</> : <><FaPlay className="inline mr-2"/> Play Full Song</>}
                     </button>
@@ -319,7 +309,7 @@ export default function SongUnlockedClient() {
                         href={`/generated/${song?.id}.mp4`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-exroast-pink text-white px-6 py-3 rounded-full font-bold inline-flex items-center gap-2"
+                        className="bg-daily-pink text-white px-6 py-3 rounded-full font-bold inline-flex items-center gap-2"
                         onClick={() => track('view_video', { songId: song?.id })}
                       >
                         View Video

@@ -3,15 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-  "dev": "next dev -p 5000 -H localhost",
+    "dev": "next dev -p 5000 -H localhost",
     "build": "next build",
-  "start": "next start -p 5000 -H localhost",
+    "start": "next start -p 5000 -H localhost",
     "lint": "next lint",
-    "db:push": "drizzle-kit push",
-    "db:seed": "tsx scripts/seed-templates.ts"
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.1.2",
     "@neondatabase/serverless": "^1.0.2",
     "@paddle/paddle-js": "^1.5.1",
     "@paddle/paddle-node-sdk": "^3.4.0",
@@ -22,7 +22,6 @@
     "@tsparticles/engine": "^3.9.1",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.9.1",
-    "@types/fluent-ffmpeg": "^2.1.28",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.4",
     "@types/string-similarity": "^4.0.2",
@@ -50,6 +49,7 @@
     "ws": "^8.18.3"
   },
   "devDependencies": {
+    "@types/fluent-ffmpeg": "^2.1.28",
     "@types/react-dom": "^19.2.3",
     "@types/ws": "^8.18.1",
     "tsx": "^4.20.6"

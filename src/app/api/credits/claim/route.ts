@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { db } from '@/server/db';
-import { transactions, songs } from '@/src/db/schema';
+import { transactions } from '@/src/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
@@ -63,15 +63,8 @@ export async function POST(request: NextRequest) {
     // Attach transaction to this user
     await db.update(transactions).set({ userId: user.id }).where(eq(transactions.id, tx.id));
 
-    // If this transaction unlocked a song, assign the song to this user as well
-    if (tx.songId) {
-      const songRows = await db.select().from(songs).where(eq(songs.id, tx.songId)).limit(1);
-      if (songRows && songRows.length > 0) {
-        const song = songRows[0];
-        // Mark song as purchased and attach user
-        await db.update(songs).set({ userId: user.id, isPurchased: true, purchaseTransactionId: tx.id, updatedAt: new Date() }).where(eq(songs.id, song.id));
-      }
-    }
+    // If this transaction unlocked a song, the songs model has been removed in DailyMotiv.
+    // We attach the transaction to the user and skip song assignment.
 
     return NextResponse.json({ success: true, claimed: true, transactionId: tx.id });
   } catch (error) {

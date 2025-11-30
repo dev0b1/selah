@@ -41,7 +41,7 @@ export default function AccountPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <FaSpinner className="animate-spin text-4xl text-exroast-gold" />
+        <FaSpinner className="animate-spin text-4xl text-daily-gold" />
       </div>
     );
   }

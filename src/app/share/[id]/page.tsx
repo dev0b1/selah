@@ -170,7 +170,7 @@ export default function SharePage() {
                   </h3>
                   <p className="text-white italic mb-4">"{song.story}"</p>
                   <div className="flex items-center space-x-2">
-                    <span className="px-3 py-1 bg-exroast-gold text-black rounded-full text-sm font-medium">
+                    <span className="px-3 py-1 bg-daily-gold text-black rounded-full text-sm font-medium">
                       {song.style.charAt(0).toUpperCase() + song.style.slice(1)} Vibe
                     </span>
                   </div>
@@ -183,7 +183,7 @@ export default function SharePage() {
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-lg text-gradient">Track Preview</h3>
                       {!song.isPurchased && (
-                        <span className="text-xs bg-exroast-pink text-white px-3 py-1 rounded-full font-medium">
+                        <span className="text-xs bg-daily-pink text-white px-3 py-1 rounded-full font-medium">
                           Preview (10s)
                         </span>
                       )}
@@ -202,7 +202,7 @@ export default function SharePage() {
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={togglePlay}
-                        className="w-14 h-14 rounded-full bg-exroast-pink hover:bg-exroast-gold text-white flex items-center justify-center transition-colors flex-shrink-0"
+                        className="w-14 h-14 rounded-full bg-daily-pink hover:bg-daily-gold text-white flex items-center justify-center transition-colors flex-shrink-0"
                       >
                         {isPlaying ? <FaPause className="text-xl" /> : <FaPlay className="text-xl ml-1" />}
                       </motion.button>
@@ -219,7 +219,7 @@ export default function SharePage() {
                               setCurrentTime(parseFloat(e.target.value));
                             }
                           }}
-                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-exroast-pink"
+                          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-daily-pink"
                         />
                         <div className="flex justify-between text-xs text-white mt-2">
                           <span>{formatTime(currentTime)}</span>

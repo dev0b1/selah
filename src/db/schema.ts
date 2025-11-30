@@ -1,11 +1,12 @@
 import { pgTable, text, timestamp, uuid, boolean, integer, index } from 'drizzle-orm/pg-core';
 
+// DailyMotiv-focused schema (camelCase columns to match existing code)
+
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
   name: text('name'),
   avatarUrl: text('avatar_url'),
-  // Per-user demo variant order (comma-separated filenames) and index for round-robin
   demoVariantOrder: text('demo_variant_order'),
   demoVariantIndex: integer('demo_variant_index').default(0).notNull(),
   currentStreak: integer('current_streak').default(0).notNull(),
@@ -15,52 +16,31 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
-// Audio generation jobs and songs removed: app no longer generates audio server-side.
-// Keeping history, daily_check_ins and subscriptions for core features.
+export const dailyQuotes = pgTable('daily_quotes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  quoteText: text('quote_text').notNull(),
+  audioUrl: text('audio_url'),
+  sentAt: timestamp('sent_at').defaultNow().notNull(),
+  deliveryMethod: text('delivery_method').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('daily_quotes_user_id_idx').on(table.userId),
+  sentAtIdx: index('daily_quotes_sent_at_idx').on(table.sentAt),
+}));
 
 export const subscriptions = pgTable('subscriptions', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().unique(),
-  paddleSubscriptionId: text('paddle_subscription_id'),
   tier: text('tier').notNull(),
   status: text('status').default('active').notNull(),
-  songsRemaining: integer('songs_remaining').default(0).notNull(),
+  paddleSubscriptionId: text('paddle_subscription_id'),
   creditsRemaining: integer('credits_remaining').default(0).notNull(),
-  // Optional expiry for short-term benefits like weekly trials or weekly plans
-  dailyCheckinsExpiresAt: timestamp('daily_checkins_expires_at'),
   renewsAt: timestamp('renews_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
 }, (table) => ({
   userIdIdx: index('subscriptions_user_id_idx').on(table.userId),
-}));
-
-export const templates = pgTable('templates', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  filename: text('filename').notNull(),
-  keywords: text('keywords').notNull(),
-  mode: text('mode').notNull(),
-  mood: text('mood').notNull(),
-  storageUrl: text('storage_url').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
-}, (table) => ({
-  modeIdx: index('templates_mode_idx').on(table.mode),
-}));
-
-export const history = pgTable('history', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id'),
-  story: text('story').notNull(),
-  mode: text('mode').notNull(),
-  title: text('title').notNull(),
-  notes: text('notes'),
-  audioUrl: text('audio_url'), // optional: may be null when no audio exists
-  isTemplate: boolean('is_template').default(false).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  userIdIdx: index('history_user_id_idx').on(table.userId),
-  createdAtIdx: index('history_created_at_idx').on(table.createdAt),
 }));
 
 export const transactions = pgTable('transactions', {
@@ -77,22 +57,34 @@ export const transactions = pgTable('transactions', {
   userIdIdx: index('transactions_user_id_idx').on(table.userId),
 }));
 
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
+export const history = pgTable('history', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id'),
+  story: text('story').notNull(),
+  mode: text('mode').notNull(),
+  title: text('title').notNull(),
+  notes: text('notes'),
+  audioUrl: text('audio_url'), // optional
+  isTemplate: boolean('is_template').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('history_user_id_idx').on(table.userId),
+  createdAtIdx: index('history_created_at_idx').on(table.createdAt),
+}));
 
-// Songs table removed; audio generation is out of scope for current app.
-
-export type Subscription = typeof subscriptions.$inferSelect;
-export type InsertSubscription = typeof subscriptions.$inferInsert;
-
-export type Template = typeof templates.$inferSelect;
-export type InsertTemplate = typeof templates.$inferInsert;
-
-export type History = typeof history.$inferSelect;
-export type InsertHistory = typeof history.$inferInsert;
-
-export type Transaction = typeof transactions.$inferSelect;
-export type InsertTransaction = typeof transactions.$inferInsert;
+export const audioNudges = pgTable('audio_nudges', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull(),
+  userStory: text('user_story').notNull(),
+  dayNumber: integer('day_number').notNull(),
+  audioUrl: text('audio_url'),
+  motivationText: text('motivation_text').notNull(),
+  creditsUsed: integer('credits_used').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  userIdIdx: index('audio_nudges_user_id_idx').on(table.userId),
+  createdAtIdx: index('audio_nudges_created_at_idx').on(table.createdAt),
+}));
 
 export const userPreferences = pgTable('user_preferences', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -109,42 +101,6 @@ export const userPreferences = pgTable('user_preferences', {
   userIdIdx: index('user_preferences_user_id_idx').on(table.userId),
 }));
 
-export const dailyQuotes = pgTable('daily_quotes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull(),
-  quoteText: text('quote_text').notNull(),
-  audioUrl: text('audio_url'),
-  sentAt: timestamp('sent_at').defaultNow().notNull(),
-  deliveryMethod: text('delivery_method').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  userIdIdx: index('daily_quotes_user_id_idx').on(table.userId),
-  sentAtIdx: index('daily_quotes_sent_at_idx').on(table.sentAt),
-}));
-
-export const audioNudges = pgTable('audio_nudges', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull(),
-  userStory: text('user_story').notNull(),
-  dayNumber: integer('day_number').notNull(),
-  audioUrl: text('audio_url'), // optional — audio generation may be disabled
-  motivationText: text('motivation_text').notNull(),
-  creditsUsed: integer('credits_used').default(0).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  userIdIdx: index('audio_nudges_user_id_idx').on(table.userId),
-  createdAtIdx: index('audio_nudges_created_at_idx').on(table.createdAt),
-}));
-
-export type UserPreference = typeof userPreferences.$inferSelect;
-export type InsertUserPreference = typeof userPreferences.$inferInsert;
-
-export type DailyQuote = typeof dailyQuotes.$inferSelect;
-export type InsertDailyQuote = typeof dailyQuotes.$inferInsert;
-
-export type AudioNudge = typeof audioNudges.$inferSelect;
-export type InsertAudioNudge = typeof audioNudges.$inferInsert;
-
 export const dailyCheckIns = pgTable('daily_check_ins', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull(),
@@ -158,6 +114,25 @@ export const dailyCheckIns = pgTable('daily_check_ins', {
   userIdIdx: index('daily_check_ins_user_id_idx').on(table.userId),
   createdAtIdx: index('daily_check_ins_created_at_idx').on(table.createdAt),
 }));
+
+// Export TypeScript helper types
+export type User = typeof users.$inferSelect;
+export type InsertUser = typeof users.$inferInsert;
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = typeof transactions.$inferInsert;
+
+export type History = typeof history.$inferSelect;
+export type InsertHistory = typeof history.$inferInsert;
+
+export type AudioNudge = typeof audioNudges.$inferSelect;
+export type InsertAudioNudge = typeof audioNudges.$inferInsert;
+
+export type UserPreference = typeof userPreferences.$inferSelect;
+export type InsertUserPreference = typeof userPreferences.$inferInsert;
 
 export type DailyCheckIn = typeof dailyCheckIns.$inferSelect;
 export type InsertDailyCheckIn = typeof dailyCheckIns.$inferInsert;

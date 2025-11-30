@@ -29,34 +29,16 @@ export default function HistoryPage() {
 
   const loadHistory = async () => {
     try {
-      if (typeof window === 'undefined') return;
-      
-      let recentHistory: any[] = [];
-      try {
-        const raw = localStorage.getItem('recentHistory');
-        if (raw) recentHistory = JSON.parse(raw);
-        if (!Array.isArray(recentHistory)) recentHistory = [];
-      } catch (err) {
-        console.warn('Invalid recentHistory in localStorage, resetting it.', err, localStorage.getItem('recentHistory'));
-        recentHistory = [];
-      }
-      
-      if (recentHistory.length === 0) {
+      // Load history from server for authenticated users. Guest/local
+      // recent-history persistence has been removed.
+      const res = await fetch('/api/user/history');
+      if (!res.ok) {
+        setEntries([]);
         setLoading(false);
         return;
       }
-
-      const roastPromises = recentHistory.map(async (item: any) => {
-        try {
-          const response = await fetch(`/api/song/${item.id}`);
-          const data = await response.json();
-          return data.success ? data.song : null;
-        } catch {
-          return null;
-        }
-      });
-      const loadedRoasts = (await Promise.all(roastPromises)).filter(Boolean);
-      setEntries(loadedRoasts as HistoryEntry[]);
+      const body = await res.json();
+      setEntries(body.history || []);
     } catch (error) {
       console.error('Error loading history:', error);
     } finally {
@@ -91,7 +73,7 @@ export default function HistoryPage() {
             className="mb-12"
           >
             <h1 className="text-5xl font-black mb-4">
-              <span className="bg-gradient-to-r from-exroast-pink to-exroast-gold bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-daily-pink to-daily-accent bg-clip-text text-transparent">
                 Your History 🔥
               </span>
             </h1>
@@ -104,19 +86,19 @@ export default function HistoryPage() {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-8 bg-gradient-to-r from-exroast-pink/20 to-exroast-gold/20 border-2 border-exroast-gold rounded-xl p-6"
+              className="mb-8 bg-gradient-to-r from-daily-pink/20 to-daily-accent/20 border-2 border-daily-accent rounded-xl p-6"
             >
               <div className="flex items-start gap-4">
-                <FaCrown className="text-exroast-gold text-3xl flex-shrink-0 mt-1" />
+                <FaCrown className="text-daily-accent text-3xl flex-shrink-0 mt-1" />
                 <div className="flex-1">
-                  <h3 className="text-xl font-black text-exroast-gold mb-2">
+                  <h3 className="text-xl font-black text-daily-accent mb-2">
                     Upgrade to Pro for Unlimited History
                   </h3>
                   <p className="text-gray-300 mb-4">
                     Save all your roasts forever, plus get personalized AI songs from your stories and screenshots!
                   </p>
                   <Link href="/pricing">
-                    <button className="bg-gradient-to-r from-exroast-pink to-exroast-gold text-white font-black px-6 py-3 rounded-full hover:scale-105 transition-transform">
+                    <button className="bg-gradient-to-r from-daily-pink to-daily-accent text-white font-black px-6 py-3 rounded-full hover:scale-105 transition-transform">
                       View Pro Features
                     </button>
                   </Link>
@@ -138,7 +120,7 @@ export default function HistoryPage() {
               <p className="text-gray-400 mb-8">
                 Create your first entry to see it here
               </p>
-              <AuthAwareCTA className="bg-gradient-to-r from-exroast-pink to-exroast-gold text-white font-black px-8 py-4 rounded-full text-lg hover:scale-105 transition-transform">
+              <AuthAwareCTA className="bg-gradient-to-r from-daily-pink to-daily-accent text-white font-black px-8 py-4 rounded-full text-lg hover:scale-105 transition-transform">
                 Create Your First Entry ✨
               </AuthAwareCTA>
             </motion.div>
@@ -150,7 +132,7 @@ export default function HistoryPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="bg-gray-900/50 backdrop-blur-sm border border-exroast-pink/30 rounded-xl p-6 hover:border-exroast-pink/60 transition-all"
+                  className="bg-gray-900/50 backdrop-blur-sm border border-daily-pink/30 rounded-xl p-6 hover:border-daily-pink/60 transition-all"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -170,7 +152,7 @@ export default function HistoryPage() {
                       
                       <div className="flex gap-3">
                         <Link href={`/preview?songId=${entry.id}`}>
-                          <button className="flex items-center gap-2 bg-exroast-pink hover:bg-exroast-pink/80 text-white font-bold px-4 py-2 rounded-lg transition-colors">
+                          <button className="flex items-center gap-2 bg-daily-pink hover:bg-daily-pink/80 text-white font-bold px-4 py-2 rounded-lg transition-colors">
                             <FaPlay /> Play
                           </button>
                         </Link>

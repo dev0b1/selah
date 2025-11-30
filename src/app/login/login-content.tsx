@@ -144,7 +144,7 @@ export default function LoginContent() {
               <pre className="whitespace-pre-wrap break-words">{JSON.stringify(debugInfo, null, 2)}</pre>
               {debugInfo?.providerUrl && (
                 <div className="mt-2 flex gap-2">
-                  <a className="text-exroast-gold underline" href={debugInfo.providerUrl} target="_blank" rel="noreferrer">Open provider URL</a>
+                  <a className="text-daily-gold underline" href={debugInfo.providerUrl} target="_blank" rel="noreferrer">Open provider URL</a>
                   <button className="ml-auto text-sm text-gray-200 bg-white/5 px-3 py-1 rounded" onClick={() => { navigator.clipboard?.writeText(debugInfo.providerUrl); }}>Copy URL</button>
                 </div>
               )}
@@ -166,7 +166,7 @@ export default function LoginContent() {
             onClick={() => router.push("/app")}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full bg-exroast-pink/20 hover:bg-exroast-pink/30 border-2 border-exroast-pink text-white py-4 px-6 rounded-xl font-black text-lg transition-all duration-300"
+            className="w-full bg-daily-pink/20 hover:bg-daily-pink/30 border-2 border-daily-pink text-white py-4 px-6 rounded-xl font-black text-lg transition-all duration-300"
           >
             Continue as Guest
           </motion.button>
@@ -176,16 +176,16 @@ export default function LoginContent() {
             <p className="text-gray-400 text-sm font-bold">Benefits of signing in:</p>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-center gap-2">
-                <span className="text-exroast-gold">✓</span> Save all your roasts
+                <span className="text-daily-accent">✓</span> Save all your history
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-exroast-gold">✓</span> Manage subscriptions
+                <span className="text-daily-accent">✓</span> Manage subscriptions
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-exroast-gold">✓</span> Download your MP3s
+                <span className="text-daily-accent">✓</span> Download your tracks
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-exroast-gold">✓</span> Priority generation
+                <span className="text-daily-accent">✓</span> Priority nudges
               </li>
             </ul>
           </div>

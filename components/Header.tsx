@@ -74,57 +74,15 @@ export function Header({ userProp }: { userProp?: any }) {
       if (mounted) setUser(session?.user || null);
     });
 
-    // When a user signs in, first check if we have an intended purchase saved
-    // (set before sign-in). If present, resume the checkout automatically.
-    // Otherwise, check pro-status and show the subscription prompt once.
+    // When a user signs in, check pro-status and show the subscription prompt
+    // if they're not pro. Previously this relied on client-side resume/seen
+    // flags; that behavior has been removed in favor of server-driven flows
+    // and explicit user actions.
     (async () => {
-      if (typeof window === 'undefined') return;
-      // If a checkout was just started, avoid auto-resume/auto-prompts that
-      // could navigate the user away from the checkout flow. `inCheckout` is
-      // set by the subscription UI before opening Paddle and cleared by the
-      // success page or other completion handlers.
-      try {
-        const inCheckout = localStorage.getItem('inCheckout');
-        if (inCheckout === 'true') {
-          // skip auto-resume/prompt while checkout is active
-          return;
-        }
-      } catch (e) {
-        // ignore localStorage errors
-      }
       try {
         const { data: { session } } = await supabase.auth.getSession();
         const currentUser = session?.user || null;
         if (currentUser) {
-          // Resume intended purchase if present
-          try {
-            const ip = localStorage.getItem('intendedPurchase');
-            if (ip) {
-              // remove it immediately so repeated attempts don't trigger twice
-              localStorage.removeItem('intendedPurchase');
-              const parsed = JSON.parse(ip);
-              // expiry guard: ignore intended purchases older than 10 minutes
-              const ageMs = Date.now() - (parsed?.ts || 0);
-              const TEN_MIN = 10 * 60 * 1000;
-              if (ageMs > TEN_MIN) {
-                // expired, fall back to normal subscription prompt flow
-              } else {
-                // small delay to allow any client scripts (Paddle) to initialize
-                setTimeout(() => {
-                  if (parsed?.type === 'single') {
-                    openSingleCheckout({ songId: parsed.songId || null });
-                  } else if (parsed?.type === 'tier') {
-                    openTierCheckout(parsed.tierId, parsed.priceId || undefined);
-                  }
-                }, 200);
-                return;
-              }
-            }
-          } catch (e) {
-            // ignore localStorage / JSON errors
-          }
-
-          // call our pro-status endpoint which accepts x-user-id header
           const res = await fetch('/api/user/pro-status', {
             method: 'GET',
             headers: { 'x-user-id': currentUser.id }
@@ -132,14 +90,7 @@ export function Header({ userProp }: { userProp?: any }) {
           if (res.ok) {
             const json = await res.json();
             const isPro = !!json?.isPro;
-            try {
-              const seen = localStorage.getItem('seenSubscriptionPrompt');
-              if (!isPro && seen !== 'true') {
-                setShowSubscriptionPrompt(true);
-              }
-            } catch (e) {
-              // ignore localStorage errors
-            }
+            if (!isPro) setShowSubscriptionPrompt(true);
           }
         }
       } catch (e) {
@@ -147,23 +98,7 @@ export function Header({ userProp }: { userProp?: any }) {
       }
     })();
 
-    // show one-time toast after sign in or credits claimed
-    try {
-      if (typeof window !== 'undefined') {
-        const claimed = localStorage.getItem('claimedCredits');
-        if (claimed) {
-          const c = Number(claimed) || 0;
-          setToastMessage(`Claimed ${c} credit${c !== 1 ? 's' : ''}`);
-          localStorage.removeItem('claimedCredits');
-          // clear after a short period
-          setTimeout(() => setToastMessage(null), 4000);
-        } else if (localStorage.getItem('justSignedIn') === 'true') {
-          setToastMessage('Signed in successfully');
-          localStorage.removeItem('justSignedIn');
-          setTimeout(() => setToastMessage(null), 4000);
-        }
-      }
-    } catch (e) {}
+    // Client-side toasts based on temporary browser markers have been removed.
 
     return () => {
       mounted = false;
@@ -224,14 +159,14 @@ export function Header({ userProp }: { userProp?: any }) {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-exroast-black/95 backdrop-blur-sm border-b border-exroast-pink/20"
+      className="fixed top-0 left-0 right-0 z-50 bg-daily-bg/95 backdrop-blur-sm border-b border-daily-pink/20"
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2 group">
             <motion.div
               whileHover={{ scale: 1.05, rotate: 2 }}
-              className="text-exroast-primary"
+              className="text-daily-primary"
               style={{ filter: 'brightness(1.05) contrast(1.05)' }}
             >
               <span className="text-3xl">⚡️</span>
@@ -247,13 +182,13 @@ export function Header({ userProp }: { userProp?: any }) {
               <>
                 <Link
                   href="/pricing"
-                  className="text-exroast-gold hover:text-white transition-colors duration-200 font-bold"
+                  className="text-daily-accent hover:text-white transition-colors duration-200 font-bold"
                 >
                   Pricing
                 </Link>
                 <Link
                   href="/#faq"
-                  className="text-exroast-gold hover:text-white transition-colors duration-200 font-bold"
+                  className="text-daily-gold hover:text-white transition-colors duration-200 font-bold"
                 >
                   FAQ
                 </Link>
@@ -262,7 +197,7 @@ export function Header({ userProp }: { userProp?: any }) {
 
             {!user && pathname !== '/app' && (
               <Link href={"/daily"}>
-                <button className="bg-gradient-to-r from-exroast-primary to-exroast-primary/90 text-white px-8 py-3 rounded-full font-black text-lg transition-all duration-200 border-2 border-exroast-accent shadow-lg">
+                <button className="bg-gradient-to-r from-daily-primary to-daily-primary/90 text-white px-8 py-3 rounded-full font-black text-lg transition-all duration-200 border-2 border-daily-accent shadow-lg">
                   <span style={{ filter: 'brightness(1.05) contrast(1.05)' }}>Daily Vent 💪</span>
                 </button>
               </Link>
@@ -273,7 +208,7 @@ export function Header({ userProp }: { userProp?: any }) {
         <div className="relative flex items-center gap-3" ref={profileRef}>
                 {/* Desktop credits + upgrade/buy UI - non-navigable account area */}
                 <div className="hidden md:flex items-center gap-4">
-                  <div className="text-sm text-white/90">Credits: <span className="font-bold text-exroast-pink">{mobileCredits ?? 0}</span></div>
+                  <div className="text-sm text-white/90">Credits: <span className="font-bold text-daily-pink">{mobileCredits ?? 0}</span></div>
                   <button
                     onClick={async () => { try { await openTierCheckout('premium'); } catch (e) { console.error('Open checkout failed', e); window.location.href = '/pricing'; } }}
                     className="hidden lg:inline-flex items-center bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black px-3 py-2 rounded-full font-bold"
@@ -301,7 +236,7 @@ export function Header({ userProp }: { userProp?: any }) {
                   aria-haspopup="menu"
                   aria-expanded={showSettingsMenu}
                   title={user.email}
-                  className="flex items-center gap-3 bg-white/5 px-3 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-exroast-pink"
+                  className="flex items-center gap-3 bg-white/5 px-3 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-daily-pink"
                 >
                   {user?.user_metadata?.avatar_url ? (
                     <img
@@ -334,7 +269,7 @@ export function Header({ userProp }: { userProp?: any }) {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-exroast-gold hover:text-white transition-colors"
+            className="md:hidden text-daily-accent hover:text-white transition-colors"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <FaTimes className="text-2xl" /> : <FaBars className="text-2xl" />}
@@ -353,20 +288,20 @@ export function Header({ userProp }: { userProp?: any }) {
             >
               <button
                 onClick={async () => { setMobileMenuOpen(false); try { await openTierCheckout('premium'); } catch (e) { console.error('Open checkout failed', e); window.location.href = '/pricing'; } }}
-                className="w-full bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black px-4 py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-exroast-gold/60"
+                className="w-full bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black px-4 py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-daily-accent/60"
               >
                 Upgrade
               </button>
               <Link
                 href="/#faq"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-exroast-gold hover:text-white transition-colors duration-200 font-bold py-2 focus:outline-none focus:ring-4 focus:ring-exroast-gold/40"
+                className="block text-daily-accent hover:text-white transition-colors duration-200 font-bold py-2 focus:outline-none focus:ring-4 focus:ring-daily-accent/40"
               >
                 FAQ
               </Link>
               {!user && pathname !== '/app' && (
                 <Link href="/daily" onClick={() => setMobileMenuOpen(false)}>
-                  <button className="w-full bg-gradient-to-r from-exroast-primary to-exroast-primary/90 text-white px-8 py-3 rounded-full font-black text-lg transition-all duration-200 border-2 border-exroast-accent shadow-lg">
+                  <button className="w-full bg-gradient-to-r from-daily-primary to-daily-primary/90 text-white px-8 py-3 rounded-full font-black text-lg transition-all duration-200 border-2 border-daily-accent shadow-lg">
                     <span style={{ filter: 'brightness(1.05) contrast(1.05)' }}>Daily Vent 💪</span>
                   </button>
                 </Link>
@@ -386,7 +321,7 @@ export function Header({ userProp }: { userProp?: any }) {
                         setMobileMenuOpen(false);
                         setShowSettingsMenu(true);
                       }}
-                      className="w-full btn-primary focus:outline-none focus:ring-4 focus:ring-exroast-accent/60"
+                      className="w-full btn-primary focus:outline-none focus:ring-4 focus:ring-daily-accent/60"
                     >
                       My History
                     </button>
@@ -401,14 +336,14 @@ export function Header({ userProp }: { userProp?: any }) {
                           console.error('Sign out error', e);
                         }
                       }}
-                      className="w-full mt-2 bg-white text-black py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-exroast-gold/60"
+                      className="w-full mt-2 bg-white text-black py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-daily-gold/60"
                     >
                       Sign out
                     </button>
                   </div>
                 ) : (
                   <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                    <button className="w-full bg-white text-black py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-exroast-gold/60">Sign in</button>
+                    <button className="w-full bg-white text-black py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-daily-gold/60">Sign in</button>
                   </Link>
                 )}
               </div>
@@ -417,7 +352,7 @@ export function Header({ userProp }: { userProp?: any }) {
         </AnimatePresence>
       </nav>
       {toastMessage && (
-        <div className="fixed top-20 right-6 bg-exroast-gold text-black px-4 py-2 rounded-lg shadow-lg z-50">
+        <div className="fixed top-20 right-6 bg-daily-gold text-black px-4 py-2 rounded-lg shadow-lg z-50">
           {toastMessage}
         </div>
       )}
@@ -426,7 +361,7 @@ export function Header({ userProp }: { userProp?: any }) {
         {showSubscriptionPrompt && (
           <SubscriptionPrompt
             onClose={() => {
-              try { localStorage.setItem('seenSubscriptionPrompt', 'true'); } catch (e) {}
+              // Do not persist seen prompt client-side; simply hide the prompt.
               setShowSubscriptionPrompt(false);
             }}
           />

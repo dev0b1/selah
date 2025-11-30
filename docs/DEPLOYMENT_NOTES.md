@@ -39,7 +39,7 @@
 
 **Testing Without Supabase:**
 - Hard-code `isPro: true` in `/api/user/pro-status` for testing
-- Or manually set pro status in localStorage for client-side testing
+- Or for quick testing, you can simulate pro status in the `/api/user/pro-status` response (server-side)
 
 ### 3. Admin Upload Security
 **Current Implementation:**
@@ -71,11 +71,10 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 PADDLE_CLIENT_TOKEN=your_paddle_token
 PADDLE_API_KEY=your_paddle_api_key
 PADDLE_NOTIFICATION_WEBHOOK_SECRET=your_webhook_secret
-NEXT_PUBLIC_PADDLE_PRICE_SINGLE=pri_xxxxx
-NEXT_PUBLIC_PADDLE_PRICE_UNLIMITED=pri_xxxxx
+NEXT_PUBLIC_PADDLE_PRICE_PRO=pri_01kb5fm41dz39x6vc3qrj59xht
 
-# Suno AI (for Pro tier)
-SUNO_API_KEY=your_suno_key
+# ElevenLabs AI (for Pro tier)
+ELEVENLABS_API_KEY=your_elevenlabs_key
 ```
 
 ### Optional But Recommended
@@ -98,14 +97,14 @@ DATABASE_URL=postgresql://...
 - [ ] Audio preview plays
 - [ ] Preview pauses at 15 seconds
 - [ ] Upsell modal appears after 15s
-- [ ] localStorage stores last 3 roasts
+ - [ ] Recent free vents are visible in `/history` (server-side recent items)
 - [ ] /history shows free roasts
 
 ### Pro Tier Flow (Requires Supabase + Paddle)
 - [ ] User can sign in with Google OAuth
 - [ ] Screenshot upload is enabled for pro users
 - [ ] OCR extracts text from screenshots
-- [ ] Full Suno API song generation works
+  - [ ] Full ElevenLabs audio generation works
 - [ ] No watermark on pro songs
 - [ ] Unlimited history saved in Supabase
 - [ ] Paddle payment flow completes
@@ -141,13 +140,12 @@ Before going live:
 - **Bandwidth**: Template audio delivery (Supabase: 50GB/month free)
 
 ### Pro Tier Costs
-- **Suno API**: ~$0.10-0.20 per song generation
-- **OpenRouter**: ~$0.01-0.03 per lyric generation
+### Pro Tier Costs
+- **ElevenLabs**: pricing varies by usage (TTS generation)
+- **OpenRouter**: ~$0.01-0.03 per prompt generation
 - **OCR**: tesseract.js runs client-side (free)
-- **Supabase**: Scales with usage (paid plans start at $25/mo)
-
-### Recommendations
+ - Monitor ElevenLabs / OpenRouter usage and costs carefully
 - Cache template matches to reduce database queries
 - Set reasonable rate limits (e.g., 5 generations/hour for free users)
-- Monitor Suno API usage carefully
+ - Monitor OpenRouter / ElevenLabs usage and costs carefully
 - Consider batching Supabase writes for history

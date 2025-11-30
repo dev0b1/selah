@@ -49,15 +49,15 @@ export function SubscriptionModal({ isOpen, onClose }: SubscriptionModalProps) {
 
               <div className="bg-gray-50 rounded-2xl p-4 space-y-2 text-left w-full">
                 <div className="flex items-start gap-3">
-                  <FaCheck className="text-exroast-pink mt-1" />
+                  <FaCheck className="text-daily-pink mt-1" />
                   <span>✓ Lyrics about "he cheated" + your exact details</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <FaCheck className="text-exroast-pink mt-1" />
+                  <FaCheck className="text-daily-pink mt-1" />
                   <span>✓ High-quality vocals + clean mastering</span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <FaCheck className="text-exroast-pink mt-1" />
+                  <FaCheck className="text-daily-pink mt-1" />
                   <span>✓ Downloadable MP3 + no watermark</span>
                 </div>
               </div>

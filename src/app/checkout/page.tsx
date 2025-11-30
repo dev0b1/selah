@@ -15,7 +15,7 @@ function CheckoutLoading() {
         animate={{ opacity: 1, scale: 1 }}
         className="relative z-10 text-center space-y-4"
       >
-        <FaSpinner className="text-5xl text-exroast-gold animate-spin mx-auto" />
+        <FaSpinner className="text-5xl text-daily-gold animate-spin mx-auto" />
         <h2 className="text-3xl font-bold text-white">Loading checkout...</h2>
       </motion.div>
     </div>

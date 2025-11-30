@@ -17,7 +17,7 @@ import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { getSongObjectURL } from '../../lib/offline-store';
 import Link from "next/link";
 import { FaLock, FaDownload, FaPlay, FaPause, FaFire, FaDumbbell, FaTiktok, FaInstagram, FaWhatsapp, FaTwitter, FaLink } from "react-icons/fa";
-import { getDailySavageQuote } from "@/lib/suno-nudge";
+import { getDailySavageQuote } from "@/lib/daily-nudge";
 import { openSingleCheckout } from '@/lib/checkout';
 
 interface Song {
@@ -90,13 +90,14 @@ export default function PreviewContent() {
         // Initialize edited lyrics for pre-generation modal
         setEditedLyrics(data.song?.lyrics ?? "");
         
-        if (typeof window !== 'undefined') {
-          const hasSeenDailyQuoteOptIn = localStorage.getItem('hasSeenDailyQuoteOptIn');
-          if (!hasSeenDailyQuoteOptIn) {
-            setTimeout(() => {
-              setShowDailyQuoteOptIn(true);
-            }, 2000);
+        // Only show the daily quote opt-in to authenticated users (no guest flows).
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && !hasShownModalRef.current) {
+            setTimeout(() => setShowDailyQuoteOptIn(true), 2000);
           }
+        } catch (e) {
+          // ignore — don't show opt-in to unauthenticated users
         }
       } else {
         console.error("Failed to fetch song");
@@ -109,65 +110,32 @@ export default function PreviewContent() {
   };
 
   const handleDailyQuoteOptIn = async (audioEnabled: boolean) => {
-    const userId = songId || '';
     const testQuote = getDailySavageQuote(1);
-    
-    console.log('Daily Quote Opt-In Flow:');
-    console.log('- User ID:', userId);
-    console.log('- Audio Enabled:', audioEnabled);
-    console.log('- Test Quote:', testQuote);
-    
-    if (audioEnabled) {
-      console.log('- Audio Nudge URL: [Will be generated via Suno AI on daily schedule]');
-      console.log('- Test Audio Generation: User would receive 15-20s motivational audio with lo-fi trap beats');
-    }
-
-    // If the user isn't authenticated (we don't have a UUID user id),
-    // save the opt-in locally and avoid calling the server which expects a
-    // real userId (uuid). This prevents server-side failures for anonymous
-    // visitors.
-    const isUuid = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id || '');
-
-    if (!isUuid(userId)) {
-      // Save preferences locally for anonymous users
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('hasSeenDailyQuoteOptIn', 'true');
-        localStorage.setItem('dailyQuotesEnabled', 'true');
-        localStorage.setItem('audioNudgesEnabled', audioEnabled ? 'true' : 'false');
-        alert(`🔥 You're in! Daily motivational quotes activated locally.\n\nToday's quote: ${testQuote}\n\n${audioEnabled ? 'Audio nudges (local) enabled - upgrade to Pro for server-sent audio nudges!' : 'Text quotes only - upgrade to Pro for server audio nudges!'}`);
-      }
-      return;
-    }
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Please sign in to enable Daily Quotes and audio nudges.');
+        return;
+      }
+
       const response = await fetch('/api/daily-quotes/opt-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, audioEnabled })
+        body: JSON.stringify({ userId: user.id, audioEnabled })
       });
 
       const data = await response.json();
-
       if (data.success) {
-        console.log('✅ Opt-in successful!');
-        console.log('Test quote from API:', data.testQuote);
-        console.log("Today's quote:", testQuote);
-
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('hasSeenDailyQuoteOptIn', 'true');
-          alert(`🔥 You're in! Daily motivational quotes activated.\n\nToday's quote: ${testQuote}\n\n${audioEnabled ? 'Audio nudges enabled - you\'ll get personalized 15s motivation with beats!' : 'Text quotes only - upgrade to Pro for audio nudges!'}`);
-        }
+        alert(`🔥 You're in! Daily motivational quotes activated.\n\nToday's quote: ${testQuote}\n\n${audioEnabled ? 'Audio nudges enabled - you\'ll get personalized 15s motivation with beats!' : 'Text quotes only - upgrade to Pro for audio nudges!'}`);
+        setShowDailyQuoteOptIn(false);
       } else {
         console.error('Opt-in failed:', data.error);
-        if (typeof window !== 'undefined') {
-          alert('❌ Oops! Something went wrong. Please try again.');
-        }
+        alert('❌ Oops! Something went wrong. Please try again.');
       }
     } catch (error) {
       console.error('Opt-in error:', error);
-      if (typeof window !== 'undefined') {
-        alert('❌ Network error. Please check your connection and try again.');
-      }
+      alert('❌ Network error. Please check your connection and try again.');
     }
   };
 
@@ -217,7 +185,6 @@ export default function PreviewContent() {
     if (!song.isPurchased && !hasShownModalRef.current && typeof window !== 'undefined') {
       setTimeout(() => {
         setShowUpsellModal(true);
-        try { localStorage.setItem('hasGeneratedFirstSong', 'true'); } catch (e) {}
         hasShownModalRef.current = true;
       }, 500);
       return;
@@ -269,14 +236,7 @@ export default function PreviewContent() {
         // ignore - unauthenticated guest
       }
 
-      // If this browser has a pending guest credit token, include it so the server
-      // can recognize/attribute the request. We will also consume the local token
-      // optimistically on success to allow immediate generation without waiting for webhook.
-      let localToken: string | null = null;
-      try {
-        localToken = typeof window !== 'undefined' ? localStorage.getItem('pendingCreditToken') : null;
-        if (localToken) body.pendingCreditToken = localToken;
-      } catch (e) {}
+      // Guest/local credit tokens removed — credits must be managed server-side.
 
       const res = await fetch('/api/generate-song', {
         method: 'POST',
@@ -297,16 +257,7 @@ export default function PreviewContent() {
 
       // Success: a song row + background job was enqueued. Inform the user.
       setGenMessage('Your personalized song has been queued — we will notify you when it is ready.');
-      // If we consumed a local guest token, decrement pendingCredits and remove the token.
-      if (localToken && typeof window !== 'undefined') {
-        try {
-          const existing = localStorage.getItem('pendingCredits');
-          const existingNum = existing ? parseInt(existing, 10) : 0;
-          const newNum = Math.max(0, existingNum - 1);
-          localStorage.setItem('pendingCredits', String(newNum));
-          localStorage.removeItem('pendingCreditToken');
-        } catch (e) { console.warn('Failed to consume local pending credit token', e); }
-      }
+      // No client-side pending credit consumption (server-side only).
       setIsGenerating(false);
       // Close modal after a short delay
       setTimeout(() => {
@@ -371,7 +322,7 @@ export default function PreviewContent() {
                 </h3>
                 <p className="text-white italic mb-4">"{song.story}"</p>
                 <div className="flex items-center space-x-2">
-                  <span className="px-3 py-1 bg-exroast-gold text-black rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 bg-daily-gold text-black rounded-full text-sm font-medium">
                     {song.style.charAt(0).toUpperCase() + song.style.slice(1)} Vibe
                   </span>
                 </div>
@@ -384,7 +335,7 @@ export default function PreviewContent() {
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-lg text-gradient">{song.title}</h3>
                     {song.isTemplate ? (
-                      <span className="text-xs bg-exroast-pink text-white px-3 py-1 rounded-full font-medium">
+                      <span className="text-xs bg-daily-pink text-white px-3 py-1 rounded-full font-medium">
                         Demo (full)
                       </span>
                     ) : null}
@@ -403,7 +354,7 @@ export default function PreviewContent() {
                     <div className="flex items-center gap-4 w-full">
                       <button
                         onClick={togglePlay}
-                        className="bg-exroast-pink text-white px-6 py-3 rounded-full font-bold flex-shrink-0"
+                        className="bg-daily-pink text-white px-6 py-3 rounded-full font-bold flex-shrink-0"
                       >
                         {isPlaying ? <><FaPause className="inline mr-2"/> Pause</> : <><FaPlay className="inline mr-2"/> Play</>}
                       </button>
@@ -413,7 +364,7 @@ export default function PreviewContent() {
                         <div className="w-full">
                           <div className="h-2 bg-white/10 rounded-full overflow-hidden w-full">
                             <div
-                              className="h-2 bg-exroast-pink"
+                              className="h-2 bg-daily-pink"
                               style={{ width: `${Math.max(0, Math.min(100, (() => {
                                 const maxDuration = (duration || actualDuration || 0);
                                 const denom = maxDuration || 1;
@@ -499,7 +450,7 @@ export default function PreviewContent() {
           <div className="card bg-black to-heartbreak-100 border-2 border-heartbreak-200">
             <div className="flex items-start space-x-4">
               <div className="flex-shrink-0">
-                <FaLock className="text-3xl text-exroast-gold" />
+                <FaLock className="text-3xl text-daily-gold" />
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-bold text-gradient mb-2">
@@ -598,7 +549,7 @@ export default function PreviewContent() {
               <button
                 onClick={() => handleGenerate(false)}
                 disabled={isGenerating}
-                className="px-4 py-2 bg-exroast-pink text-white rounded font-bold"
+                className="px-4 py-2 bg-daily-pink text-white rounded font-bold"
               >
                 {isGenerating ? 'Generating...' : 'Generate (AI lyrics)'}
               </button>
@@ -616,12 +567,7 @@ export default function PreviewContent() {
 
       <DailyQuoteOptInModal
         isOpen={showDailyQuoteOptIn}
-        onClose={() => {
-          setShowDailyQuoteOptIn(false);
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('hasSeenDailyQuoteOptIn', 'true');
-          }
-        }}
+        onClose={() => setShowDailyQuoteOptIn(false)}
         onOptIn={handleDailyQuoteOptIn}
         isPro={song?.isPurchased || false}
       />

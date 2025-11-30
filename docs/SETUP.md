@@ -6,7 +6,7 @@ This guide will help you set up the freemium template system for ExRoast.fm.
 
 - Supabase account (free tier works)
 - Paddle account for payments
-- Suno API key for pro song generation
+- ElevenLabs API key for pro audio generation
 
 ## 1. Supabase Setup
 
@@ -80,8 +80,7 @@ Create at least 10-20 templates covering common breakup scenarios:
 - `PADDLE_CLIENT_TOKEN`: Your Paddle client token
 - `PADDLE_API_KEY`: Your Paddle API key
 - `PADDLE_NOTIFICATION_WEBHOOK_SECRET`: Webhook secret
-- `NEXT_PUBLIC_PADDLE_PRICE_SINGLE`: Price ID for $4.99 one-time
-- `NEXT_PUBLIC_PADDLE_PRICE_UNLIMITED`: Price ID for $12.99/month
+- `NEXT_PUBLIC_PADDLE_PRICE_PRO`: Consolidated price ID used for both one-time and subscription flows
 
 ## 4. Testing the Flow
 
@@ -93,12 +92,12 @@ Create at least 10-20 templates covering common breakup scenarios:
 5. Wait for template matching
 6. Preview should play 15s from matched template
 7. Upsell modal appears after preview
-8. Check `/history` - should see last 3 roasts in localStorage
+8. Check `/history` - your most recent vents should appear in the history (server-side)
 
 ### Pro User Flow (After Purchase)
 1. Click upgrade in upsell modal
 2. Complete Paddle payment (use test mode)
-3. After payment, user gets full Suno AI song
+3. After payment, user gets full ElevenLabs AI audio
 4. Can upload screenshots for OCR-based roasts
 5. `/history` shows all saved roasts
 6. No watermark on songs

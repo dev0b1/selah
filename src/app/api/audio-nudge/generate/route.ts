@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSunoNudgeClient } from '@/lib/suno-nudge';
+import { createElevenNudgeClient } from '@/lib/server/eleven-nudge.server';
 import { 
   getUserCredits, 
   deductCredit, 
@@ -45,10 +45,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Generating audio nudge with Suno AI...');
-    
-    const sunoNudgeClient = createSunoNudgeClient();
-    const result = await sunoNudgeClient.generateAudioNudge({
+    console.log('Generating audio nudge with ElevenLabs...');
+
+    const nudgeClient = createElevenNudgeClient();
+    // createElevenNudgeClient returns an Eleven-backed client. Use generateDailyNudge.
+    const result = await nudgeClient.generateDailyNudge({
       userStory,
       dayNumber: dayNumber || 1,
     });
