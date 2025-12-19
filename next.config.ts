@@ -10,12 +10,16 @@ const nextConfig: NextConfig = {
   turbopack: {
     resolveExtensions: ['.ts', '.tsx', '.js', '.jsx'],
   },
-  // Exclude problematic packages from bundling
   serverExternalPackages: [
     'fluent-ffmpeg',
     '@ffmpeg-installer/ffmpeg',
     '@ffprobe-installer/ffprobe',
     'canvas'
+  ],
+  allowedDevOrigins: [
+    'https://*.replit.dev',
+    'https://*.repl.co',
+    'https://*.riker.replit.dev',
   ],
 };
 
