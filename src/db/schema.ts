@@ -1,41 +1,26 @@
 import { pgTable, text, timestamp, uuid, boolean, integer, index } from 'drizzle-orm/pg-core';
 
-// DailyMotiv-focused schema (camelCase columns to match existing code)
+// Selah - Faith-based prayer and worship app schema
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: text('email').notNull().unique(),
   name: text('name'),
+  displayName: text('display_name'), // Name used in personalized prayers
   avatarUrl: text('avatar_url'),
-  demoVariantOrder: text('demo_variant_order'),
-  demoVariantIndex: integer('demo_variant_index').default(0).notNull(),
-  currentStreak: integer('current_streak').default(0).notNull(),
-  longestStreak: integer('longest_streak').default(0).notNull(),
-  lastCheckInDate: timestamp('last_check_in_date'),
+  trialStartDate: timestamp('trial_start_date'), // 3-day free trial
+  trialEndDate: timestamp('trial_end_date'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
 });
 
-export const dailyQuotes = pgTable('daily_quotes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull(),
-  quoteText: text('quote_text').notNull(),
-  audioUrl: text('audio_url'),
-  sentAt: timestamp('sent_at').defaultNow().notNull(),
-  deliveryMethod: text('delivery_method').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  userIdIdx: index('daily_quotes_user_id_idx').on(table.userId),
-  sentAtIdx: index('daily_quotes_sent_at_idx').on(table.sentAt),
-}));
-
 export const subscriptions = pgTable('subscriptions', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().unique(),
-  tier: text('tier').notNull(),
-  status: text('status').default('active').notNull(),
-  paddleSubscriptionId: text('paddle_subscription_id'),
-  creditsRemaining: integer('credits_remaining').default(0).notNull(),
+  tier: text('tier').notNull(), // monthly, yearly, trial
+  status: text('status').default('active').notNull(), // active, cancelled, expired, trial
+  dodoSubscriptionId: text('dodo_subscription_id'),
+  creditsRemaining: integer('credits_remaining').default(0).notNull(), // For worship songs (1 per day for premium)
   renewsAt: timestamp('renews_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
@@ -45,74 +30,63 @@ export const subscriptions = pgTable('subscriptions', {
 
 export const transactions = pgTable('transactions', {
   id: text('id').primaryKey(),
-  songId: text('song_id'),
+  songId: text('song_id'), // Optional reference to worship song
   userId: text('user_id'),
   amount: text('amount').notNull(),
   currency: text('currency').notNull(),
   status: text('status').notNull(),
-  paddleData: text('paddle_data').notNull(),
+  dodoData: text('dodo_data').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
   songIdIdx: index('transactions_song_id_idx').on(table.songId),
   userIdIdx: index('transactions_user_id_idx').on(table.userId),
 }));
 
-export const history = pgTable('history', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id'),
-  story: text('story').notNull(),
-  mode: text('mode').notNull(),
-  title: text('title').notNull(),
-  notes: text('notes'),
-  audioUrl: text('audio_url'), // optional
-  isTemplate: boolean('is_template').default(false).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  userIdIdx: index('history_user_id_idx').on(table.userId),
-  createdAtIdx: index('history_created_at_idx').on(table.createdAt),
-}));
-
-export const audioNudges = pgTable('audio_nudges', {
+// Prayers table - stores generated personalized prayers
+export const prayers = pgTable('prayers', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull(),
-  userStory: text('user_story').notNull(),
-  dayNumber: integer('day_number').notNull(),
-  audioUrl: text('audio_url'),
-  motivationText: text('motivation_text').notNull(),
-  creditsUsed: integer('credits_used').default(0).notNull(),
+  userName: text('user_name').notNull(), // Name used in prayer (for personalization)
+  need: text('need').notNull(), // peace, strength, guidance, healing, gratitude, comfort
+  message: text('message'), // Optional user message (max 120 chars)
+  prayerText: text('prayer_text').notNull(), // Generated prayer text
+  audioUrl: text('audio_url'), // TTS audio URL (premium feature)
+  isFavorite: boolean('is_favorite').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
-  userIdIdx: index('audio_nudges_user_id_idx').on(table.userId),
-  createdAtIdx: index('audio_nudges_created_at_idx').on(table.createdAt),
+  userIdIdx: index('prayers_user_id_idx').on(table.userId),
+  createdAtIdx: index('prayers_created_at_idx').on(table.createdAt),
 }));
 
-export const userPreferences = pgTable('user_preferences', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().unique(),
-  dailyQuotesEnabled: boolean('daily_quotes_enabled').default(false).notNull(),
-  audioNudgesEnabled: boolean('audio_nudges_enabled').default(false).notNull(),
-  lastQuoteSent: timestamp('last_quote_sent'),
-  quoteScheduleHour: integer('quote_schedule_hour').default(10).notNull(),
-  audioNudgesThisWeek: integer('audio_nudges_this_week').default(0).notNull(),
-  weekResetDate: timestamp('week_reset_date').defaultNow().notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
-}, (table) => ({
-  userIdIdx: index('user_preferences_user_id_idx').on(table.userId),
-}));
-
-export const dailyCheckIns = pgTable('daily_check_ins', {
+// Worship Songs table - stores AI-generated worship songs
+export const worshipSongs = pgTable('worship_songs', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull(),
-  mood: text('mood').notNull(),
-  message: text('message'),
-  motivationText: text('motivation_text'),
-  motivationAudioUrl: text('motivation_audio_url'),
-  convertedToSong: boolean('converted_to_song').default(false).notNull(),
+  userName: text('user_name').notNull(), // Name used in song
+  mood: text('mood').notNull(), // peace, strength, trust, hope, gratitude
+  title: text('title'), // Generated song title
+  lyrics: text('lyrics').notNull(), // Full song lyrics
+  audioUrl: text('audio_url').notNull(), // Generated audio URL (Suno or ElevenLabs)
+  videoUrl: text('video_url'), // Video with lyrics (generated later with ffmpeg)
+  sunoTaskId: text('suno_task_id'), // Suno API task ID for tracking
+  generationMethod: text('generation_method').default('suno'), // 'suno' or 'elevenlabs'
+  isFavorite: boolean('is_favorite').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
-  userIdIdx: index('daily_check_ins_user_id_idx').on(table.userId),
-  createdAtIdx: index('daily_check_ins_created_at_idx').on(table.createdAt),
+  userIdIdx: index('worship_songs_user_id_idx').on(table.userId),
+  createdAtIdx: index('worship_songs_created_at_idx').on(table.createdAt),
+  sunoTaskIdIdx: index('worship_songs_suno_task_id_idx').on(table.sunoTaskId),
+}));
+
+// Daily Bible Verses - stores the 365 pre-selected KJV verses
+export const bibleVerses = pgTable('bible_verses', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  dayOfYear: integer('day_of_year').notNull().unique(), // 1-365
+  reference: text('reference').notNull(), // e.g., "John 3:16"
+  verseText: text('verse_text').notNull(), // Full verse text
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  dayOfYearIdx: index('bible_verses_day_of_year_idx').on(table.dayOfYear),
 }));
 
 // Export TypeScript helper types
@@ -125,14 +99,15 @@ export type InsertSubscription = typeof subscriptions.$inferInsert;
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = typeof transactions.$inferInsert;
 
-export type History = typeof history.$inferSelect;
-export type InsertHistory = typeof history.$inferInsert;
+export type Prayer = typeof prayers.$inferSelect;
+export type InsertPrayer = typeof prayers.$inferInsert;
 
-export type AudioNudge = typeof audioNudges.$inferSelect;
-export type InsertAudioNudge = typeof audioNudges.$inferInsert;
+export type WorshipSong = typeof worshipSongs.$inferSelect;
+export type InsertWorshipSong = typeof worshipSongs.$inferInsert;
 
-export type UserPreference = typeof userPreferences.$inferSelect;
-export type InsertUserPreference = typeof userPreferences.$inferInsert;
+export type BibleVerse = typeof bibleVerses.$inferSelect;
+export type InsertBibleVerse = typeof bibleVerses.$inferInsert;
 
-export type DailyCheckIn = typeof dailyCheckIns.$inferSelect;
-export type InsertDailyCheckIn = typeof dailyCheckIns.$inferInsert;
+// Selah-specific types
+export type PrayerNeedType = 'peace' | 'strength' | 'guidance' | 'healing' | 'gratitude' | 'comfort';
+export type WorshipMoodType = 'peace' | 'strength' | 'trust' | 'hope' | 'gratitude' | 'comfort';

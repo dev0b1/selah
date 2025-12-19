@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Claim-purchase flow deprecated for DailyMotiv: songs model removed.
+// Claim-purchase flow deprecated for Selah: songs model removed.
 // Endpoint retained to return 410 Gone for older clients.
 
 // Claim purchases that were made while the user was logged out. We match

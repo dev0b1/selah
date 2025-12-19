@@ -1,4 +1,3 @@
-import { getFallbackMotivation } from '@/lib/daily-motivations';
 import { generateMusicWithEleven } from '@/lib/eleven';
 import { uploadPreviewAudio } from '@/lib/file-storage';
 
@@ -18,8 +17,9 @@ export interface NudgeGenerationResult {
 
 export class ElevenNudgeAPI {
   async generateDailyNudge(params: { userStory: string; mood?: string; motivationText?: string; dayNumber?: number; userName?: string; }): Promise<NudgeGenerationResult> {
-    const dayNumber = params.dayNumber || 1;
-    const motivationText = params.motivationText || getFallbackMotivation(dayNumber);
+    // For Selah: motivationText should always be provided (prayer text)
+    // If not provided, use the userStory (prayer text) as fallback
+    const motivationText = params.motivationText || params.userStory || 'Heavenly Father, we lift up Your child in prayer. In Jesus\' name, Amen.';
 
     try {
       const res = await generateMusicWithEleven(motivationText, 'voiceover', params.mood || 'confidence', 15);

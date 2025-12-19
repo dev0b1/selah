@@ -9,7 +9,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // New DailyMotiv palette (kept exroast for compatibility)
+        // Spiritual/Calming Prayer App Palette
+        prayer: {
+          bg: "#0f172a",
+          primary: "#6366f1",
+          secondary: "#8b5cf6",
+          accent: "#c4b5fd",
+          light: "#e9d5ff",
+          dark: "#1e1b4b",
+        },
         daily: {
           bg: "#0f1724",
           primary: "#6d28d9",

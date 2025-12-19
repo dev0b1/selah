@@ -159,20 +159,19 @@ export function Header({ userProp }: { userProp?: any }) {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6 }}
-      className="fixed top-0 left-0 right-0 z-50 bg-daily-bg/95 backdrop-blur-sm border-b border-daily-pink/20"
+      className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-sm border-b border-white/10"
     >
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2 group">
             <motion.div
               whileHover={{ scale: 1.05, rotate: 2 }}
-              className="text-daily-primary"
-              style={{ filter: 'brightness(1.05) contrast(1.05)' }}
+              className="text-[#D4A574]"
             >
-              <span className="text-3xl">⚡️</span>
+              <span className="text-3xl">🙏</span>
             </motion.div>
-            <span className="text-2xl font-black bg-clip-text text-white">
-              DailyMotiv
+            <span className="text-2xl font-script text-white">
+              Selah
             </span>
           </Link>
           
@@ -182,13 +181,13 @@ export function Header({ userProp }: { userProp?: any }) {
               <>
                 <Link
                   href="/pricing"
-                  className="text-daily-accent hover:text-white transition-colors duration-200 font-bold"
+                  className="text-[#D4A574] hover:text-white transition-colors duration-200 font-bold"
                 >
                   Pricing
                 </Link>
                 <Link
                   href="/#faq"
-                  className="text-daily-gold hover:text-white transition-colors duration-200 font-bold"
+                  className="text-[#D4A574] hover:text-white transition-colors duration-200 font-bold"
                 >
                   FAQ
                 </Link>
@@ -196,9 +195,9 @@ export function Header({ userProp }: { userProp?: any }) {
             )}
 
             {!user && pathname !== '/app' && (
-              <Link href={"/daily"}>
-                <button className="bg-gradient-to-r from-daily-primary to-daily-primary/90 text-white px-8 py-3 rounded-full font-black text-lg transition-all duration-200 border-2 border-daily-accent shadow-lg">
-                  <span style={{ filter: 'brightness(1.05) contrast(1.05)' }}>Daily Vent 💪</span>
+              <Link href={"/app"}>
+                <button className="bg-gradient-to-r from-[#D4A574] to-[#c4965f] text-black px-8 py-3 rounded-lg font-bold text-lg transition-all duration-200 border-2 border-[#D4A574]/50 shadow-lg hover:from-[#c4965f] hover:to-[#b8864a] hover:shadow-[#D4A574]/50">
+                  Start Free Trial 🙏
                 </button>
               </Link>
             )}
@@ -207,25 +206,18 @@ export function Header({ userProp }: { userProp?: any }) {
             {user ? (
         <div className="relative flex items-center gap-3" ref={profileRef}>
                 {/* Desktop credits + upgrade/buy UI - non-navigable account area */}
-                <div className="hidden md:flex items-center gap-4">
-                  <div className="text-sm text-white/90">Credits: <span className="font-bold text-daily-pink">{mobileCredits ?? 0}</span></div>
+                  <div className="hidden md:flex items-center gap-4">
                   <button
-                    onClick={async () => { try { await openTierCheckout('premium'); } catch (e) { console.error('Open checkout failed', e); window.location.href = '/pricing'; } }}
-                    className="hidden lg:inline-flex items-center bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black px-3 py-2 rounded-full font-bold"
+                    onClick={() => router.push('/app')}
+                    className="inline-flex items-center bg-gradient-to-r from-[#D4A574] to-[#c4965f] text-black px-4 py-2 rounded-lg font-bold text-sm hover:from-[#c4965f] hover:to-[#b8864a] transition-all"
                   >
-                    Upgrade
-                  </button>
-                  <button
-                    onClick={async () => { try { await openSingleCheckout(); } catch (e) { console.error('Open single checkout failed', e); window.location.href = '/pricing'; } }}
-                    className="inline-flex items-center bg-white/5 px-3 py-2 rounded-full font-bold text-sm"
-                  >
-                    Buy Credits
+                    Create Prayer
                   </button>
                   <button
                     onClick={() => router.push('/app?tab=history')}
-                    className="inline-flex items-center bg-white/5 px-3 py-2 rounded-full font-bold text-sm"
+                    className="inline-flex items-center bg-white/5 px-4 py-2 rounded-lg font-bold text-sm border border-white/20 hover:bg-white/10"
                   >
-                    History
+                    My Prayers
                   </button>
                 </div>
 
@@ -236,7 +228,7 @@ export function Header({ userProp }: { userProp?: any }) {
                   aria-haspopup="menu"
                   aria-expanded={showSettingsMenu}
                   title={user.email}
-                  className="flex items-center gap-3 bg-white/5 px-3 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-daily-pink"
+                  className="flex items-center gap-3 bg-white/5 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 border border-white/20"
                 >
                   {user?.user_metadata?.avatar_url ? (
                     <img
@@ -269,7 +261,7 @@ export function Header({ userProp }: { userProp?: any }) {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-daily-accent hover:text-white transition-colors"
+            className="md:hidden text-[#D4A574] hover:text-white transition-colors"
             aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <FaTimes className="text-2xl" /> : <FaBars className="text-2xl" />}
@@ -286,26 +278,18 @@ export function Header({ userProp }: { userProp?: any }) {
               transition={{ duration: 0.2 }}
               className="md:hidden mt-4 pb-4 space-y-4"
             >
-              <button
-                onClick={async () => { setMobileMenuOpen(false); try { await openTierCheckout('premium'); } catch (e) { console.error('Open checkout failed', e); window.location.href = '/pricing'; } }}
-                className="w-full bg-gradient-to-r from-[#ff006e] to-[#ffd23f] text-black px-4 py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-daily-accent/60"
-              >
-                Upgrade
-              </button>
-              <Link
-                href="/#faq"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block text-daily-accent hover:text-white transition-colors duration-200 font-bold py-2 focus:outline-none focus:ring-4 focus:ring-daily-accent/40"
-              >
-                FAQ
+                <Link href="/app" onClick={() => setMobileMenuOpen(false)}>
+                <button className="w-full bg-white text-black px-4 py-3 rounded-lg font-bold focus:outline-none focus:ring-4 focus:ring-white/50">
+                  Create Prayer
+                </button>
               </Link>
-              {!user && pathname !== '/app' && (
-                <Link href="/daily" onClick={() => setMobileMenuOpen(false)}>
-                  <button className="w-full bg-gradient-to-r from-daily-primary to-daily-primary/90 text-white px-8 py-3 rounded-full font-black text-lg transition-all duration-200 border-2 border-daily-accent shadow-lg">
-                    <span style={{ filter: 'brightness(1.05) contrast(1.05)' }}>Daily Vent 💪</span>
-                  </button>
+                <Link
+                  href="/#faq"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-gray-300 hover:text-white transition-colors duration-200 font-medium py-2 focus:outline-none focus:ring-4 focus:ring-white/40"
+                >
+                  FAQ
                 </Link>
-              )}
 
               {/* Mobile auth area */}
               <div className="pt-4">
@@ -321,9 +305,9 @@ export function Header({ userProp }: { userProp?: any }) {
                         setMobileMenuOpen(false);
                         setShowSettingsMenu(true);
                       }}
-                      className="w-full btn-primary focus:outline-none focus:ring-4 focus:ring-daily-accent/60"
+                      className="w-full bg-white text-black py-3 rounded-lg font-bold focus:outline-none focus:ring-4 focus:ring-white/50"
                     >
-                      My History
+                      My Prayers
                     </button>
                     <button
                       onClick={async () => {
@@ -336,14 +320,14 @@ export function Header({ userProp }: { userProp?: any }) {
                           console.error('Sign out error', e);
                         }
                       }}
-                      className="w-full mt-2 bg-white text-black py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-daily-gold/60"
+                      className="w-full mt-2 bg-white/10 text-white py-3 rounded-lg font-medium border border-white/20 focus:outline-none focus:ring-4 focus:ring-white/50"
                     >
                       Sign out
                     </button>
                   </div>
                 ) : (
                   <Link href="/auth" onClick={() => setMobileMenuOpen(false)}>
-                    <button className="w-full bg-white text-black py-3 rounded-full font-bold focus:outline-none focus:ring-4 focus:ring-daily-gold/60">Sign in</button>
+                    <button className="w-full bg-white text-black py-3 rounded-lg font-bold focus:outline-none focus:ring-4 focus:ring-white/50">Sign in</button>
                   </Link>
                 )}
               </div>
@@ -352,7 +336,7 @@ export function Header({ userProp }: { userProp?: any }) {
         </AnimatePresence>
       </nav>
       {toastMessage && (
-        <div className="fixed top-20 right-6 bg-daily-gold text-black px-4 py-2 rounded-lg shadow-lg z-50">
+        <div className="fixed top-20 right-6 bg-[#D4A574] text-black px-4 py-2 rounded-lg shadow-lg z-50">
           {toastMessage}
         </div>
       )}

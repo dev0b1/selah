@@ -2,7 +2,8 @@
 // Requires `OPENROUTER_API_KEY` in env. Optionally set `OPENROUTER_MODEL`.
 export function createOpenRouterClient() {
   const key = process.env.OPENROUTER_API_KEY || '';
-  const model = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
+  // Prefer an inexpensive/free small Mistral model by default; allow override via OPENROUTER_MODEL.
+  const model = process.env.OPENROUTER_MODEL || 'mistral-small';
 
   async function generateSongPrompt(params: any) {
     if (!key) throw new Error('OPENROUTER_API_KEY not set');
@@ -50,7 +51,51 @@ export function createOpenRouterClient() {
     return { prompt: content };
   }
 
-  return { generateSongPrompt };
+  async function generatePrayerText(params: {
+    system: string;
+    user: string;
+    model?: string;
+  }): Promise<string> {
+    if (!key) throw new Error('OPENROUTER_API_KEY not set');
+
+    const body = {
+      model: params.model || model,
+      messages: [
+        { role: 'system', content: params.system },
+        { role: 'user', content: params.user },
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    };
+
+    const resp = await fetch('https://api.openrouter.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`,
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error(`OpenRouter API error ${resp.status}: ${txt}`);
+    }
+
+    const data = await resp.json();
+    const content =
+      data?.choices?.[0]?.message?.content ||
+      data?.choices?.[0]?.text ||
+      '';
+
+    if (!content) {
+      throw new Error('No content returned from OpenRouter');
+    }
+
+    return content.trim();
+  }
+
+  return { generateSongPrompt, generatePrayerText };
 }
 
 export default { createOpenRouterClient };

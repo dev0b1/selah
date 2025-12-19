@@ -62,21 +62,26 @@ export default function AccountPage() {
             <p className="text-sm text-gray-400 mt-2">Manage your plan on the Pricing page.</p>
           </div>
 
-          <div className="card p-6">
-            <h3 className="text-lg font-bold mb-3">Preferences</h3>
-            <p className="text-gray-300">Daily Quotes: {data?.prefs?.dailyQuotesEnabled ? 'Enabled' : 'Disabled'}</p>
-            <p className="text-gray-300">Audio Nudges: {data?.prefs?.audioNudgesEnabled ? 'Enabled' : 'Disabled'}</p>
-          </div>
         </div>
 
         <div className="card p-6 mt-6">
           <h3 className="text-lg font-bold mb-3">Your History</h3>
-          {data?.roasts && data.roasts.length > 0 ? (
+          {data?.history && data.history.length > 0 ? (
             <ul className="space-y-3">
-              {data.roasts.map((r: any) => (
-                <li key={r.id} className="border p-3 rounded-md bg-black/40">
-                  <div className="text-white font-bold">{r.title || 'Untitled'}</div>
-                  <div className="text-gray-400 text-sm">{r.story?.slice(0, 120)}</div>
+              {data.history.map((item: any) => (
+                <li key={item.id} className="border p-3 rounded-md bg-black/40">
+                  <div className="text-white font-bold">
+                    {item.type === 'song' ? '🎵 Worship Song' : '🙏 Prayer'}
+                    {item.type === 'song' && item.title ? ` - ${item.title}` : ''}
+                  </div>
+                  <div className="text-gray-400 text-sm">
+                    {item.type === 'song' 
+                      ? item.lyrics?.slice(0, 120) 
+                      : item.prayerText?.slice(0, 120)}
+                  </div>
+                  <div className="text-gray-500 text-xs mt-2">
+                    {new Date(item.createdAt).toLocaleDateString()}
+                  </div>
                 </li>
               ))}
             </ul>

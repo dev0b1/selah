@@ -91,10 +91,10 @@ export default function AuthContent() {
           {/* Header */}
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-black text-gradient">
-              Welcome to DailyMotiv ✨
+              Welcome to Selah ✨
             </h1>
             <p className="text-xl text-white font-bold">
-              Sign in to save your daily check-ins and receive motivational nudges
+              Sign in to unlock premium features and save your prayers
             </p>
             <p className="text-gray-400">
               Quick login with Google. No passwords, no spam.
@@ -148,7 +148,7 @@ export default function AuthContent() {
             onClick={() => router.push("/app")}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="w-full bg-daily-pink/20 hover:bg-daily-pink/30 border-2 border-daily-pink text-white py-4 px-6 rounded-xl font-black text-lg transition-all duration-300"
+            className="w-full bg-[#D4A574]/20 hover:bg-[#D4A574]/30 border-2 border-[#D4A574] text-white py-4 px-6 rounded-xl font-black text-lg transition-all duration-300"
           >
             Continue to App
           </motion.button>
@@ -158,16 +158,16 @@ export default function AuthContent() {
             <p className="text-gray-400 text-sm font-bold">Benefits of signing in:</p>
             <ul className="space-y-2 text-sm text-gray-300">
               <li className="flex items-center gap-2">
-                <span className="text-daily-accent">✓</span> Save your daily history
+                <span className="text-[#D4A574]">✓</span> Voice prayers with music
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-daily-accent">✓</span> Manage subscriptions
+                <span className="text-[#D4A574]">✓</span> AI worship songs (1 per day)
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-daily-accent">✓</span> Download your tracks
+                <span className="text-[#D4A574]">✓</span> Full prayer history
               </li>
               <li className="flex items-center gap-2">
-                <span className="text-daily-accent">✓</span> Priority nudges
+                <span className="text-[#D4A574]">✓</span> Save favorite prayers
               </li>
             </ul>
           </div>
@@ -185,7 +185,7 @@ export default function AuthContent() {
             <pre className="whitespace-pre-wrap break-words">{JSON.stringify(debugInfo, null, 2)}</pre>
             {debugInfo?.providerUrl && (
               <div className="mt-2 flex gap-2">
-                <a className="text-daily-gold underline" href={debugInfo.providerUrl} target="_blank" rel="noreferrer">Open provider URL</a>
+                <a className="text-[#D4A574] underline" href={debugInfo.providerUrl} target="_blank" rel="noreferrer">Open provider URL</a>
                 <button className="ml-auto text-sm text-gray-200 bg-white/5 px-3 py-1 rounded" onClick={() => { navigator.clipboard?.writeText(debugInfo.providerUrl); }}>Copy URL</button>
               </div>
             )}

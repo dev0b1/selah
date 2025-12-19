@@ -1,18 +1,24 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
-import { FaCheck, FaStar, FaCrown, FaShieldAlt, FaLock } from "react-icons/fa";
+import { FaCheck, FaCrown, FaShieldAlt, FaLock, FaHeadphones, FaMusic, FaHistory, FaBook, FaPrayingHands } from "react-icons/fa";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import AuthAwareCTA from "@/components/AuthAwareCTA";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { SINGLE_LABEL, SINGLE_AMOUNT, PREMIUM_LABEL, PREMIUM_AMOUNT, WEEKLY_LABEL, WEEKLY_AMOUNT, WEEKLY_PRICE_ID } from '@/lib/pricing';
-import { openSingleCheckout, openTierCheckout } from '@/lib/checkout';
+import { openDodoCheckout } from '@/lib/dodo-checkout';
+
+const PREMIUM_AMOUNT = 9.99;
+const FREE_TRIAL_DAYS = 3;
 
 export default function PricingPage() {
+  const handleStartTrial = () => {
+    if (typeof window !== 'undefined') {
+      openDodoCheckout({ planType: 'monthly' });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1a2942]">
       <AnimatedBackground />
       <Header />
       
@@ -22,278 +28,193 @@ export default function PricingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-8"
+            className="text-center mb-16"
           >
-            <h1 className="text-5xl md:text-6xl font-bold text-gradient mb-6">
-              Pricing That Slaps 🔥
+            <h1 className="text-5xl md:text-6xl font-script text-white mb-6">
+              Unlock Unlimited Peace
             </h1>
-            <p className="text-xl text-white max-w-2xl mx-auto mb-6">
-              From free templates to personalized AI roasts. Pick your savage level 💅
+            <p className="text-xl text-white/80 max-w-2xl mx-auto mb-8">
+              Pause. Breathe. Pray. Experience personalized prayers and worship songs that speak your name.
             </p>
             
             <div className="flex flex-wrap justify-center gap-6 mb-4">
-              <div className="flex items-center gap-2 text-white bg-gray-900/50 px-6 py-3 rounded-full border border-daily-gold/30">
-                <FaShieldAlt className="text-daily-gold" />
+              <div className="flex items-center gap-2 text-white bg-black/40 px-6 py-3 rounded-full border border-[#D4A574]/30">
+                <FaShieldAlt className="text-[#D4A574]" />
                 <span className="text-sm">Cancel Anytime</span>
               </div>
-              <div className="flex items-center gap-2 text-white bg-gray-900/50 px-6 py-3 rounded-full border border-daily-gold/30">
-                <FaLock className="text-daily-gold" />
-                <span className="text-sm">Secure Paddle Payments</span>
+              <div className="flex items-center gap-2 text-white bg-black/40 px-6 py-3 rounded-full border border-[#D4A574]/30">
+                <FaLock className="text-[#D4A574]" />
+                <span className="text-sm">Secure Payments</span>
               </div>
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20">
-            {/* Weekly plan: 3 credits + 7 days daily check-in */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              whileHover={{ y: -10 }}
-              className="card text-center relative overflow-hidden tier-card"
-            >
-              <h3 className="text-2xl font-bold text-gradient mb-2">Weekly</h3>
-              <div className="text-5xl font-bold text-daily-accent mb-6">
-                {`$${WEEKLY_AMOUNT.toFixed(2)}`}
-                <span className="text-white text-sm"> / week</span>
-              </div>
-              <p className="text-gray-400 text-sm mb-6">3 song-generation credits (use for full personalized songs)</p>
-              <ul className="space-y-4 text-left mb-8">
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-accent mt-1 flex-shrink-0" />
-                  <span>3 song generation credits</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>3 credits for full song generations</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>Download MP3s for unlocked songs</span>
-                </li>
-              </ul>
-              <button
-                className="btn-primary w-full"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    openTierCheckout('weekly', WEEKLY_PRICE_ID);
-                  }
-                }}
-              >
-                Subscribe Weekly
-              </button>
-            </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-20">
+            {/* Free Tier */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              whileHover={{ y: -10 }}
-              className="card text-center relative overflow-hidden tier-card"
+              className="card text-center relative overflow-hidden bg-black/40 border border-white/10"
             >
-              <h3 className="text-2xl font-bold text-gradient mb-2">Free</h3>
-              <div className="text-5xl font-bold text-daily-accent mb-6">
-                $0
+              <div className="p-8">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <FaBook className="text-[#D4A574] text-3xl" />
+                  <h3 className="text-3xl font-bold text-white">Free</h3>
+                </div>
+                <div className="text-6xl font-bold text-white mb-6">
+                  $0
+                </div>
+                <p className="text-white/70 text-sm mb-8">Everything you need to start your journey</p>
+                <ul className="space-y-4 text-left mb-8">
+                  <li className="flex items-start space-x-3">
+                    <FaCheck className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">Daily Bible verse</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <FaCheck className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">Unlimited text prayers</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <FaCheck className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">Personalized prayers with your name</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <FaCheck className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">Generate specific prayers</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <FaCheck className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">Share prayers</span>
+                  </li>
+                </ul>
+                <div className="text-center">
+                  <p className="text-white/50 text-sm">Start with free features</p>
+                </div>
               </div>
-              <p className="text-gray-400 text-sm mb-6">Instant Vibe-Matched Teasers</p>
-              <ul className="space-y-4 text-left mb-8">
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-accent mt-1 flex-shrink-0" />
-                  <span>Fun library templates</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>Matched to your vibe & mode</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>15-second previews</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>Watermarked shares</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-gray-600 mt-1 flex-shrink-0" />
-                  <span className="text-gray-600 line-through">Personalized lyrics</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-gray-600 mt-1 flex-shrink-0" />
-                  <span className="text-gray-600 line-through">Screenshot upload</span>
-                </li>
-              </ul>
-              <AuthAwareCTA className="btn-secondary w-full">
-                Try Free Now
-              </AuthAwareCTA>
             </motion.div>
 
+            {/* Premium Tier */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              whileHover={{ y: -10 }}
-              className="card text-center relative overflow-hidden tier-card"
+              className="card text-center relative overflow-hidden bg-gradient-to-br from-[#D4A574]/20 to-[#D4A574]/5 border-2 border-[#D4A574]/50 shadow-[0_0_40px_rgba(212,165,116,0.3)]"
             >
-              <h3 className="text-2xl font-bold text-gradient mb-2">One-Time Pro</h3>
-              <div className="text-5xl font-bold text-daily-accent mb-6">
-                {`$${SINGLE_AMOUNT.toFixed(2)}`}
-              </div>
-              <p className="text-gray-400 text-sm mb-6">Unlock Your Custom Diss (One-Time Flex)</p>
-              <ul className="space-y-4 text-left mb-8">
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span className="font-medium">Tailored AI song (ElevenLabs)</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>Personalized from YOUR story</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>Full 30-35s song</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>No watermark</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>Download MP3</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-gray-600 mt-1 flex-shrink-0" />
-                  <span className="text-gray-600 line-through">Screenshot upload</span>
-                </li>
-              </ul>
-              <button
-                className="btn-primary w-full"
-                onClick={() => {
-                  // Reuse the same checkout flow as the preview page (no songId for general one-time)
-                  if (typeof window !== 'undefined') {
-                    openSingleCheckout();
-                  }
-                }}
-              >
-                Get One Song
-              </button>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              whileHover={{ y: -10 }}
-              className="card text-center border-4 border-daily-pink relative shadow-2xl overflow-hidden tier-card"
-            >
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-daily-pink text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg z-10">
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-[#D4A574] to-[#c4965f] text-black px-6 py-2 rounded-full text-sm font-bold shadow-lg z-10">
                 Most Popular
               </div>
-              <div className="absolute top-12 right-4 bg-daily-gold text-black px-3 py-1 rounded-full text-xs font-bold z-10">
-                Cancel Anytime
+              <div className="absolute top-12 right-4 bg-black/60 text-[#D4A574] px-3 py-1 rounded-full text-xs font-bold z-10 border border-[#D4A574]/30">
+                {FREE_TRIAL_DAYS}-Day Free Trial
               </div>
-              <div className="flex items-center justify-center mb-2">
-                <FaCrown className="text-daily-accent text-2xl mr-2" />
-                <h3 className="text-2xl font-bold text-gradient">Unlimited Pro</h3>
+              <div className="p-8 pt-12">
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <FaCrown className="text-[#D4A574] text-3xl" />
+                  <h3 className="text-3xl font-bold text-white">Premium</h3>
+                </div>
+                <div className="text-6xl font-bold text-white mb-2">
+                  ${PREMIUM_AMOUNT.toFixed(2)}
+                  <span className="text-2xl text-white/70">/month</span>
+                </div>
+                <p className="text-white/70 text-sm mb-8">Unlock the full Selah experience</p>
+                <ul className="space-y-4 text-left mb-8">
+                  <li className="flex items-start space-x-3">
+                    <FaCheck className="text-[#D4A574] mt-1 flex-shrink-0 text-lg" />
+                    <span className="text-white font-medium">Everything in Free</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <FaHeadphones className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">Voice prayers with music</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <FaMusic className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">AI worship songs (1 per day)</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <FaHistory className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">Full prayer history</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <FaPrayingHands className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">Save favorite prayers</span>
+                  </li>
+                  <li className="flex items-start space-x-3">
+                    <FaCheck className="text-[#D4A574] mt-1 flex-shrink-0" />
+                    <span className="text-white">Share worship songs</span>
+                  </li>
+                </ul>
+                <button
+                  onClick={handleStartTrial}
+                  className="btn-primary w-full bg-gradient-to-r from-[#D4A574] to-[#c4965f] hover:from-[#c4965f] hover:to-[#b8864a] text-black font-bold py-4 text-lg shadow-[0_4px_20px_rgba(212,165,116,0.4)]"
+                >
+                  Start {FREE_TRIAL_DAYS}-Day Free Trial
+                </button>
+                <p className="text-white/60 text-xs mt-3">Then ${PREMIUM_AMOUNT.toFixed(2)}/month • Cancel anytime</p>
               </div>
-              <div className="text-5xl font-bold text-daily-accent mb-6">
-                {`$${PREMIUM_AMOUNT.toFixed(2)}`}
-                <span className="text-xl text-white">/month</span>
-              </div>
-              <p className="text-gray-400 text-sm mb-6">Unlimited Everything</p>
-              <ul className="space-y-4 text-left mb-8">
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span className="font-medium">UNLIMITED personalized songs</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span className="font-medium">Upload chat screenshots</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>AI reads chats for ultra-petty lines 💅</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>Ultra-petty digs on ex's exact crimes</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span className="font-medium">Unlimited history & saves</span>
-                </li>
-                <li className="flex items-start space-x-3">
-                  <FaCheck className="text-daily-gold mt-1 flex-shrink-0" />
-                  <span>Clean MP3 downloads (no watermark)</span>
-                </li>
-              </ul>
-              <button
-                className="btn-primary w-full"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    // premium tier id 'unlimited' and premium price id will be used by helper
-                    openTierCheckout('unlimited');
-                  }
-                }}
-              >
-                Go Unlimited
-              </button>
             </motion.div>
           </div>
 
+          {/* Comparison Table */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
             className="max-w-5xl mx-auto mb-16"
           >
-            <div className="card bg-gradient-to-r from-gray-900 to-black border-2 border-daily-pink/30">
-              <h3 className="text-3xl font-black text-daily-gold mb-8 text-center">
-                Why Upgrade to Pro? 🔥
+            <div className="card bg-black/40 border border-white/10">
+              <h3 className="text-3xl font-bold text-white mb-8 text-center">
+                Feature Comparison
               </h3>
               
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b-2 border-daily-gold/30">
+                    <tr className="border-b-2 border-[#D4A574]/30">
                       <th className="pb-4 text-white font-bold text-lg">Feature</th>
-                      <th className="pb-4 text-gray-400 font-bold text-lg text-center">Free</th>
-                      <th className="pb-4 text-daily-gold font-bold text-lg text-center">Pro</th>
+                      <th className="pb-4 text-white/70 font-bold text-lg text-center">Free</th>
+                      <th className="pb-4 text-[#D4A574] font-bold text-lg text-center">Premium</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800">
+                  <tbody className="divide-y divide-white/10">
                     <tr>
-                      <td className="py-4 text-white">Song Type</td>
-                      <td className="py-4 text-gray-400 text-center">Template Library</td>
-                      <td className="py-4 text-white text-center font-medium">Custom AI Generated</td>
+                      <td className="py-4 text-white">Daily Bible Verse</td>
+                      <td className="py-4 text-white/70 text-center">✓</td>
+                      <td className="py-4 text-[#D4A574] text-center font-medium">✓</td>
                     </tr>
                     <tr>
-                      <td className="py-4 text-white">Personalization</td>
-                      <td className="py-4 text-gray-400 text-center">Generic roasts</td>
-                      <td className="py-4 text-white text-center font-medium">YOUR story details</td>
+                      <td className="py-4 text-white">Text Prayers</td>
+                      <td className="py-4 text-white/70 text-center">Unlimited</td>
+                      <td className="py-4 text-[#D4A574] text-center font-medium">Unlimited</td>
                     </tr>
                     <tr>
-                      <td className="py-4 text-white">Screenshot Upload</td>
-                      <td className="py-4 text-gray-400 text-center">❌</td>
-                      <td className="py-4 text-daily-gold text-center font-medium">✅</td>
+                      <td className="py-4 text-white">Personalized Prayers</td>
+                      <td className="py-4 text-white/70 text-center">✓</td>
+                      <td className="py-4 text-[#D4A574] text-center font-medium">✓</td>
                     </tr>
                     <tr>
-                      <td className="py-4 text-white">AI Reads Chats for Ultra-Petty Lines 💅</td>
-                      <td className="py-4 text-gray-400 text-center">❌</td>
-                      <td className="py-4 text-daily-gold text-center font-medium">✅</td>
+                      <td className="py-4 text-white">Voice Prayers (TTS + Music)</td>
+                      <td className="py-4 text-white/70 text-center">—</td>
+                      <td className="py-4 text-[#D4A574] text-center font-medium">✓</td>
                     </tr>
                     <tr>
-                      <td className="py-4 text-white">Song Length</td>
-                      <td className="py-4 text-gray-400 text-center">15s preview</td>
-                      <td className="py-4 text-white text-center font-medium">Full 30-35s</td>
+                      <td className="py-4 text-white">AI Worship Songs</td>
+                      <td className="py-4 text-white/70 text-center">—</td>
+                      <td className="py-4 text-[#D4A574] text-center font-medium">1 per day</td>
                     </tr>
                     <tr>
-                      <td className="py-4 text-white">Watermark</td>
-                      <td className="py-4 text-gray-400 text-center">Yes</td>
-                      <td className="py-4 text-daily-gold text-center font-medium">None</td>
+                      <td className="py-4 text-white">Prayer History</td>
+                      <td className="py-4 text-white/70 text-center">Limited</td>
+                      <td className="py-4 text-[#D4A574] text-center font-medium">Full Access</td>
                     </tr>
                     <tr>
-                      <td className="py-4 text-white">MP3 Download</td>
-                      <td className="py-4 text-gray-400 text-center">❌</td>
-                      <td className="py-4 text-daily-gold text-center font-medium">✅</td>
+                      <td className="py-4 text-white">Save Favorites</td>
+                      <td className="py-4 text-white/70 text-center">—</td>
+                      <td className="py-4 text-[#D4A574] text-center font-medium">✓</td>
+                    </tr>
+                    <tr>
+                      <td className="py-4 text-white">Share Worship Songs</td>
+                      <td className="py-4 text-white/70 text-center">—</td>
+                      <td className="py-4 text-[#D4A574] text-center font-medium">✓</td>
                     </tr>
                   </tbody>
                 </table>
@@ -301,60 +222,42 @@ export default function PricingPage() {
             </div>
           </motion.div>
 
+          {/* FAQ */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
             className="max-w-3xl mx-auto mb-12"
           >
-            <div className="card">
-              <h3 className="text-2xl font-bold text-gradient mb-6 text-center">
+            <div className="card bg-black/40 border border-white/10">
+              <h3 className="text-2xl font-bold text-white mb-6 text-center">
                 Frequently Asked Questions
               </h3>
               <div className="space-y-6">
                 <div>
-                  <h4 className="font-bold text-white mb-2">Safe Sharing: 100% Anonymous</h4>
-                  <p className="text-white">
-                    Your privacy matters. All songs are completely anonymous - no names, no emails, 
-                    no identifiable info. Share your roast without worrying about your ex finding out it's you.
+                  <h4 className="font-bold text-white mb-2">What happens after my free trial?</h4>
+                  <p className="text-white/80">
+                    After your {FREE_TRIAL_DAYS}-day free trial, your subscription will automatically continue at ${PREMIUM_AMOUNT.toFixed(2)}/month. You can cancel anytime before the trial ends with no charges.
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-bold text-white mb-2">Can I buy individual songs instead?</h4>
-                  <p className="text-white">
-                    Yes! You can purchase individual full songs for $4.99 each if you don't 
-                    want a subscription. Just generate your song and choose the one-time purchase option.
+                  <h4 className="font-bold text-white mb-2">Can I use Selah without subscribing?</h4>
+                  <p className="text-white/80">
+                    Yes! The free tier includes daily Bible verses and unlimited personalized text prayers. Premium features like voice prayers and worship songs require a subscription.
                   </p>
                 </div>
                 <div>
-                  <h4 className="font-bold text-white mb-2">Do unused songs roll over?</h4>
-                  <p className="text-white">
-                    With Unlimited Pro, you get truly unlimited songs - no credits, no counting. 
-                    Generate as many roasts as you want, whenever you want.
+                  <h4 className="font-bold text-white mb-2">How do worship songs work?</h4>
+                  <p className="text-white/80">
+                    Premium users can generate one AI-powered worship song per day. Each song is personalized with your name and inspired by your prayers. You can share these songs with friends and family.
                   </p>
                 </div>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="flex flex-wrap justify-center gap-8 mb-8"
-          >
-            <div className="flex items-center gap-3 bg-gray-900/50 px-8 py-4 rounded-lg border border-gray-800">
-              <div className="text-3xl">🎵</div>
-              <div>
-                <div className="text-white font-bold">Powered by ElevenLabs</div>
-                <div className="text-gray-400 text-sm">AI Audio Generation</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 bg-gray-900/50 px-8 py-4 rounded-lg border border-gray-800">
-                <FaLock className="text-daily-accent text-2xl" />
-              <div>
-                <div className="text-white font-bold">Secure Paddle</div>
-                <div className="text-gray-400 text-sm">Safe Payments</div>
+                <div>
+                  <h4 className="font-bold text-white mb-2">Can I cancel anytime?</h4>
+                  <p className="text-white/80">
+                    Absolutely. You can cancel your subscription at any time. You'll continue to have access to premium features until the end of your current billing period.
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -362,26 +265,6 @@ export default function PricingPage() {
       </main>
 
       <Footer />
-      
-      <style jsx global>{`
-        @keyframes goldPulse {
-          0%, 100% {
-            box-shadow: 0 0 20px rgba(255, 210, 63, 0.3);
-          }
-          50% {
-            box-shadow: 0 0 40px rgba(255, 210, 63, 0.6);
-          }
-        }
-        
-        .tier-card {
-          animation: goldPulse 2s ease-in-out infinite;
-          will-change: box-shadow;
-        }
-        
-        .tier-card:hover {
-          animation: goldPulse 0.5s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 }

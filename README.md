@@ -1,23 +1,27 @@
-# DailyMotiv
+# Selah
 
-DailyMotiv is a lightweight Next.js app for short daily check-ins, motivational nudges, and saved personal history. This repository is a pivot from the original Breakup-music project — key differences and setup notes are below.
+Selah is a faith-based prayer app that helps you pause and reconnect with God through a daily Bible verse, personalized spoken prayers, and optional AI-generated worship songs that speak your name.
 
 ## Features
 
-- Quick daily check-ins and history saving
-- Motivational AI nudges (ElevenLabs TTS + OpenRouter prompts)
-- Supabase authentication and storage
-- Paddle billing for paid tiers and subscriptions
-- Shareable previews and downloadable tracks for paid users
-- Mobile-first UI with Tailwind and Framer Motion
+- **Daily Bible Verse** - 365 pre-selected KJV verses, one per day, rotating yearly
+- **Personalized Prayers** - AI-generated prayers with your name, unlimited text prayers for free users
+- **Voice Prayers (Premium)** - Text-to-speech prayers with soft worship background music
+- **AI Worship Songs (Premium)** - One AI-generated worship song per day, personalized with your name
+- **Prayer History** - Full access to past prayers and songs (Premium)
+- **3-Day Free Trial** - Try premium features before subscribing
+- **DodoPayments** - Subscription billing ($9.99/month)
+- **Mobile-First PWA** - Optimized for mobile web with add-to-home-screen support
 
 ## Tech Stack
 
 - **Framework**: Next.js (App Router)
 - **DB/ORM**: Drizzle + Postgres (migrations in `migrations/`)
 - **Auth/Storage**: Supabase
-- **Payments**: Paddle
-- **TTS / Audio**: ElevenLabs (synchronous nudges); legacy Suno worker retired
+- **Payments**: DodoPayments
+- **TTS / Audio**: ElevenLabs (voice prayers)
+- **Music Generation**: Suno API (worship songs)
+- **AI**: OpenRouter/Claude (prayer text generation)
 - **Styling**: Tailwind CSS
 
 ## Getting Started
@@ -40,8 +44,11 @@ cp .env.example .env
 
 - `SUPABASE_URL` and `SUPABASE_ANON_KEY` — Supabase project
 - `DATABASE_URL` — Postgres connection for Drizzle
-- `PADDLE_API_KEY` and `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN` — Paddle
-- `ELEVENLABS_API_KEY` — ElevenLabs TTS
+- `NEXT_PUBLIC_DODO_API_KEY` and `NEXT_PUBLIC_DODO_ENVIRONMENT` — DodoPayments
+- `NEXT_PUBLIC_DODO_PRICE_MONTHLY` — Subscription price ID ($9.99/month)
+- `ELEVENLABS_API_KEY` — ElevenLabs TTS for voice prayers
+- `OPENROUTER_API_KEY` — OpenRouter for AI prayer text generation
+- `SUNO_API_KEY` and `SUNO_API_URL` — Suno API for worship song generation (optional)
 - `SITE_DOMAIN` — used to build callback/webhook URLs
 
 ### Development
@@ -60,34 +67,26 @@ To push schema changes (dev):
 
 ```bash
 npm run db:push
-npm run db:seed
 ```
-
-## Notes about audio & providers
-
-- The Suno-based background worker and some Suno API routes have been retired for this pivot — the app uses ElevenLabs for short TTS nudges and OpenRouter for prompt shaping.
-- For preview/paid-generation flows, the codebase contains compatibility stubs and a migration that archives legacy `songs`/`audio_generation_jobs` tables.
 
 ## Project layout (high level)
 
 - `src/app/` — App Router pages & API routes
 - `src/components/` — UI components
-- `lib/` — thin provider clients and helpers (Eleven, OpenRouter, file-storage, db-service)
-- `server/` — background worker (archived/stubbed)
+- `lib/` — provider clients and helpers (ElevenLabs, OpenRouter, db-service)
 - `migrations/` — Drizzle migrations
 
 ## Deployment
 
 - Push the `main` branch to GitHub and connect the repo to Vercel (or your host of choice).
 - Ensure environment variables are set in the deployment environment.
-- Switch Paddle to production keys and update webhook URLs (`SITE_DOMAIN/api/*`).
+- Switch DodoPayments to production keys and update webhook URLs (`SITE_DOMAIN/api/*`).
 
 ## Contributing
 
 - Keep changes small and focused.
-- Preserve the insert-then-enqueue pattern used for async generation flows unless intentionally reworking the pipeline.
+- Maintain the faith-first, calm, and personal tone throughout the app.
 
 ---
 
-Maintainers: `dev0b1` — if you'd like a different README structure, tell me what to add.
-
+Maintainers: `dev0b1`

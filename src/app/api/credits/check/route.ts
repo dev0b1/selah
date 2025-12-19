@@ -14,17 +14,14 @@ export async function GET(request: NextRequest) {
 
     const credits = await getUserCredits(userId);
 
-    const canGenerateAudioNudge = credits.tier === 'free' 
-      ? credits.audioNudgesThisWeek < 1 
-      : credits.creditsRemaining > 0;
+    // For Selah: Free users get unlimited text prayers, premium gets worship songs (1 per day)
+    const canGenerateWorshipSong = credits.creditsRemaining > 0;
 
     return NextResponse.json({
       success: true,
       creditsRemaining: credits.creditsRemaining,
       tier: credits.tier,
-      audioNudgesThisWeek: credits.audioNudgesThisWeek,
-      canGenerateAudioNudge,
-      maxFreeAudioNudgesPerWeek: 1,
+      canGenerateWorshipSong,
     });
   } catch (error) {
     console.error('Check credits error:', error);

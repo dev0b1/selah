@@ -1,0 +1,256 @@
+"use client";
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { ScreenHeader } from "./ScreenHeader";
+import { FaLock, FaCrown, FaMusic } from "react-icons/fa";
+import { SongModeUpsell } from "./SongModeUpsell";
+
+interface SongModeScreenProps {
+  userId: string;
+  userName?: string;
+  isPremium?: boolean;
+  onUpgrade?: () => void;
+}
+
+export function SongModeScreen({
+  userId,
+  userName,
+  isPremium = false,
+  onUpgrade,
+}: SongModeScreenProps) {
+  const [showUpsell, setShowUpsell] = useState(false);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+
+  // Mood options - note: adding 'comfort' as mentioned in requirements
+  const moods = [
+    { id: 'peace', label: 'Peace', emoji: '🕊️' },
+    { id: 'strength', label: 'Strength', emoji: '💪' },
+    { id: 'hope', label: 'Hope', emoji: '✨' },
+    { id: 'trust', label: 'Trust', emoji: '🤲' },
+    { id: 'gratitude', label: 'Gratitude', emoji: '🙏' },
+    { id: 'comfort', label: 'Comfort', emoji: '🕯️' },
+  ];
+
+  const getMoodLabel = (moodId: string | null): string => {
+    if (!moodId) return '';
+    const mood = moods.find(m => m.id === moodId);
+    return mood?.label || moodId;
+  };
+
+  // For free users, show mood selection UI instead of immediate paywall
+  if (!isPremium) {
+    return (
+      <>
+        <div className="min-h-[calc(100vh-8rem)] p-4 sm:p-6 pb-24">
+          <div className="max-w-2xl mx-auto space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center space-y-2"
+            >
+              <div className="text-4xl sm:text-5xl">🎵</div>
+              <h2 className="text-xl sm:text-2xl font-bold text-[#F5F5F5]">
+                Create Worship Song
+              </h2>
+              <p className="text-sm sm:text-base text-[#8B9DC3]">
+                Choose the mood for your song:
+              </p>
+            </motion.div>
+
+            {/* Mood Selection */}
+            <div className="card space-y-4 p-4 sm:p-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {moods.map((mood) => (
+                  <motion.button
+                    key={mood.id}
+                    onClick={() => setSelectedMood(mood.id)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`
+                      relative p-3 sm:p-4 rounded-xl border-2 transition-all duration-300
+                      touch-manipulation min-h-[90px] sm:min-h-[100px] flex flex-col items-center justify-center
+                      ${selectedMood === mood.id
+                        ? 'bg-gradient-to-br from-[#D4A574] to-[#B8935F] border-[#F5F5F5] shadow-lg'
+                        : 'bg-[#1a2942]/60 border-[#8B9DC3]/30 hover:border-[#8B9DC3]/50 hover:bg-[#1a2942]/80'
+                      }
+                    `}
+                  >
+                    <div className="text-2xl sm:text-3xl mb-2">{mood.emoji}</div>
+                    <div className={`font-bold text-xs sm:text-sm text-center ${
+                      selectedMood === mood.id ? 'text-[#0A1628]' : 'text-[#F5F5F5]'
+                    }`}>
+                      {mood.label}
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Generate Button - triggers paywall for free users */}
+              <motion.button
+                onClick={() => {
+                  if (selectedMood) {
+                    setShowUpsell(true);
+                  }
+                }}
+                disabled={!selectedMood}
+                className={`
+                  btn-primary w-full py-4 text-base sm:text-lg min-h-[52px] touch-manipulation font-bold
+                  ${!selectedMood ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+              >
+                {!selectedMood ? (
+                  'Select a mood first'
+                ) : (
+                  <>
+                    <FaMusic className="mr-2" />
+                    <span>Generate My Worship Song</span>
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </div>
+        </div>
+
+        <SongModeUpsell
+          isOpen={showUpsell}
+          onClose={() => setShowUpsell(false)}
+          onUpgrade={() => {
+            setShowUpsell(false);
+            onUpgrade?.();
+          }}
+          userName={userName}
+          selectedMood={selectedMood ? getMoodLabel(selectedMood) : undefined}
+        />
+      </>
+    );
+  }
+
+  // Premium users see the full generation interface (actually generates songs)
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateSong = async () => {
+    if (!selectedMood || !userId || !userName) return;
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/worship/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          userName,
+          mood: selectedMood,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 402) {
+          // Paywall required - shouldn't happen for premium users, but handle gracefully
+          setShowUpsell(true);
+        } else {
+          alert(data.error || 'Failed to generate song. Please try again.');
+        }
+        return;
+      }
+
+      if (data.success) {
+        // Song generated successfully
+        if (data.status === 'generating') {
+          // Song is still generating (Suno async)
+          alert('Your worship song is being generated! Check back in a few moments.');
+        } else {
+          // Song is ready
+          alert('Your worship song is ready! Check your history to listen.');
+        }
+        // Reset selection
+        setSelectedMood(null);
+      }
+    } catch (error) {
+      console.error('Error generating song:', error);
+      alert('Failed to generate song. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="min-h-[calc(100vh-8rem)] p-4 sm:p-6 pb-24">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center space-y-2"
+          >
+            <div className="text-4xl sm:text-5xl">🎵</div>
+            <h2 className="text-xl sm:text-2xl font-bold text-[#F5F5F5]">
+              Create Worship Song
+            </h2>
+            <p className="text-sm sm:text-base text-[#8B9DC3]">
+              Choose the mood for your song:
+            </p>
+          </motion.div>
+
+          {/* Mood Selection */}
+          <div className="card space-y-4 p-4 sm:p-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {moods.map((mood) => (
+                <motion.button
+                  key={mood.id}
+                  onClick={() => setSelectedMood(mood.id)}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  disabled={isGenerating}
+                  className={`
+                    relative p-3 sm:p-4 rounded-xl border-2 transition-all duration-300
+                    touch-manipulation min-h-[90px] sm:min-h-[100px] flex flex-col items-center justify-center
+                    ${selectedMood === mood.id
+                      ? 'bg-gradient-to-br from-[#D4A574] to-[#B8935F] border-[#F5F5F5] shadow-lg'
+                      : 'bg-[#1a2942]/60 border-[#8B9DC3]/30 hover:border-[#8B9DC3]/50 hover:bg-[#1a2942]/80'
+                    }
+                    ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}
+                  `}
+                >
+                  <div className="text-2xl sm:text-3xl mb-2">{mood.emoji}</div>
+                  <div className={`font-bold text-xs sm:text-sm text-center ${
+                    selectedMood === mood.id ? 'text-[#0A1628]' : 'text-[#F5F5F5]'
+                  }`}>
+                    {mood.label}
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Generate Button */}
+            <motion.button
+              onClick={handleGenerateSong}
+              disabled={!selectedMood || isGenerating}
+              className={`
+                btn-primary w-full py-4 text-base sm:text-lg min-h-[52px] touch-manipulation font-bold
+                ${!selectedMood || isGenerating ? 'opacity-50 cursor-not-allowed' : ''}
+              `}
+            >
+              {isGenerating ? (
+                <>
+                  <FaMusic className="mr-2 animate-pulse" />
+                  <span>Generating Your Song...</span>
+                </>
+              ) : !selectedMood ? (
+                'Select a mood first'
+              ) : (
+                <>
+                  <FaMusic className="mr-2" />
+                  <span>Generate Worship Song</span>
+                </>
+              )}
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+

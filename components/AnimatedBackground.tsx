@@ -29,7 +29,7 @@ export function AnimatedBackground() {
       },
       particles: {
         color: {
-          value: ["#ff006e", "#ff4500", "#ffd23f"],
+          value: ["#D4A574", "#F5F5F5"], // Gold and white for subtle stars
         },
         move: {
           direction: "top",
@@ -38,23 +38,23 @@ export function AnimatedBackground() {
             default: "out",
           },
           random: true,
-          speed: 0.5,
+          speed: 0.3, // Slower for subtlety
           straight: false,
         },
         number: {
           density: {
             enable: true,
           },
-          value: 50,
+          value: 30, // Fewer particles for subtlety
         },
         opacity: {
-          value: { min: 0.1, max: 0.4 },
+          value: { min: 0.05, max: 0.2 }, // Very subtle
         },
         shape: {
-          type: "circle",
+          type: "circle", // Circle particles (star shape may not be available in slim version)
         },
         size: {
-          value: { min: 1, max: 3 },
+          value: { min: 1, max: 2 }, // Smaller stars
         },
       },
       detectRetina: true,

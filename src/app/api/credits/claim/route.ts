@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Attach transaction to this user
     await db.update(transactions).set({ userId: user.id }).where(eq(transactions.id, tx.id));
 
-    // If this transaction unlocked a song, the songs model has been removed in DailyMotiv.
+    // If this transaction unlocked a song, the songs model has been removed in Selah.
     // We attach the transaction to the user and skip song assignment.
 
     return NextResponse.json({ success: true, claimed: true, transactionId: tx.id });

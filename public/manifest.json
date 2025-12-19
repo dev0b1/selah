@@ -1,11 +1,11 @@
 {
-  "name": "Daily Motiv",
-  "short_name": "DailyMotiv",
+  "name": "Selah - Pause. Breathe. Pray.",
+  "short_name": "Selah",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "description": "Short AI-generated motivational audio nudges",
+  "background_color": "#0f172a",
+  "theme_color": "#6366f1",
+  "description": "Daily Bible verse, personalized prayers, and worship songs that speak your name",
   "icons": [
     {
       "src": "/demo-nudges/thumbs/feeling-unstoppable.svg",

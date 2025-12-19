@@ -1,31 +1,29 @@
-// Centralized pricing config for client and server code.
-// Exports public (NEXT_PUBLIC_*) values for client components and server-side ids as well.
+// Centralized pricing config for Selah
+// DodoPayments integration - monthly subscription only
 
-// Use the consolidated PRO price id for both single and premium flows
-export const SINGLE_PRICE_ID = process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO || "";
-export const SINGLE_AMOUNT = Number(process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE_AMOUNT) || 4.99;
-export const SINGLE_LABEL = process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE_LABEL || `$${SINGLE_AMOUNT.toFixed(2)}`;
-export const SINGLE_BUTTON_TEXT = process.env.NEXT_PUBLIC_PADDLE_PRICE_SINGLE_BUTTON_TEXT || `One-Time Full Unlock`;
+// Premium subscription (monthly)
+export const PREMIUM_PRICE_ID = process.env.NEXT_PUBLIC_DODO_PRICE_MONTHLY || "";
+export const PREMIUM_AMOUNT = Number(process.env.NEXT_PUBLIC_DODO_PRICE_MONTHLY_AMOUNT) || 9.99;
+export const PREMIUM_LABEL = process.env.NEXT_PUBLIC_DODO_PRICE_MONTHLY_LABEL || `$${PREMIUM_AMOUNT.toFixed(2)}/mo`;
+export const PREMIUM_BUTTON_TEXT = process.env.NEXT_PUBLIC_DODO_PRICE_MONTHLY_BUTTON_TEXT || `Start 3-Day Free Trial`;
 
-// Premium/unlimited should also resolve to the PRO price id
-export const PREMIUM_PRICE_ID = process.env.NEXT_PUBLIC_PADDLE_PRICE_PRO || "";
-export const PREMIUM_AMOUNT = Number(process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM_AMOUNT) || 12.99;
-export const PREMIUM_LABEL = process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM_LABEL || `$${PREMIUM_AMOUNT.toFixed(2)}/mo`;
-export const PREMIUM_BUTTON_TEXT = process.env.NEXT_PUBLIC_PADDLE_PRICE_PREMIUM_BUTTON_TEXT || `Unlimited Roasts + History`;
+// Free trial days
+export const FREE_TRIAL_DAYS = 3;
 
-export const WEEKLY_PRICE_ID = process.env.NEXT_PUBLIC_PADDLE_PRICE_WEEKLY || "";
-export const WEEKLY_AMOUNT = Number(process.env.NEXT_PUBLIC_PADDLE_PRICE_WEEKLY_AMOUNT) || 7.99;
-export const WEEKLY_LABEL = process.env.NEXT_PUBLIC_PADDLE_PRICE_WEEKLY_LABEL || `$${WEEKLY_AMOUNT.toFixed(2)}/week`;
-export const WEEKLY_BUTTON_TEXT = process.env.NEXT_PUBLIC_PADDLE_PRICE_WEEKLY_BUTTON_TEXT || `Weekly - 3 Credits`;
+// Server-side Dodo price ids
+export const SERVER_PRICE_ID_PREMIUM = process.env.DODO_PRICE_ID_MONTHLY || "";
 
-// Server-side Paddle price ids (no NEXT_PUBLIC_) — exported here for convenience if server imports this file.
-// Prefer explicit names using SINGLE / PREMIUM so envs are readable.
-// Fall back to legacy NEXT_PADDLE_PRICE_ID_1/_2 if present.
-export const SERVER_PRICE_ID_SINGLE = process.env.NEXT_PADDLE_PRICE_ID_SINGLE || process.env.NEXT_PADDLE_PRICE_ID_1 || "";
-export const SERVER_PRICE_ID_PREMIUM = process.env.NEXT_PADDLE_PRICE_ID_PREMIUM || process.env.NEXT_PADDLE_PRICE_ID_2 || "";
-export const SERVER_PRICE_ID_WEEKLY = process.env.NEXT_PADDLE_PRICE_ID_WEEKLY || process.env.NEXT_PADDLE_PRICE_ID_WEEKLY || "";
-
-// Backwards-compatible aliases (some places previously referenced SERVER_PRICE_ID_1/2)
+// Legacy aliases for backwards compatibility (not used in Selah)
+export const SINGLE_PRICE_ID = "";
+export const SINGLE_AMOUNT = 0;
+export const SINGLE_LABEL = "";
+export const SINGLE_BUTTON_TEXT = "";
+export const WEEKLY_PRICE_ID = "";
+export const WEEKLY_AMOUNT = 0;
+export const WEEKLY_LABEL = "";
+export const WEEKLY_BUTTON_TEXT = "";
+export const SERVER_PRICE_ID_SINGLE = "";
+export const SERVER_PRICE_ID_WEEKLY = "";
 export const SERVER_PRICE_ID_1 = SERVER_PRICE_ID_SINGLE;
 export const SERVER_PRICE_ID_2 = SERVER_PRICE_ID_PREMIUM;
 

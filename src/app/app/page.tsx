@@ -5,12 +5,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createBrowserClient } from '@supabase/ssr';
 import { useRouter } from "next/navigation";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { DailyCheckInTab } from "@/components/DailyCheckInTab";
-import { RoastModeTab } from "@/components/RoastModeTab";
+import { LandingPage } from "@/components/LandingPage";
+import { NameInputScreen } from "@/components/NameInputScreen";
+import { HomeScreen } from "@/components/HomeScreen";
+import { PrayerIntentScreen } from "@/components/PrayerIntentScreen";
+import { PrayerPlayerScreen } from "@/components/PrayerPlayerScreen";
+import { PaywallModal } from "@/components/PaywallModal";
 import { ConfettiPop } from "@/components/ConfettiPop";
-import { FaSpinner, FaFire, FaDumbbell, FaHistory } from "react-icons/fa";
-
-type Tab = "daily" | "history";
+import { BottomTabNavigation, type TabType } from "@/components/BottomTabNavigation";
+import { HomeHeader } from "@/components/HomeHeader";
+import { SongModeScreen } from "@/components/SongModeScreen";
+import { FeedHistoryScreen } from "@/components/FeedHistoryScreen";
+import { ProfileScreen } from "@/components/ProfileScreen";
+import { ScreenHeader } from "@/components/ScreenHeader";
+import { FaSpinner, FaHeart, FaHistory } from "react-icons/fa";
 
 export default function AppPage() {
   const router = useRouter();
@@ -18,15 +26,37 @@ export default function AppPage() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-  const [currentTab, setCurrentTab] = useState<Tab>("daily");
+  const [currentTab, setCurrentTab] = useState<TabType>("home");
+  const [isPremium, setIsPremium] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [streak, setStreak] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
-  const [userAvatar, setUserAvatar] = useState<string>("");
   const [showConfetti, setShowConfetti] = useState(false);
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const profileRef = useRef<HTMLDivElement | null>(null);
+  const [userDisplayName, setUserDisplayName] = useState<string>("");
+  const [appFlow, setAppFlow] = useState<"landing" | "name" | "app">("landing");
+  const [showPrayerIntent, setShowPrayerIntent] = useState(false);
+  const [currentPrayer, setCurrentPrayer] = useState<{text: string; audioUrl?: string; intent?: string} | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [localUserName, setLocalUserName] = useState<string>("");
+  // Initialize app flow based on whether user has name
+  // First-time users (no name) should go: landing -> name -> app
+  // Returning users (has name) should go: app directly
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedName = localStorage.getItem('selah_user_name');
+      if (storedName) {
+        setLocalUserName(storedName);
+        // If user has a name, skip onboarding and go straight to app
+        if (appFlow === "landing") {
+          setAppFlow("app");
+        }
+      } else {
+        // First-time user: start with landing screen
+        if (appFlow === "app") {
+          setAppFlow("landing");
+        }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     // Allow ?tab=history or ?tab=daily to pre-select the tab when linking
@@ -34,8 +64,8 @@ export default function AppPage() {
       try {
         const params = new URLSearchParams(window.location.search || '');
         const tabParam = params.get('tab');
-        if (tabParam === 'history' || tabParam === 'daily') {
-          setCurrentTab(tabParam as Tab);
+        if (tabParam === 'history' || tabParam === 'feed') {
+          setCurrentTab(tabParam as TabType);
         }
       } catch (e) {
         // ignore
@@ -48,11 +78,22 @@ export default function AppPage() {
     const initUser = async (sessionUser: any) => {
       if (!mounted) return;
       setUser(sessionUser);
-      setUserAvatar(sessionUser.user_metadata?.avatar_url || "");
-      await Promise.all([
-        fetchStreak(sessionUser.id),
-        checkTodayCheckIn(sessionUser.id)
-      ]);
+      
+      // Check if user has completed onboarding (has display name)
+      const displayName = sessionUser.user_metadata?.name || sessionUser.user_metadata?.displayName || sessionUser.email?.split('@')[0] || "";
+      setUserDisplayName(displayName);
+      
+      // Check premium status
+      try {
+        const res = await fetch(`/api/user/subscription-status?userId=${sessionUser.id}`);
+        if (res.ok) {
+          const { isPro } = await res.json();
+          setIsPremium(isPro);
+        }
+      } catch (error) {
+        console.error('Failed to fetch premium status:', error);
+      }
+      
       setIsLoading(false);
     };
 
@@ -100,293 +141,271 @@ export default function AppPage() {
     };
   }, [router, supabase]);
 
-  // close profile menu when clicking outside (so mobile taps will dismiss)
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      const el = profileRef.current;
-      if (!el) return;
-      if (!el.contains(e.target as Node)) {
-        setShowProfileMenu(false);
-      }
-    };
-    document.addEventListener('click', onDocClick);
-    return () => document.removeEventListener('click', onDocClick);
-  }, []);
-
-  const fetchStreak = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/user/streak?userId=${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setStreak(data.currentStreak || 0);
-      }
-    } catch (error) {
-      console.error("Error fetching streak:", error);
-    }
-  };
-
-  const checkTodayCheckIn = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/daily/check-in?userId=${userId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setHasCheckedInToday(!!data.checkIn);
-      }
-    } catch (error) {
-      console.error("Error checking today's check-in:", error);
-    }
-  };
-
-  const handleStreakUpdate = (newStreak: number) => {
-    setStreak(newStreak);
-    setHasCheckedInToday(true);
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 3200);
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/");
   };
 
-  const getFireEmojis = () => {
-    if (streak === 0) return "";
-    if (streak <= 12) return "🔥".repeat(streak);
-    return `🔥×${streak}`;
-  };
-
-  const getStreakMessage = () => {
-    if (streak === 0) return "";
-    return `Day ${streak} strong`;
-  };
-
-  if (isLoading) {
+  if (isLoading && user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <FaSpinner className="animate-spin text-daily-gold text-6xl" />
+      <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1a2942] flex items-center justify-center">
+        <FaSpinner className="animate-spin text-[#D4A574] text-6xl" />
       </div>
     );
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <FaSpinner className="animate-spin text-daily-gold text-6xl" />
-      </div>
-    );
-  }
+  // Note: We allow app to work without authentication (delayed auth)
+  // Only redirect if user tries to access premium features without auth
+  // For now, we skip the auth check to allow free usage
+      if (appFlow === "landing") {
+        return (
+          <div className="min-h-screen">
+            <LandingPage onContinue={() => setAppFlow("name")} />
+          </div>
+        );
+      }
+
+      if (appFlow === "name") {
+        return (
+          <div className="min-h-screen">
+            <NameInputScreen 
+              onContinue={(name) => {
+                setLocalUserName(name);
+                setAppFlow("app");
+              }}
+            />
+          </div>
+        );
+      }
+
+  // Note: Onboarding is handled via NameInputScreen in the landing/name flow
+  // No separate onboarding needed since we use delayed auth - name is collected before app entry
+
+  // Show prayer intent screen (when user wants to pray for something specific)
+  if (showPrayerIntent && appFlow === "app") {
+        return (
+          <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1a2942] relative pb-20">
+            <AnimatedBackground />
+            <ScreenHeader 
+              title="Pray for Something Specific"
+              onBack={() => setShowPrayerIntent(false)}
+            />
+            <div className="pt-20 pb-24">
+              <PrayerIntentScreen
+                onGenerate={async (intent, customMessage) => {
+                  const effectiveName = localUserName || userDisplayName || user?.email?.split('@')[0] || "Friend";
+                  try {
+                    const res = await fetch('/api/prayer/generate', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userId: user?.id || 'anonymous',
+                        need: intent,
+                        message: customMessage,
+                        userName: effectiveName,
+                      }),
+                    });
+
+                    if (res.status === 402) {
+                      setShowPaywall(true);
+                      return;
+                    }
+
+                    if (!res.ok) {
+                      const errorData = await res.json().catch(() => ({}));
+                      throw new Error(errorData.error || `Failed to generate prayer (${res.status})`);
+                    }
+
+                    const data = await res.json();
+                    
+                    if (!data.prayerText) {
+                      throw new Error('No prayer text returned from server');
+                    }
+
+                    setCurrentPrayer({
+                      text: data.prayerText,
+                      audioUrl: data.audioUrl,
+                      intent: intent,
+                    });
+                    setShowPrayerIntent(false);
+                  } catch (err) {
+                    console.error('Error generating prayer:', err);
+                    const errorMessage = err instanceof Error ? err.message : 'Failed to generate prayer. Please try again.';
+                    alert(errorMessage);
+                  }
+                }}
+                isGenerating={false}
+              />
+            </div>
+            <BottomTabNavigation currentTab={currentTab} onTabChange={setCurrentTab} isPremium={isPremium} />
+          </div>
+        );
+      }
+
+  // Show prayer player screen (when prayer is generated)
+  if (currentPrayer && appFlow === "app") {
+        return (
+          <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1a2942] relative pb-20">
+            <AnimatedBackground />
+            <ScreenHeader 
+              title="Your Prayer"
+              onBack={() => setCurrentPrayer(null)}
+            />
+            <div className="pt-20 pb-24">
+              <PrayerPlayerScreen
+                prayerText={currentPrayer.text}
+                audioUrl={currentPrayer.audioUrl}
+                prayerIntent={currentPrayer.intent}
+                userName={localUserName || userDisplayName || user?.email?.split('@')[0] || "Friend"}
+                isPremium={isPremium}
+                onNewPrayer={() => setShowPrayerIntent(true)}
+                onShare={async () => {
+                  if (navigator.share) {
+                    await navigator.share({
+                      title: 'My Personalized Prayer',
+                      text: currentPrayer.text,
+                    });
+                  } else {
+                    await navigator.clipboard.writeText(currentPrayer.text);
+                    alert('Prayer copied to clipboard!');
+                  }
+                }}
+                onCreateWorshipSong={() => {
+                  if (!isPremium) {
+                    setShowPaywall(true);
+                  } else {
+                    setCurrentTab("song-mode");
+                  }
+                }}
+              />
+            </div>
+            <BottomTabNavigation currentTab={currentTab} onTabChange={setCurrentTab} isPremium={isPremium} />
+          </div>
+        );
+      }
 
   return (
-    <div className="min-h-screen bg-black relative pb-20 md:pb-0">
+    <div className="min-h-screen relative pb-20 md:pb-0 animate-gradient">
       <AnimatedBackground />
       
-      {/* Fixed Header - 50-60px */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-lg border-b border-white/10 h-14 md:h-16">
-        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-          <h1 className="text-lg md:text-xl font-black text-gradient">
-            Daily Motivation
-          </h1>
-          
-          {/* Profile Avatar Dropdown */}
-          <div className="relative" ref={profileRef}>
-            <button
-              onClick={() => setShowProfileMenu((s) => !s)}
-              aria-haspopup="true"
-              aria-expanded={showProfileMenu}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+      {/* Conditional Headers - ONE header per tab */}
+      {currentTab === "home" && (
+        <HomeHeader 
+          userName={localUserName || userDisplayName || user?.email?.split('@')[0] || "Friend"}
+          onNotificationsClick={() => {
+            // Navigate to profile/settings where notifications toggle is
+            setCurrentTab("profile");
+          }}
+          onSignOut={handleLogout}
+        />
+      )}
+      {currentTab === "song-mode" && (
+        <ScreenHeader 
+          title="Worship" 
+          showBack={false}
+        />
+      )}
+      {currentTab === "feed" && (
+        <ScreenHeader 
+          title="History" 
+          showBack={false}
+        />
+      )}
+      {currentTab === "profile" && (
+        <ScreenHeader 
+          title="Profile & Settings" 
+          showBack={false}
+        />
+      )}
+
+      {/* Main Content Area - Simple structure */}
+      <main className="pt-16 relative z-10">
+        <AnimatePresence mode="wait">
+          {currentTab === "home" && (
+            <motion.div
+              key="home"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
             >
-              {userAvatar ? (
-                  <img 
-                  src={userAvatar} 
-                  alt="Profile" 
-                  className="w-9 h-9 md:w-10 md:h-10 rounded-full border-2 border-daily-accent"
-                />
-              ) : (
-                <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-daily-pink to-daily-accent flex items-center justify-center text-white font-black text-sm">
-                  {user?.email?.[0]?.toUpperCase() || "U"}
-                </div>
-              )}
-            </button>
-            
-            {/* Dropdown Menu (click-toggle for mobile) */}
-            <div className={`${showProfileMenu ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-1'} absolute right-0 top-full mt-2 w-48 bg-black border-2 border-daily-gold rounded-xl overflow-hidden transition-all duration-200 shadow-xl`}>
-              <div className="p-3 border-b border-white/10">
-                <p className="text-white font-bold text-sm truncate">{user?.email}</p>
-              </div>
-              <button
-                onClick={() => router.push("/account")}
-                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors text-sm"
-              >
-                Account Settings
-              </button>
-              <button
-                onClick={() => router.push("/history")}
-                className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors text-sm"
-              >
-                History
-              </button>
-              <button
-                onClick={handleLogout}
-                className="w-full px-4 py-3 text-left text-red-400 hover:bg-white/10 transition-colors text-sm"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Fixed Streak Bar - 60-70px */}
-      <div className="fixed top-14 md:top-16 left-0 right-0 z-40 bg-gradient-to-r from-purple-900/80 via-purple-700/70 to-amber-500/60 backdrop-blur-md border-b-2 border-amber-500/30 h-16 md:h-[70px] shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 h-full flex flex-col justify-center">
-          <div className="flex items-center justify-between md:justify-start gap-4">
-            {/* Left: Streak Text (hidden when streak === 0) */}
-            <div className="flex-1 md:flex-initial">
-              {streak > 0 && (
-                <>
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-black text-white leading-tight drop-shadow-lg">
-                    {getStreakMessage()}
-                  </h2>
-                  {!hasCheckedInToday && (
-                    <button 
-                      onClick={() => setCurrentTab("daily")}
-                      className="text-xs md:text-sm text-amber-300 hover:text-amber-100 transition-colors mt-0.5 font-bold"
-                    >
-                      Check in to make it {streak + 1} →
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-            
-            {/* Right: Fire Emojis */}
-            <div className="text-xl sm:text-2xl md:text-3xl drop-shadow-lg">
-              {getFireEmojis()}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop Tab Navigation */}
-      <div className="hidden md:block fixed top-[106px] lg:top-[118px] left-0 right-0 z-40 bg-black/95 border-b-2 border-white/10 shadow-xl">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-center gap-8">
-            <button
-              onClick={() => setCurrentTab("daily")}
-              className={`relative px-8 py-4 font-black text-lg transition-all duration-200 ${
-                currentTab === "daily"
-                  ? "text-daily-primary border-b-4 border-daily-primary"
-                  : "text-gray-500 hover:text-white border-b-4 border-transparent"
-              }`}
-            >
-              <span className="flex items-center gap-3">
-                💪 Daily Boost
-                {!hasCheckedInToday && (
-                  <span className="flex items-center justify-center w-6 h-6 bg-red-500 text-white text-xs font-black rounded-full">
-                    1
-                  </span>
-                )}
-              </span>
-            </button>
-
-            <button
-              onClick={() => setCurrentTab("history")}
-              className={`relative px-8 py-4 font-black text-lg transition-all duration-200 ${
-                currentTab === "history"
-                  ? "text-daily-pink border-b-4 border-daily-pink"
-                  : "text-gray-500 hover:text-white border-b-4 border-transparent"
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                🔥 History
-              </span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      <main className="pt-32 md:pt-40 lg:pt-48 px-3 sm:px-4 md:px-6 pb-8 relative z-10">
-        <div className={`max-w-5xl mx-auto transition-colors duration-300 ${
-          currentTab === "daily" 
-            ? "bg-black/60 backdrop-blur-xl"
-            : "bg-gradient-to-b from-red-900/30 via-red-800/20 to-black/60"
-        } rounded-2xl p-4 sm:p-6 md:p-8 shadow-2xl`}>
-          <AnimatePresence mode="wait">
-            {currentTab === "daily" && (
-              <motion.div
-                key="daily"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <DailyCheckInTab 
-                  userId={user?.id} 
-                  onStreakUpdate={handleStreakUpdate}
-                  hasCheckedInToday={hasCheckedInToday}
-                />
-              </motion.div>
-            )}
-            {currentTab === "history" && (
-              <motion.div
-                key="roast"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
-              >
-                <RoastModeTab userId={user?.id} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              <HomeScreen
+                userName={localUserName || userDisplayName || user?.email?.split('@')[0] || "Friend"}
+                todaysPrayer={currentPrayer ? {
+                  text: currentPrayer.text,
+                  audioUrl: currentPrayer.audioUrl,
+                } : undefined}
+                onPrayForSomething={() => setShowPrayerIntent(true)}
+                onCreateWorshipSong={() => {
+                  if (!isPremium) {
+                    setShowPaywall(true);
+                  } else {
+                    setCurrentTab("song-mode");
+                  }
+                }}
+                isPremium={isPremium}
+              />
+            </motion.div>
+          )}
+          {currentTab === "song-mode" && (
+            <SongModeScreen 
+              userId={user?.id || 'anonymous'}
+              userName={localUserName || userDisplayName || user?.email?.split('@')[0] || "Friend"}
+              isPremium={isPremium}
+              onUpgrade={() => {
+                if (!user) {
+                  setShowPaywall(true);
+                } else {
+                  router.push('/pricing');
+                }
+              }}
+            />
+          )}
+          {currentTab === "feed" && (
+            <FeedHistoryScreen 
+              userId={user?.id || 'anonymous'}
+            />
+          )}
+          {currentTab === "profile" && (
+            <ProfileScreen
+              userId={user?.id || 'anonymous'}
+              userName={localUserName || userDisplayName || user?.email?.split('@')[0]}
+              userEmail={user?.email}
+              isPremium={isPremium}
+              onNameUpdate={(newName) => {
+                setLocalUserName(newName);
+              }}
+              onSignOut={handleLogout}
+              onManageSubscription={() => {
+                if (!user) {
+                  setShowPaywall(true);
+                } else {
+                  router.push('/pricing');
+                }
+              }}
+            />
+          )}
+        </AnimatePresence>
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-lg border-t border-white/20 h-20">
-        <div className="h-full flex items-stretch">
-          {/* Left: Daily Tab */}
-          <button
-            onClick={() => setCurrentTab("daily")}
-            className={`relative flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
-              currentTab === "daily"
-                ? "bg-gradient-to-t from-daily-primary/20 to-transparent text-daily-primary"
-                : "text-gray-400"
-            }`}
-          >
-            <span className={`${currentTab === 'daily' ? 'block' : 'hidden'} absolute top-0 left-1/4 right-1/4 h-1 rounded-t-md bg-daily-primary`} />
-            <FaDumbbell className="text-2xl" />
-            <span className="text-xs font-bold">Daily</span>
-          </button>
+      <BottomTabNavigation currentTab={currentTab} onTabChange={setCurrentTab} isPremium={isPremium} />
 
-          {/* Center: Streak (Tappable to Daily) */}
-          <button
-            onClick={() => setCurrentTab("daily")}
-            className="w-32 flex flex-col items-center justify-center bg-gradient-to-t from-daily-primary/10 to-transparent border-x border-white/10"
-          >
-            <div className="text-lg font-black text-white leading-tight">
-              Day {streak}
-            </div>
-            <div className="text-xs text-gray-400 font-bold">strong</div>
-            <div className="text-base mt-0.5">{getFireEmojis()}</div>
-          </button>
-
-          {/* Right: History Tab */}
-          <button
-            onClick={() => setCurrentTab("history")}
-            className={`relative flex-1 flex flex-col items-center justify-center gap-1 transition-all duration-200 ${
-              currentTab === "history"
-                ? "bg-gradient-to-t from-daily-pink/20 to-transparent text-daily-pink"
-                : "text-gray-400"
-            }`}
-          >
-            <span className={`${currentTab === 'history' ? 'block' : 'hidden'} absolute top-0 left-1/4 right-1/4 h-1 rounded-t-md bg-daily-pink`} />
-            <FaHistory className="text-2xl" />
-            <span className="text-xs font-bold">History</span>
-          </button>
-        </div>
-      </nav>
+      {/* Paywall Modal */}
+      <PaywallModal
+        isOpen={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onSignInApple={async () => {
+          // TODO: Implement Apple Sign-In
+          setShowPaywall(false);
+          // Redirect to payment flow
+        }}
+        onSignInGoogle={async () => {
+          // TODO: Implement Google Sign-In
+          setShowPaywall(false);
+          // Redirect to payment flow
+        }}
+      />
 
       {showConfetti && <ConfettiPop show={showConfetti} onComplete={() => setShowConfetti(false)} />}
     </div>

@@ -51,10 +51,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If the user IS authenticated, redirect them from public pages to /app
+  // If the user IS authenticated, redirect them from landing page to /app
   if (user) {
-    const publicPaths = ['/', '/pricing', '/template'];
-    if (publicPaths.includes(request.nextUrl.pathname)) {
+    if (request.nextUrl.pathname === '/') {
       const url = request.nextUrl.clone();
       url.pathname = '/app';
       return NextResponse.redirect(url);

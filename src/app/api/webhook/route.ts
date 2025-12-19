@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       userId: data.custom_data?.userId || null,
       amount: amountStr,
       currency: data.currency_code || 'USD',
-      paddleData: JSON.stringify(data),
+      dodoData: JSON.stringify(data),
       status: data.status || eventData.eventType,
     });
 
@@ -151,7 +151,7 @@ async function handleTransactionCompleted(transaction: any, priceAction: any = n
     }
   }
 
-  // Note: song purchases are deprecated in DailyMotiv; historic song rows (if any)
+  // Note: song purchases are deprecated in Selah
   // are archived by migrations. For purchases that map to daily credits, we
   // handle credits above. If you need custom fulfillment, extend this handler.
 }
@@ -166,21 +166,21 @@ async function handleSubscriptionCreated(subscription: any) {
     return;
   }
 
-  const tier = subscription.custom_data?.tier || 'unlimited';
+  // Selah subscription model: 'monthly' tier for premium users
+  const tier = subscription.custom_data?.tier || 'monthly';
   let initialCredits = 0;
 
-  if (tier === 'unlimited') {
-    initialCredits = 20;
-  } else if (tier === 'weekly') {
-    // Weekly subscription grants 3 credits (for song generation). Daily motivation is free for all users.
-    initialCredits = 3;
+  if (tier === 'monthly' || tier === 'yearly') {
+    // Premium subscription: 1 worship song per day (credits reset daily)
+    // We start with 1 credit that can be used immediately
+    initialCredits = 1;
   }
   
   await db
     .insert(subscriptions)
     .values({
       userId,
-      paddleSubscriptionId: subscription.id,
+      dodoSubscriptionId: subscription.id,
       tier,
       status: subscription.status || 'active',
       creditsRemaining: initialCredits,
@@ -189,7 +189,7 @@ async function handleSubscriptionCreated(subscription: any) {
     .onConflictDoUpdate({
       target: subscriptions.userId,
       set: {
-        paddleSubscriptionId: subscription.id,
+        dodoSubscriptionId: subscription.id,
         tier,
         status: subscription.status || 'active',
         creditsRemaining: initialCredits,
@@ -224,17 +224,11 @@ async function handleSubscriptionUpdated(subscription: any, eventType: string) {
     if (tier === 'unlimited') {
       await refillCredits(userId, 20);
       console.log(`[Webhook] Refilled 20 credits for user ${userId} on subscription renewal`);
-    } else if (tier === 'weekly') {
-      // Refill 3 credits for weekly subscription renewals and extend daily checkin expiry
-      await refillCredits(userId, 3);
-      console.log(`[Webhook] Refilled 3 credits for user ${userId} on weekly subscription renewal`);
-        // The current Drizzle schema does not include `dailyCheckinsExpiresAt`.
-        // Persisting this field would require a schema migration. For now,
-        // compute the intended expiry, update the subscription's `updatedAt`
-        // timestamp and log the intended expiry (do not persist the expiry).
-        const newExpiry = subscription.next_billed_at ? new Date(subscription.next_billed_at) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-        await db.update(subscriptions).set({ updatedAt: new Date() }).where(eq(subscriptions.userId, userId));
-        console.log(`[Webhook] Intended to extend daily checkin expiry for user ${userId} to ${newExpiry} (schema missing - not persisted)`);
+    } else if (tier === 'monthly' || tier === 'yearly') {
+      // Refill 1 credit per day for premium subscription renewals (worship songs)
+      // For Selah, premium users get 1 worship song per day
+      await refillCredits(userId, 1);
+      console.log(`[Webhook] Refilled 1 credit for user ${userId} on premium subscription renewal`);
     }
   }
 
@@ -246,7 +240,7 @@ async function handleSubscriptionUpdated(subscription: any, eventType: string) {
       renewsAt: subscription.next_billed_at ? new Date(subscription.next_billed_at) : null,
       updatedAt: new Date(),
     })
-    .where(eq(subscriptions.paddleSubscriptionId, subscription.id));
+    .where(eq(subscriptions.dodoSubscriptionId, subscription.id));
 
   console.log(`[Webhook] Subscription ${subscription.id} updated - status: ${status}`);
 }
@@ -260,7 +254,7 @@ async function handleSubscriptionCanceled(subscription: any) {
       status: 'canceled',
       updatedAt: new Date(),
     })
-    .where(eq(subscriptions.paddleSubscriptionId, subscription.id));
+    .where(eq(subscriptions.dodoSubscriptionId, subscription.id));
   
   console.log(`[Webhook] Subscription ${subscription.id} marked as canceled`);
 }
@@ -274,7 +268,7 @@ async function handleSubscriptionPastDue(subscription: any) {
       status: 'past_due',
       updatedAt: new Date(),
     })
-    .where(eq(subscriptions.paddleSubscriptionId, subscription.id));
+    .where(eq(subscriptions.dodoSubscriptionId, subscription.id));
   
   console.log(`[Webhook] Subscription ${subscription.id} marked as past_due`);
 }

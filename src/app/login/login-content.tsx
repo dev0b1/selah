@@ -95,10 +95,10 @@ export default function LoginContent() {
           {/* Header */}
           <div className="text-center space-y-4">
             <h1 className="text-4xl font-black text-gradient">
-              Welcome to ExRoast 🔥
+              Welcome to Selah ✨
             </h1>
             <p className="text-xl text-white font-bold">
-              Sign in to roast your ex with AI
+              Sign in to unlock premium features
             </p>
             <p className="text-gray-400">
               Quick login with Google. No passwords, no spam.
