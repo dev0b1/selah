@@ -37,13 +37,14 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
-  // Protected routes that require authentication
-  const protectedPaths = ['/checkout', '/dashboard', '/app', '/account'];
+  // Protected routes that require authentication (excluding /app which uses delayed auth)
+  const protectedPaths = ['/checkout', '/dashboard', '/account'];
   const isProtectedPath = protectedPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
   );
 
   // Redirect to login if not authenticated and trying to access protected routes
+  // Note: /app allows delayed auth (free users can access without login)
   if (!user && isProtectedPath) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth';

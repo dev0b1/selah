@@ -1,21 +1,39 @@
-# Background Audio Files
+# Background Music for Prayers
 
-Place background music files in this directory. The generator will look for files listed in `src/config/motivation.config.ts`.
+This folder contains background music files that are mixed with ElevenLabs TTS audio for prayer playback.
 
-Required structure (examples):
-- `public/bg/drill1.mp3`
-- `public/bg/drill2.mp3`
-- `public/bg/drill-intense.mp3`
-- `public/bg/epic-orchestral.mp3`
-- `public/bg/epic-cinematic.mp3`
-- `public/bg/calm-ambient.mp3`
-- `public/bg/rain-focus.mp3`
-- `public/bg/intense-gym.mp3`
-- `public/bg/intense-heartbeat.mp3`
-- `public/bg/overcome-rise.mp3`
-- `public/bg/overcome-triumph.mp3`
+## File Structure
 
-Recommended:
-- MP3, 192kbps or higher
-- Duration 60-120s (looped if shorter)
-- Instrumental (no vocals)
+Place your background music files here:
+- `prayer-background.mp3` - Default background music for all prayers (required)
+- `prayer-peace.mp3` - Optional: Background for peace-themed prayers
+- `prayer-guidance.mp3` - Optional: Background for guidance-themed prayers
+- `prayer-strength.mp3` - Optional: Background for strength-themed prayers
+- etc.
+
+## Requirements
+
+- **Format**: MP3 (recommended) or WAV
+- **Duration**: Should be at least 60 seconds (will loop if needed)
+- **Volume**: Keep background music subtle (-18dB to -15dB when mixed)
+- **Style**: Gentle, peaceful, non-distracting instrumental music
+- **Bitrate**: 192kbps or higher recommended
+
+## Usage
+
+The system will automatically:
+1. Generate TTS audio from prayer text
+2. Mix it with the background music at -18dB
+3. Normalize and compress the final audio
+4. Upload to storage
+
+## Upload Instructions
+
+1. Prepare your background music file (MP3 format, 60+ seconds)
+2. Name it `prayer-background.mp3` for the default
+3. Place it in this folder: `public/bg/prayer-background.mp3`
+4. The system will automatically use it for all prayer audio generation
+
+## Optional: Mood-Specific Backgrounds
+
+You can extend the system to use different backgrounds based on prayer mood by modifying `src/lib/server/eleven-nudge.server.ts` to select different files based on the `mood` parameter.

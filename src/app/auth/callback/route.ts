@@ -52,15 +52,20 @@ export async function GET(request: NextRequest) {
       try {
         cookieStore.set('post_auth_redirect', '', { path: '/', maxAge: 0 });
       } catch (e) {}
+      
+      // Fix redirect URL to use localhost instead of 0.0.0.0
+      const baseUrl = request.url.replace('0.0.0.0', 'localhost');
+      
       // Redirect to checkout if user came from subscribe button
       if (redirectTo === '/checkout') {
-        return NextResponse.redirect(new URL('/checkout', request.url));
+        return NextResponse.redirect(new URL('/checkout', baseUrl));
       }
       // Otherwise redirect to the original page
-      return NextResponse.redirect(new URL(redirectTo, request.url));
+      return NextResponse.redirect(new URL(redirectTo, baseUrl));
     }
   }
 
   // return the user to an error page with instructions
-  return NextResponse.redirect(new URL('/auth?error=authentication_failed', request.url));
+  const baseUrl = request.url.replace('0.0.0.0', 'localhost');
+  return NextResponse.redirect(new URL('/auth?error=authentication_failed', baseUrl));
 }

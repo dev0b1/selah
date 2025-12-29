@@ -29,7 +29,7 @@ export function AnimatedBackground() {
       },
       particles: {
         color: {
-          value: ["#D4A574", "#F5F5F5"], // Gold and white for subtle stars
+          value: ["#D4A574", "#F5F5F5", "#E4B584", "#FFD700"], // Gold, white, warm gold, and bright gold for twinkling stars
         },
         move: {
           direction: "top",
@@ -38,23 +38,44 @@ export function AnimatedBackground() {
             default: "out",
           },
           random: true,
-          speed: 0.3, // Slower for subtlety
+          speed: { min: 0.15, max: 0.4 }, // Slower, more gentle drift
           straight: false,
         },
         number: {
           density: {
             enable: true,
           },
-          value: 30, // Fewer particles for subtlety
+          value: 50, // More particles for richer starfield
         },
         opacity: {
-          value: { min: 0.05, max: 0.2 }, // Very subtle
+          value: { min: 0.1, max: 0.4 }, // More visible twinkling
+          animation: {
+            enable: true,
+            speed: { min: 0.3, max: 0.8 }, // Varied twinkle speeds
+            sync: false,
+            destroy: "none",
+            minimumValue: 0.05,
+          },
         },
         shape: {
-          type: "circle", // Circle particles (star shape may not be available in slim version)
+          type: "circle",
         },
         size: {
-          value: { min: 1, max: 2 }, // Smaller stars
+          value: { min: 1, max: 3 }, // More varied sizes
+          animation: {
+            enable: true,
+            speed: { min: 1.5, max: 3 }, // Varied pulse speeds
+            sync: false,
+            destroy: "none",
+            minimumValue: 0.5,
+          },
+        },
+        twinkle: {
+          particles: {
+            enable: true,
+            frequency: 0.08,
+            opacity: { min: 0.2, max: 1 },
+          },
         },
       },
       detectRetina: true,

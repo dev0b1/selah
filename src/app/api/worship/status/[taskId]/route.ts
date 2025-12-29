@@ -4,10 +4,10 @@ import { getWorshipSongBySunoTaskId, updateWorshipSongAudioUrl } from '@/lib/db-
 // Check status of Suno generation task
 export async function GET(
   request: NextRequest,
-  { params }: { params: { taskId: string } }
+  { params }: { params: Promise<{ taskId: string }> }
 ) {
   try {
-    const { taskId } = params;
+    const { taskId } = await params;
 
     if (!taskId) {
       return NextResponse.json(
@@ -38,9 +38,9 @@ export async function GET(
       });
     }
 
-    // Poll Suno API for task status
+    // Poll SunoAPI.org for task status
     const sunoApiKey = process.env.SUNO_API_KEY;
-    const sunoApiUrl = process.env.SUNO_API_URL || 'https://api.suno.ai';
+    const sunoApiUrl = process.env.SUNO_API_URL || 'https://api.sunoapi.org';
 
     if (!sunoApiKey) {
       return NextResponse.json({
@@ -52,10 +52,12 @@ export async function GET(
     }
 
     try {
-      const response = await fetch(`${sunoApiUrl}/api/task/${taskId}`, {
+      // SunoAPI.org v1 status endpoint
+      const response = await fetch(`${sunoApiUrl}/v1/suno/get/${taskId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${sunoApiKey}`,
+          'Content-Type': 'application/json',
         },
       });
 
@@ -71,19 +73,33 @@ export async function GET(
 
       const data = await response.json();
       
-      // Suno API returns status and audio_url when complete
-      if (data.status === 'complete' && data.audio_url) {
+      // SunoAPI.org returns different response structure
+      // Check for common formats: { status, audio_url } or { data: { status, audio_url } }
+      const status = data.status || data.data?.status || data.task_status;
+      const audioUrl = data.audio_url || data.data?.audio_url || data.audio_urls?.[0] || data.metadata?.audio_url;
+      
+      // Status can be: 'complete', 'generating', 'pending', 'failed'
+      if (status === 'complete' && audioUrl) {
         // Update database with final audio URL
-        await updateWorshipSongAudioUrl(song.id, data.audio_url);
+        await updateWorshipSongAudioUrl(song.id, audioUrl);
 
         return NextResponse.json({
           success: true,
           status: 'complete',
           songId: song.id,
-          audioUrl: data.audio_url,
+          audioUrl: audioUrl,
           title: song.title,
           lyrics: song.lyrics,
         });
+      }
+      
+      if (status === 'failed' || status === 'error') {
+        return NextResponse.json({
+          success: false,
+          status: 'failed',
+          songId: song.id,
+          message: 'Song generation failed. Please try again.',
+        }, { status: 500 });
       }
 
       // Still generating

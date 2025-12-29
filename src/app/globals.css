@@ -38,16 +38,39 @@ body {
   --selah-periwinkle: #8B9DC3;
 }
 
-/* Typography */
+/* Typography - Premium & Elegant with Warmth */
 .font-script {
   font-family: 'Dancing Script', 'Brush Script MT', cursive;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 .font-serif {
-  font-family: 'Cormorant Garamond', 'Georgia', serif;
+  font-family: 'Cormorant Garamond', 'Georgia', 'Times New Roman', serif;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
-#tsparticles {
+/* Elegant semi-serif for verses and prayers - Warm, poetic, illuminated */
+.font-elegant {
+  font-family: 'Cormorant Garamond', 'Georgia', 'Times New Roman', serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 2;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Illuminated text for key words */
+.text-illuminated {
+  text-shadow: 
+    0 0 10px rgba(212, 165, 116, 0.4),
+    0 0 20px rgba(212, 165, 116, 0.2),
+    0 2px 4px rgba(0, 0, 0, 0.2);
+  color: rgba(255, 255, 255, 0.98);
+}
+
+#tsparticles,
+#ambient-particles {
   position: fixed;
   top: 0;
   left: 0;
@@ -59,27 +82,59 @@ body {
 
 /* Button Styles */
 .btn-primary {
-  padding: 1rem 2.5rem;
-  background: linear-gradient(135deg, #D4A574 0%, #B8935F 100%);
+  padding: 1.125rem 2.75rem;
+  background: linear-gradient(135deg, #D4A574 0%, #c4965f 50%, #B8935F 100%);
   color: #0A1628;
   font-weight: 700;
   font-size: 1.125rem;
-  border-radius: 16px;
+  border-radius: 1.25rem;
   border: none;
-  box-shadow: 0 4px 20px rgba(212, 165, 116, 0.25), 0 0 0 1px rgba(212, 165, 116, 0.1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 6px 30px rgba(212, 165, 116, 0.4),
+    0 0 0 1px rgba(212, 165, 116, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
   transform-origin: center;
-  transition: all 0.3s ease;
-  will-change: transform;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+  backdrop-filter: blur(10px);
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(255, 255, 255, 0.3), 
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #E4B584 0%, #C8A36F 100%);
-  box-shadow: 0 6px 30px rgba(212, 165, 116, 0.35), 0 0 0 1px rgba(212, 165, 116, 0.15);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #E4B584 0%, #d4a574 50%, #C8A36F 100%);
+  box-shadow: 
+    0 8px 40px rgba(212, 165, 116, 0.5),
+    0 0 0 1px rgba(212, 165, 116, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 0 80px rgba(212, 165, 116, 0.3);
+  transform: translateY(-2px) scale(1.02);
 }
 
 .btn-primary:active {
   transform: translateY(0) scale(0.98);
+  transition: all 0.15s ease;
 }
 
 .btn-secondary {
@@ -102,15 +157,64 @@ body {
   border-color: rgba(139, 157, 195, 0.5);
 }
 
-/* Card Styles - Lighter, more devotional feel */
+/* Card Styles - Glassmorphic, glowing, floating effect */
 .card {
-  background: rgba(26, 41, 66, 0.5);
-  backdrop-filter: blur(20px);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  border: 1px solid rgba(139, 157, 195, 0.15);
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(212, 165, 116, 0.05);
+  background: rgba(26, 41, 66, 0.4);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+  border: 1px solid rgba(212, 165, 116, 0.25);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(212, 165, 116, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 40px rgba(212, 165, 116, 0.08),
+    0 0 80px rgba(212, 165, 116, 0.05);
+  position: relative;
+  overflow: hidden;
+  animation: float 8s ease-in-out infinite;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    rgba(212, 165, 116, 0.5), 
+    transparent
+  );
+  opacity: 0.8;
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(212, 165, 116, 0.1) 0%, transparent 70%);
+  opacity: 0.6;
+  animation: parallax-breathe 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(212, 165, 116, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 0 60px rgba(212, 165, 116, 0.12),
+    0 0 120px rgba(212, 165, 116, 0.15);
+  border-color: rgba(212, 165, 116, 0.4);
 }
 
 /* Text Styles */
@@ -129,7 +233,7 @@ body {
   color: #8B9DC3;
 }
 
-/* Animations */
+/* Animations - Living, breathing effects */
 @keyframes breathe {
   0%, 100% {
     transform: scale(1);
@@ -158,6 +262,85 @@ body {
 
 .animate-gentle-fade {
   animation: gentle-fade 0.6s ease-out;
+}
+
+/* Twinkling stars animation */
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.animate-twinkle {
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.animate-twinkle-delayed {
+  animation: twinkle 3s ease-in-out infinite;
+  animation-delay: 1.5s;
+}
+
+/* Floating/breathing effect for cards */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Gentle pulse for glow effects */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(212, 165, 116, 0.3), 0 0 40px rgba(212, 165, 116, 0.1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(212, 165, 116, 0.5), 0 0 60px rgba(212, 165, 116, 0.2);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+/* Inner glow animation */
+@keyframes inner-glow {
+  0%, 100% {
+    box-shadow: inset 0 0 30px rgba(212, 165, 116, 0.1);
+  }
+  50% {
+    box-shadow: inset 0 0 50px rgba(212, 165, 116, 0.2);
+  }
+}
+
+.animate-inner-glow {
+  animation: inner-glow 5s ease-in-out infinite;
+}
+
+/* Subtle parallax breathing */
+@keyframes parallax-breathe {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-3px) scale(1.002);
+    opacity: 0.7;
+  }
+}
+
+.animate-parallax-breathe {
+  animation: parallax-breathe 10s ease-in-out infinite;
 }
 
 /* Mobile-first touch optimizations */

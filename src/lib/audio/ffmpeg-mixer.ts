@@ -4,8 +4,26 @@ import { path as ffprobePath } from '@ffprobe-installer/ffprobe';
 import path from 'path';
 import fs from 'fs/promises';
 import { writeFile } from 'fs/promises';
-import type { AudioMixConfig, TimingData } from '@/types/motivation';
-import { AUDIO_SETTINGS } from '@/config/motivation.config';
+
+// Audio settings for Selah prayer mixing
+const AUDIO_SETTINGS = {
+  bitrate: '192k',
+  sampleRate: 44100,
+};
+
+// Type definitions for audio mixing
+export interface TimingData {
+  startTime: number;
+  endTime: number;
+  backgroundVolume: number;
+}
+
+export interface AudioMixConfig {
+  ttsBuffer: Buffer;
+  backgroundPath: string;
+  timingData: TimingData[];
+  totalDuration: number;
+}
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
@@ -24,13 +42,22 @@ export async function mixAudio(config: AudioMixConfig): Promise<Buffer> {
 
     const volumeFilter = generateVolumeFilter(timingData, totalDuration);
 
+    // Use only first 60 seconds of background music, loop if needed for longer prayers
+    const maxBackgroundDuration = 60; // Use only first 60 seconds
+    const prayerDuration = totalDuration / 1000; // Prayer duration in seconds
+    
     await new Promise<void>((resolve, reject) => {
+      // First, trim background to 60 seconds, then loop if prayer is longer
+      const bgFilter = prayerDuration > maxBackgroundDuration
+        ? `[1:a]atrim=0:${maxBackgroundDuration},aloop=loop=-1:size=2e+09,atrim=0:${prayerDuration}[bg_trimmed]`
+        : `[1:a]atrim=0:${prayerDuration}[bg_trimmed]`;
+      
       ffmpeg()
         .input(tempTTSPath)
         .input(fullBackgroundPath)
-        .inputOptions(['-stream_loop', '-1'])
         .complexFilter([
-          `[1:a]${volumeFilter},atrim=duration=${totalDuration / 1000}[bg]`,
+          bgFilter,
+          `[bg_trimmed]${volumeFilter}[bg]`,
           '[0:a][bg]amix=inputs=2:duration=first:weights=1.5 0.5',
           'loudnorm=I=-16:TP=-1.5:LRA=11',
           'acompressor=threshold=-20dB:ratio=4:attack=5:release=50',

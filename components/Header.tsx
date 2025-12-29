@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaBars, FaTimes } from "react-icons/fa";
 import SubscriptionPrompt from "./SubscriptionPrompt";
 import SettingsMenu from "./SettingsMenu";
-import { openSingleCheckout, openTierCheckout } from "@/lib/checkout";
 
 export function Header({ userProp }: { userProp?: any }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

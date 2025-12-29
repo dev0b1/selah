@@ -47,20 +47,28 @@ export function SongModeScreen({
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center space-y-2"
+              className="text-center space-y-4 relative"
             >
-              <div className="text-4xl sm:text-5xl">🎵</div>
-              <h2 className="text-xl sm:text-2xl font-bold text-[#F5F5F5]">
+              {/* Subtle musical staff decoration */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 opacity-20">
+                <div className="flex gap-8 justify-center">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="w-0.5 h-full bg-[#D4A574] rounded-full" />
+                  ))}
+                </div>
+              </div>
+              <div className="text-5xl sm:text-6xl mb-2">🎵</div>
+              <h2 className="text-2xl sm:text-3xl font-light text-[#F5F5F5] tracking-tight">
                 Create Worship Song
               </h2>
-              <p className="text-sm sm:text-base text-[#8B9DC3]">
+              <p className="text-base sm:text-lg text-[#8B9DC3] font-light">
                 Choose the mood for your song:
               </p>
             </motion.div>
 
-            {/* Mood Selection */}
-            <div className="card space-y-4 p-4 sm:p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {/* Mood Selection - Premium styling */}
+            <div className="card space-y-6 p-6 sm:p-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {moods.map((mood) => (
                   <motion.button
                     key={mood.id}
@@ -68,16 +76,16 @@ export function SongModeScreen({
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className={`
-                      relative p-3 sm:p-4 rounded-xl border-2 transition-all duration-300
-                      touch-manipulation min-h-[90px] sm:min-h-[100px] flex flex-col items-center justify-center
+                      relative p-5 sm:p-6 rounded-2xl border-2 transition-all duration-300
+                      touch-manipulation min-h-[110px] sm:min-h-[120px] flex flex-col items-center justify-center
                       ${selectedMood === mood.id
-                        ? 'bg-gradient-to-br from-[#D4A574] to-[#B8935F] border-[#F5F5F5] shadow-lg'
-                        : 'bg-[#1a2942]/60 border-[#8B9DC3]/30 hover:border-[#8B9DC3]/50 hover:bg-[#1a2942]/80'
+                        ? 'bg-gradient-to-br from-[#D4A574] to-[#B8935F] border-[#D4A574]/60 shadow-[0_8px_30px_rgba(212,165,116,0.4),0_0_0_2px_rgba(212,165,116,0.2),inset_0_1px_0_rgba(255,255,255,0.3)]'
+                        : 'bg-white/6 backdrop-blur-sm border-white/20 hover:border-[#D4A574]/40 hover:bg-white/10 hover:shadow-[0_4px_20px_rgba(212,165,116,0.15)]'
                       }
                     `}
                   >
-                    <div className="text-2xl sm:text-3xl mb-2">{mood.emoji}</div>
-                    <div className={`font-bold text-xs sm:text-sm text-center ${
+                    <div className="text-4xl sm:text-5xl mb-3">{mood.emoji}</div>
+                    <div className={`font-semibold text-sm sm:text-base text-center ${
                       selectedMood === mood.id ? 'text-[#0A1628]' : 'text-[#F5F5F5]'
                     }`}>
                       {mood.label}

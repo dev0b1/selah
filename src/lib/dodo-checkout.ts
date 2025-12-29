@@ -56,9 +56,10 @@ async function ensureDodoInitialized() {
   dodoInitPromise = (async () => {
     try {
       const apiKey = process.env.NEXT_PUBLIC_DODO_API_KEY;
-      const environment = process.env.NEXT_PUBLIC_DODO_ENVIRONMENT;
+      const environment = process.env.NEXT_PUBLIC_DODO_ENVIRONMENT || 'sandbox';
 
       if (!apiKey) {
+        console.warn('[Dodo] API key not configured');
         // Return a shim that redirects to pricing page
         return {
           Checkout: {
@@ -67,36 +68,56 @@ async function ensureDodoInitialized() {
               if (typeof window !== 'undefined') {
                 window.location.href = '/pricing';
               }
-            }
+            },
+            close: () => {}
           }
         };
+      }
+
+      // Wait a bit for DodoLoader to load the SDK if it hasn't yet
+      let attempts = 0;
+      while (typeof window !== 'undefined' && !(window as any).Dodo && attempts < 10) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
       }
 
       // Check if Dodo is available in window (loaded by DodoLoader)
       if (typeof window !== 'undefined' && (window as any).Dodo) {
         try {
-          (window as any).Dodo.Initialize({
-            apiKey: apiKey,
-            environment: environment === 'production' ? 'production' : 'sandbox',
-          });
-          dodoInstance = (window as any).Dodo;
-          return dodoInstance;
+          const Dodo = (window as any).Dodo;
+          
+          // Initialize if not already initialized
+          if (Dodo.Initialize) {
+            Dodo.Initialize({
+              apiKey: apiKey,
+              environment: environment === 'production' ? 'production' : 'sandbox',
+            });
+            console.log('[Dodo] Initialized via window.Dodo');
+          }
+          
+          dodoInstance = Dodo;
+          return Dodo;
         } catch (e) {
-          console.warn('[Dodo] Window.Dodo initialization failed, using shim');
+          console.warn('[Dodo] Window.Dodo initialization failed:', e);
         }
       }
 
       // Fallback to our wrapper
-      const instance = await initializeDodo({
-        environment: environment === 'production' ? 'production' : 'sandbox',
-        apiKey: apiKey,
-        eventCallback: (ev) => {
-          console.log('[Dodo Event]', ev?.name);
-        }
-      });
+      try {
+        const instance = await initializeDodo({
+          environment: environment === 'production' ? 'production' : 'sandbox',
+          apiKey: apiKey,
+          eventCallback: (ev) => {
+            console.log('[Dodo Event]', ev?.name);
+          }
+        });
 
-      dodoInstance = instance;
-      return instance;
+        dodoInstance = instance;
+        return instance;
+      } catch (wrapperError) {
+        console.warn('[Dodo] Wrapper initialization failed:', wrapperError);
+        throw wrapperError;
+      }
     } catch (e) {
       console.warn('[Dodo] Initialization failed, using fallback shim:', e);
       dodoInitPromise = null;
@@ -104,10 +125,17 @@ async function ensureDodoInitialized() {
       return {
         Checkout: {
           open: (payload: any) => {
+            console.warn('[Dodo] Using fallback shim, redirecting to pricing');
             if (typeof window !== 'undefined') {
               window.location.href = '/pricing';
             }
+          },
+          close: () => {
+            console.log('[Dodo] Close called on shim');
           }
+        },
+        on: (event: string, callback: (data: any) => void) => {
+          console.log('[Dodo] Event listener registered on shim:', event);
         }
       };
     }

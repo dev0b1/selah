@@ -11,6 +11,7 @@ import { HomeScreen } from "@/components/HomeScreen";
 import { PrayerIntentScreen } from "@/components/PrayerIntentScreen";
 import { PrayerPlayerScreen } from "@/components/PrayerPlayerScreen";
 import { PaywallModal } from "@/components/PaywallModal";
+import { UpgradeModal } from "@/components/UpgradeModal";
 import { ConfettiPop } from "@/components/ConfettiPop";
 import { BottomTabNavigation, type TabType } from "@/components/BottomTabNavigation";
 import { HomeHeader } from "@/components/HomeHeader";
@@ -18,7 +19,8 @@ import { SongModeScreen } from "@/components/SongModeScreen";
 import { FeedHistoryScreen } from "@/components/FeedHistoryScreen";
 import { ProfileScreen } from "@/components/ProfileScreen";
 import { ScreenHeader } from "@/components/ScreenHeader";
-import { FaSpinner, FaHeart, FaHistory } from "react-icons/fa";
+import { SignupPrompt } from "@/components/SignupPrompt";
+import { FaSpinner, FaHeart, FaHistory, FaBell, FaSignOutAlt } from "react-icons/fa";
 
 export default function AppPage() {
   const router = useRouter();
@@ -34,14 +36,24 @@ export default function AppPage() {
   const [userDisplayName, setUserDisplayName] = useState<string>("");
   const [appFlow, setAppFlow] = useState<"landing" | "name" | "app">("landing");
   const [showPrayerIntent, setShowPrayerIntent] = useState(false);
-  const [currentPrayer, setCurrentPrayer] = useState<{text: string; audioUrl?: string; intent?: string} | null>(null);
+  const [currentPrayer, setCurrentPrayer] = useState<{text: string; audioUrl?: string; intent?: string; prayerId?: string} | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [localUserName, setLocalUserName] = useState<string>("");
+  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
+  const [signupPromptType, setSignupPromptType] = useState<'first-prayer' | 'save-history' | 'share' | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  
   // Initialize app flow based on whether user has name
   // First-time users (no name) should go: landing -> name -> app
   // Returning users (has name) should go: app directly
   useEffect(() => {
+    setIsMounted(true);
+    
     if (typeof window !== 'undefined') {
+      // Check if coming from landing page (onboarding flow)
+      const fromLanding = sessionStorage.getItem('selah_from_landing');
+      
       const storedName = localStorage.getItem('selah_user_name');
       if (storedName) {
         setLocalUserName(storedName);
@@ -49,6 +61,11 @@ export default function AppPage() {
         if (appFlow === "landing") {
           setAppFlow("app");
         }
+      } else if (fromLanding === 'true') {
+        // Coming from landing page - go directly to name input
+        setAppFlow("name");
+        // Clear the flag after using it
+        sessionStorage.removeItem('selah_from_landing');
       } else {
         // First-time user: start with landing screen
         if (appFlow === "app") {
@@ -107,11 +124,12 @@ export default function AppPage() {
           return;
         }
 
+        // Allow app to work without authentication (delayed auth)
+        // Only initialize user if they're logged in, but don't redirect if not
         if (session?.user) {
           await initUser(session.user);
-        } else {
-          router.push("/auth");
         }
+        // No redirect - allow free usage without auth
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
@@ -120,7 +138,10 @@ export default function AppPage() {
             if (event === 'SIGNED_IN' && session?.user) {
               await initUser(session.user);
             } else if (event === 'SIGNED_OUT') {
-              router.push("/auth");
+              // User explicitly signed out - reset state but don't redirect
+              // Allow them to continue using the app in free mode
+              setUser(null);
+              setIsPremium(false);
             }
           }
         );
@@ -129,7 +150,8 @@ export default function AppPage() {
 
       } catch (err) {
         console.error('[app/page] Auth error:', err);
-        if (mounted) router.push('/auth');
+        // Don't redirect on auth errors - allow app to work in free mode
+        // Only redirect if it's a critical parse error (handled above)
       }
     };
 
@@ -226,8 +248,27 @@ export default function AppPage() {
                       text: data.prayerText,
                       audioUrl: data.audioUrl,
                       intent: intent,
+                      prayerId: data.prayerId,
                     });
                     setShowPrayerIntent(false);
+                    setShowConfetti(true);
+                    setTimeout(() => setShowConfetti(false), 3000);
+
+                    // Trigger signup prompt after first personalized prayer (primary growth point)
+                    if (!user && typeof window !== 'undefined') {
+                      const firstPrayerPromptShown = localStorage.getItem('selah_first_prayer_prompt_shown');
+                      const signupPromptShown = sessionStorage.getItem('selah_signup_prompt_shown');
+                      
+                      if (!firstPrayerPromptShown && !signupPromptShown) {
+                        // Show prompt after a brief delay (let them see the prayer first)
+                        setTimeout(() => {
+                          setSignupPromptType('first-prayer');
+                          setShowSignupPrompt(true);
+                          localStorage.setItem('selah_first_prayer_prompt_shown', 'true');
+                          sessionStorage.setItem('selah_signup_prompt_shown', 'true');
+                        }, 2000); // 2 second delay after prayer appears
+                      }
+                    }
                   } catch (err) {
                     console.error('Error generating prayer:', err);
                     const errorMessage = err instanceof Error ? err.message : 'Failed to generate prayer. Please try again.';
@@ -246,7 +287,6 @@ export default function AppPage() {
   if (currentPrayer && appFlow === "app") {
         return (
           <div className="min-h-screen bg-gradient-to-b from-[#0A1628] to-[#1a2942] relative pb-20">
-            <AnimatedBackground />
             <ScreenHeader 
               title="Your Prayer"
               onBack={() => setCurrentPrayer(null)}
@@ -256,19 +296,108 @@ export default function AppPage() {
                 prayerText={currentPrayer.text}
                 audioUrl={currentPrayer.audioUrl}
                 prayerIntent={currentPrayer.intent}
+                prayerId={currentPrayer.prayerId}
                 userName={localUserName || userDisplayName || user?.email?.split('@')[0] || "Friend"}
                 isPremium={isPremium}
                 onNewPrayer={() => setShowPrayerIntent(true)}
                 onShare={async () => {
-                  if (navigator.share) {
-                    await navigator.share({
-                      title: 'My Personalized Prayer',
-                      text: currentPrayer.text,
-                    });
-                  } else {
-                    await navigator.clipboard.writeText(currentPrayer.text);
-                    alert('Prayer copied to clipboard!');
-                  }
+                  if (currentPrayer.prayerId) {
+                    const cardUrl = `${window.location.origin}/api/prayer/${currentPrayer.prayerId}/card`;
+                    if (navigator.share) {
+                      try {
+                        // Share the card image
+                        const response = await fetch(cardUrl);
+                        const blob = await response.blob();
+                        const file = new File([blob], 'prayer-card.png', { type: 'image/png' });
+                        await navigator.share({
+                          title: 'My Personalized Prayer',
+                          text: currentPrayer.text.substring(0, 100) + '...',
+                          files: [file],
+                        });
+                        
+                        // After successful share, show signup prompt (secondary growth point)
+                        if (!user && typeof window !== 'undefined') {
+                          const signupPromptShown = sessionStorage.getItem('selah_signup_prompt_shown');
+                          if (!signupPromptShown) {
+                            setTimeout(() => {
+                              setSignupPromptType('share');
+                              setShowSignupPrompt(true);
+                              sessionStorage.setItem('selah_signup_prompt_shown', 'true');
+                            }, 1500); // Show after share completes
+                          }
+                        }
+                      } catch (error) {
+                        // Fallback to text sharing
+                        await navigator.share({
+                          title: 'My Personalized Prayer',
+                          text: currentPrayer.text,
+                        });
+                        
+                        // Show signup prompt after share
+                        if (!user && typeof window !== 'undefined') {
+                          const signupPromptShown = sessionStorage.getItem('selah_signup_prompt_shown');
+                          if (!signupPromptShown) {
+                            setTimeout(() => {
+                              setSignupPromptType('share');
+                              setShowSignupPrompt(true);
+                              sessionStorage.setItem('selah_signup_prompt_shown', 'true');
+                            }, 1500);
+                          }
+                        }
+                      }
+                    } else {
+                      // Fallback: copy card URL to clipboard
+                      await navigator.clipboard.writeText(cardUrl);
+                      alert('Prayer card link copied to clipboard!');
+                      
+                      // Show signup prompt after share
+                      if (!user && typeof window !== 'undefined') {
+                        const signupPromptShown = sessionStorage.getItem('selah_signup_prompt_shown');
+                        if (!signupPromptShown) {
+                          setTimeout(() => {
+                            setSignupPromptType('share');
+                            setShowSignupPrompt(true);
+                            sessionStorage.setItem('selah_signup_prompt_shown', 'true');
+                          }, 1500);
+                        }
+                      }
+                    }
+                    } else {
+                      // Fallback: share text
+                      if (navigator.share) {
+                        await navigator.share({
+                          title: 'My Personalized Prayer',
+                          text: currentPrayer.text,
+                        });
+                        
+                        // Show signup prompt after share
+                        if (!user && typeof window !== 'undefined') {
+                          const signupPromptShown = sessionStorage.getItem('selah_signup_prompt_shown');
+                          if (!signupPromptShown) {
+                            setTimeout(() => {
+                              setSignupPromptType('share');
+                              setShowSignupPrompt(true);
+                              sessionStorage.setItem('selah_signup_prompt_shown', 'true');
+                            }, 1500);
+                          }
+                        }
+                      } else {
+                        await navigator.clipboard.writeText(currentPrayer.text);
+                        alert('Prayer copied to clipboard!');
+                        
+                        // Show signup prompt after share
+                        if (!user && typeof window !== 'undefined') {
+                          const signupPromptShown = sessionStorage.getItem('selah_signup_prompt_shown');
+                          if (!signupPromptShown) {
+                            setTimeout(() => {
+                              setSignupPromptType('share');
+                              setShowSignupPrompt(true);
+                              sessionStorage.setItem('selah_signup_prompt_shown', 'true');
+                            }, 1500);
+                          }
+                        }
+                      }
+                    }
                 }}
                 onCreateWorshipSong={() => {
                   if (!isPremium) {
@@ -285,20 +414,74 @@ export default function AppPage() {
       }
 
   return (
-    <div className="min-h-screen relative pb-20 md:pb-0 animate-gradient">
+    <div className="min-h-screen relative pb-20 md:pb-0 animate-gradient bg-gradient-to-b from-[#0A1628] via-[#0f1d35] to-[#1a2942] overflow-hidden">
+      {/* Radial glow behind content for depth */}
+      <div className="fixed inset-0 bg-gradient-radial from-[#D4A574]/5 via-[#D4A574]/2 to-transparent pointer-events-none opacity-60 animate-parallax-breathe" style={{ background: 'radial-gradient(circle at center, rgba(212,165,116,0.05) 0%, rgba(212,165,116,0.02) 40%, transparent 70%)' }} />
+      
+      {/* Static twinkling stars overlay */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-[#D4A574] rounded-full animate-twinkle"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 2}s`,
+              boxShadow: `0 0 ${2 + Math.random() * 3}px rgba(212, 165, 116, 0.8)`,
+            }}
+          />
+        ))}
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={`delayed-${i}`}
+            className="absolute w-0.5 h-0.5 bg-white rounded-full animate-twinkle-delayed"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2.5 + Math.random() * 2}s`,
+              boxShadow: `0 0 ${1 + Math.random() * 2}px rgba(255, 255, 255, 0.6)`,
+            }}
+          />
+        ))}
+      </div>
+      
       <AnimatedBackground />
       
-      {/* Conditional Headers - ONE header per tab */}
+      {/* Fixed Header for Home Tab */}
       {currentTab === "home" && (
-        <HomeHeader 
-          userName={localUserName || userDisplayName || user?.email?.split('@')[0] || "Friend"}
-          onNotificationsClick={() => {
-            // Navigate to profile/settings where notifications toggle is
-            setCurrentTab("profile");
-          }}
-          onSignOut={handleLogout}
-        />
+        <header className="fixed top-0 left-0 right-0 z-40 bg-[#0A1628]/95 backdrop-blur-lg border-b border-[#8B9DC3]/20">
+          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            {/* Left: Selah Logo */}
+            <h1 className="text-2xl font-script text-white">Selah</h1>
+            {/* Right: Notification Bell and Sign Out */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  // TODO: Implement notifications
+                }}
+                className="w-10 h-10 flex items-center justify-center text-[#8B9DC3] hover:text-[#F5F5F5] transition-colors touch-manipulation"
+                aria-label="Notifications"
+              >
+                <FaBell className="text-xl" />
+              </button>
+              {user && (
+                <button
+                  onClick={handleLogout}
+                  className="w-10 h-10 flex items-center justify-center text-[#8B9DC3] hover:text-red-400 transition-colors touch-manipulation"
+                  aria-label="Sign Out"
+                >
+                  <FaSignOutAlt className="text-lg" />
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
       )}
+
+      {/* Conditional Headers - Only show for non-home tabs */}
       {currentTab === "song-mode" && (
         <ScreenHeader 
           title="Worship" 
@@ -318,8 +501,8 @@ export default function AppPage() {
         />
       )}
 
-      {/* Main Content Area - Simple structure */}
-      <main className="pt-16 relative z-10">
+      {/* Main Content Area */}
+      <main className={`${currentTab === 'home' ? 'pt-16' : 'pt-16'} relative z-10`}>
         <AnimatePresence mode="wait">
           {currentTab === "home" && (
             <motion.div
@@ -336,6 +519,16 @@ export default function AppPage() {
                   audioUrl: currentPrayer.audioUrl,
                 } : undefined}
                 onPrayForSomething={() => setShowPrayerIntent(true)}
+                onListenToPrayer={() => {
+                  if (!isPremium) {
+                    // Show upgrade modal for logged-in users, paywall for guests
+                    if (user) {
+                      setShowUpgradeModal(true);
+                    } else {
+                      setShowPaywall(true);
+                    }
+                  }
+                }}
                 onCreateWorshipSong={() => {
                   if (!isPremium) {
                     setShowPaywall(true);
@@ -356,7 +549,7 @@ export default function AppPage() {
                 if (!user) {
                   setShowPaywall(true);
                 } else {
-                  router.push('/pricing');
+                  setShowUpgradeModal(true);
                 }
               }}
             />
@@ -364,6 +557,17 @@ export default function AppPage() {
           {currentTab === "feed" && (
             <FeedHistoryScreen 
               userId={user?.id || 'anonymous'}
+              onRequireSignup={() => {
+                // Trigger signup prompt when user tries to access history without account
+                if (!user && typeof window !== 'undefined') {
+                  const signupPromptShown = sessionStorage.getItem('selah_signup_prompt_shown');
+                  if (!signupPromptShown) {
+                    setSignupPromptType('save-history');
+                    setShowSignupPrompt(true);
+                    sessionStorage.setItem('selah_signup_prompt_shown', 'true');
+                  }
+                }
+              }}
             />
           )}
           {currentTab === "profile" && (
@@ -372,16 +576,22 @@ export default function AppPage() {
               userName={localUserName || userDisplayName || user?.email?.split('@')[0]}
               userEmail={user?.email}
               isPremium={isPremium}
+              isAuthenticated={!!user}
+              onStartTrial={() => {
+                // Show paywall for guests, upgrade modal for logged-in users
+                if (user) {
+                  setShowUpgradeModal(true);
+                } else {
+                  setShowPaywall(true);
+                }
+              }}
               onNameUpdate={(newName) => {
                 setLocalUserName(newName);
               }}
               onSignOut={handleLogout}
               onManageSubscription={() => {
-                if (!user) {
-                  setShowPaywall(true);
-                } else {
-                  router.push('/pricing');
-                }
+                // Show upgrade modal instead of redirecting to pricing
+                setShowUpgradeModal(true);
               }}
             />
           )}
@@ -391,21 +601,75 @@ export default function AppPage() {
       {/* Mobile Bottom Navigation Bar */}
       <BottomTabNavigation currentTab={currentTab} onTabChange={setCurrentTab} isPremium={isPremium} />
 
-      {/* Paywall Modal */}
+      {/* Paywall Modal - For non-authenticated users */}
       <PaywallModal
         isOpen={showPaywall}
         onClose={() => setShowPaywall(false)}
         onSignInApple={async () => {
-          // TODO: Implement Apple Sign-In
+          // Redirect to auth page - signup/login required before checkout
+          router.push("/auth?redirectTo=/app&prompt=upgrade");
           setShowPaywall(false);
-          // Redirect to payment flow
         }}
         onSignInGoogle={async () => {
-          // TODO: Implement Google Sign-In
+          // Redirect to auth page - signup/login required before checkout
+          router.push("/auth?redirectTo=/app&prompt=upgrade");
           setShowPaywall(false);
-          // Redirect to payment flow
         }}
+        userName={user?.email || localUserName || userDisplayName || undefined}
       />
+
+      {/* Upgrade Modal - For authenticated users */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={() => {
+          setShowUpgradeModal(false);
+          router.push('/pricing');
+        }}
+        userName={localUserName || userDisplayName || user?.email?.split('@')[0]}
+        feature="voice prayers and worship songs"
+      />
+
+      {/* Signup Prompt (Non-Intrusive Growth Prompts) - Only render client-side to avoid hydration issues */}
+      {isMounted && (
+        <>
+          <SignupPrompt
+            show={showSignupPrompt && signupPromptType === 'first-prayer'}
+            onClose={() => {
+              setShowSignupPrompt(false);
+              setSignupPromptType(null);
+            }}
+            title="Save your prayers"
+            description="Create an account to save your prayers and receive a new one tomorrow."
+            primaryAction="Save my prayers"
+            secondaryAction="Maybe later"
+          />
+
+          <SignupPrompt
+            show={showSignupPrompt && signupPromptType === 'share'}
+            onClose={() => {
+              setShowSignupPrompt(false);
+              setSignupPromptType(null);
+            }}
+            title="Keep your prayers"
+            description="Want to keep your prayers and come back to them later?"
+            primaryAction="Create account"
+            secondaryAction="Not now"
+          />
+
+          <SignupPrompt
+            show={showSignupPrompt && signupPromptType === 'save-history'}
+            onClose={() => {
+              setShowSignupPrompt(false);
+              setSignupPromptType(null);
+            }}
+            title="Sync across devices"
+            description="Create an account to keep your prayers across devices."
+            primaryAction="Create account"
+            secondaryAction="Maybe later"
+          />
+        </>
+      )}
 
       {showConfetti && <ConfettiPop show={showConfetti} onComplete={() => setShowConfetti(false)} />}
     </div>

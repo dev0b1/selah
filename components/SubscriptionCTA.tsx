@@ -5,17 +5,7 @@ import { FaCheck, FaStar, FaCrown } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { openSingleCheckout, openTierCheckout } from "@/lib/checkout";
-import {
-  SINGLE_PRICE_ID,
-  SINGLE_AMOUNT,
-  SINGLE_LABEL,
-  SINGLE_BUTTON_TEXT,
-  PREMIUM_PRICE_ID,
-  PREMIUM_AMOUNT,
-  PREMIUM_LABEL,
-  PREMIUM_BUTTON_TEXT,
-} from "@/lib/pricing";
+import { openDodoCheckout } from "@/lib/dodo-checkout";
 
 interface SubscriptionTier {
   id: string;
@@ -25,40 +15,38 @@ interface SubscriptionTier {
   features: string[];
   popular?: boolean;
   icon: any;
-  priceId: string;
+  planType: 'monthly' | 'yearly';
 }
 
-// Align tiers with the pricing page: One-Time Pro ($4.99) and Unlimited Pro ($12.99/mo)
+// Selah subscription tiers
 const tiers: SubscriptionTier[] = [
   {
-    id: "one-time",
-    name: "One-Time Pro",
-    price: SINGLE_AMOUNT,
-    interval: "one-time",
-    priceId: SINGLE_PRICE_ID || "pri_single",
+    id: "monthly",
+    name: "Premium Monthly",
+    price: 9.99,
+    interval: "month",
+    planType: "monthly",
     icon: FaStar,
     features: [
-      "Tailored Suno AI song",
-      "Personalized from YOUR story",
-      "Full 30-35s song",
-      "No watermark",
-      "Download MP3",
+      "Voice prayers with background music",
+      "AI-generated worship songs",
+      "Unlimited prayer history",
+      "Personalized daily prayers",
     ],
   },
   {
-    id: "unlimited",
-    name: "Unlimited Pro",
-    price: PREMIUM_AMOUNT,
-    interval: "month",
-    priceId: PREMIUM_PRICE_ID || "pri_premium",
+    id: "yearly",
+    name: "Premium Yearly",
+    price: 95.88,
+    interval: "year",
+    planType: "yearly",
     icon: FaCrown,
     popular: true,
     features: [
-      "UNLIMITED personalized songs",
-      "Upload chat screenshots",
-      "AI reads chats for ultra-petty lines",
-      "Unlimited history & saves",
-      "Clean MP3 downloads (no watermark)",
+      "Everything in Monthly",
+      "Save 20% annually",
+      "Priority support",
+      "Early access to new features",
     ],
   },
 ];
@@ -86,26 +74,7 @@ export function SubscriptionCTA({ songId, autoOpenSingle }: SubscriptionCTAProps
   const handleSubscribe = async (tier: SubscriptionTier) => {
     setIsLoading(tier.id);
     try {
-      // Re-check auth state at click time to avoid stale `user` state causing
-      // an unnecessary redirect to the auth page when the user is actually signed in.
-      const { data: { user: freshUser } } = await supabase.auth.getUser();
-      let resolvedUser = freshUser;
-      if (!resolvedUser) {
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData?.session?.user) resolvedUser = sessionData.session.user;
-        } catch (e) {
-          // ignore
-        }
-      }
-
-      if (!resolvedUser) {
-        // Let the checkout helper handle sign-in flow consistently
-        await openTierCheckout(tier.id, tier.priceId);
-        return;
-      }
-
-      await openTierCheckout(tier.id, tier.priceId);
+      await openDodoCheckout({ planType: tier.planType });
     } catch (err) {
       console.error('handleSubscribe error', err);
       alert('Unable to open checkout. Please try again or contact support.');
@@ -113,48 +82,6 @@ export function SubscriptionCTA({ songId, autoOpenSingle }: SubscriptionCTAProps
       setIsLoading(null);
     }
   };
-
-  // Open single-song checkout. If songId is provided, attach it as customData so
-  // the server-side webhook can unlock the correct song on transaction completion.
-  const handleSingleSongPurchase = async (opts?: { songId?: string }) => {
-    setIsLoading("single");
-
-    try {
-      // Re-check auth state at click time to avoid stale `user` state causing
-      // an unnecessary redirect to the auth page when the user is actually signed in.
-      const { data: { user: freshUser } } = await supabase.auth.getUser();
-      let resolvedUser = freshUser;
-      if (!resolvedUser) {
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData?.session?.user) resolvedUser = sessionData.session.user;
-        } catch (e) {
-          // ignore
-        }
-      }
-
-      // Delegate to centralized checkout helper which handles user resolution,
-      // payload creation and Paddle initialization. This prevents duplicate
-      // checkout codepaths and keeps behavior consistent across the app.
-      try {
-        await openSingleCheckout({ songId: opts?.songId || null });
-      } catch (e) {
-        console.error('handleSingleSongPurchase -> openSingleCheckout error', e);
-        alert('Unable to open checkout. Please try again or contact support.');
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Unable to open checkout. Please try again or contact support.");
-    } finally {
-      setIsLoading(null);
-    }
-  };
-
-  // NOTE: autoOpenSingle previously automatically opened the single-song checkout
-  // when the component mounted. That caused accidental purchases when upstream
-  // flows set the flag (for example, after a preview/upsell). To avoid unexpected
-  // checkout openings, we intentionally DO NOT auto-open checkout here. Users
-  // must explicitly click the purchase button to start the checkout flow.
 
   return (
     <div className="space-y-8">
@@ -227,26 +154,15 @@ export function SubscriptionCTA({ songId, autoOpenSingle }: SubscriptionCTAProps
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  // If this is the one-time product, open the single purchase flow.
-                  // handleSingleSongPurchase will redirect to Google sign-in if needed
-                  // and then to checkout after auth. For other tiers, use subscription flow.
-                  if (tier.id === 'one-time') {
-                      // Do not persist `inCheckout` client-side; checkout flow handles sign-in server-side.
-                      handleSingleSongPurchase({ songId: songId || undefined });
-                    } else {
-                      // Do not persist `inCheckout` client-side; checkout flow handles sign-in server-side.
-                      handleSubscribe(tier);
-                    }
-                }}
+                onClick={() => handleSubscribe(tier)}
                 disabled={isLoading === tier.id}
                 className={
-                  (tier.id === 'one-time' || isPopular)
+                  isPopular
                     ? 'btn-primary w-full'
-                    : 'w-full py-4 rounded-full font-semibold text-lg shadow-lg transition-all duration-300 bg-gradient-to-r from-heartbreak-500 to-heartbreak-600 text-white hover:shadow-xl'
+                    : 'w-full py-4 rounded-full font-semibold text-lg shadow-lg transition-all duration-300 bg-gradient-to-r from-[#D4A574] to-[#c4965f] text-white hover:shadow-xl'
                 }
               >
-                {isLoading === tier.id ? "Loading..." : (tier.id === 'one-time' ? `Get One Song` : (tier.id === 'unlimited' ? `Go Unlimited` : `Subscribe to ${tier.name}`))}
+                {isLoading === tier.id ? "Loading..." : `Subscribe to ${tier.name}`}
               </motion.button>
             </motion.div>
           );

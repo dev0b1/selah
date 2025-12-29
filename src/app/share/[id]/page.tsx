@@ -8,7 +8,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import AuthAwareCTA from "@/components/AuthAwareCTA";
 import { LoadingAnimation } from "@/components/LoadingAnimation";
-import { SocialShareButtons } from "@/components/SocialShareButtons";
+// SocialShareButtons removed - will create new Selah-specific share component
 import { LyricsOverlay } from "@/components/LyricsOverlay";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { FaPlay, FaPause, FaDownload, FaLock } from "react-icons/fa";
@@ -246,11 +246,8 @@ export default function SharePage() {
 
                     <div className="border-t border-white/10 pt-6">
                       <h4 className="text-sm font-semibold text-white mb-3">Share This Track</h4>
-                      <SocialShareButtons 
-                        url={shareUrl}
-                        title={song.title}
-                        message={`Check out this AI-generated motivation track: ${song.title}`}
-                      />
+                      {/* Share functionality - to be replaced with Selah-specific share component */}
+                      <p className="text-gray-400 text-sm">Share functionality coming soon</p>
                     </div>
                   </div>
                 </div>

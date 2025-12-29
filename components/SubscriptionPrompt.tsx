@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import { openSingleCheckout, openTierCheckout } from "@/lib/checkout";
-import { PREMIUM_PRICE_ID } from "@/lib/pricing";
+import { openDodoCheckout } from "@/lib/dodo-checkout";
 
 type Props = {
   onClose: () => void;
@@ -12,33 +11,33 @@ export default function SubscriptionPrompt({ onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-        <h3 className="mb-2 text-lg font-semibold">Unlock Pro</h3>
-        <p className="mb-4 text-sm text-gray-600">Welcome — get Pro to remove limits and get the full experience.</p>
+      <div className="relative w-full max-w-md rounded-2xl bg-gradient-to-br from-[#1a2942] to-[#0A1628] border border-[#D4A574]/30 p-6 shadow-lg">
+        <h3 className="mb-2 text-xl font-bold text-white">Unlock Premium</h3>
+        <p className="mb-4 text-sm text-white/70">Get voice prayers, worship songs, and more.</p>
 
         <div className="space-y-3">
           <button
-            className="w-full rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+            className="w-full rounded-xl bg-gradient-to-r from-[#D4A574] to-[#c4965f] px-4 py-3 text-white font-medium hover:shadow-lg transition-all"
             onClick={() => {
-              openSingleCheckout();
+              openDodoCheckout({ planType: 'monthly' });
               onClose();
             }}
           >
-            One-time Pro — $4.99
+            Premium — $9.99/month
           </button>
 
           <button
-            className="w-full rounded border border-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-50"
+            className="w-full rounded-xl border border-white/20 px-4 py-3 text-white/80 hover:bg-white/5 transition-all"
             onClick={() => {
-              openTierCheckout('premium', PREMIUM_PRICE_ID);
+              openDodoCheckout({ planType: 'yearly' });
               onClose();
             }}
           >
-            Pro Subscription — monthly
+            Yearly — Save 20%
           </button>
 
-          <button className="mt-2 w-full text-sm text-gray-500" onClick={onClose}>
-            Not now
+          <button className="mt-2 w-full text-sm text-white/50 hover:text-white/70" onClick={onClose}>
+            Maybe later
           </button>
         </div>
       </div>

@@ -8,6 +8,7 @@ interface PrayerPlayerScreenProps {
   prayerText: string;
   audioUrl?: string;
   prayerIntent?: string;
+  prayerId?: string;
   userName: string;
   isPremium?: boolean;
   onNewPrayer?: () => void;

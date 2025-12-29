@@ -107,25 +107,36 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate prayer text (faith-first, no spiritual level needed)
+    // Text prayers are always free
     const prayerText = await generatePrayerText(need, userName, message);
 
-    // Generate audio using ElevenLabs (include user name)
+    // Generate audio using ElevenLabs - PREMIUM FEATURE ONLY
+    // If ElevenLabs not configured, return null to use browser TTS fallback
     let audioUrl: string | undefined = undefined;
-    try {
-      const nudgeClient = createElevenNudgeClient();
-      const audioResult = await nudgeClient.generateDailyNudge({
-        userStory: prayerText,
-        mood: need,
-        motivationText: prayerText,
-        userName: userName,
-      });
-      audioUrl = audioResult.audioUrl;
-    } catch (e) {
-      console.warn('Audio generation failed, continuing with text-only', e);
+    if (hasAccess) {
+      const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
+      if (elevenLabsKey) {
+        try {
+          const nudgeClient = createElevenNudgeClient();
+          const audioResult = await nudgeClient.generateDailyNudge({
+            userStory: prayerText,
+            mood: need,
+            motivationText: prayerText,
+            userName: userName,
+          });
+          audioUrl = audioResult.audioUrl;
+        } catch (e) {
+          console.warn('ElevenLabs audio generation failed, will use browser TTS fallback', e);
+          // Don't set audioUrl - let client use browser TTS
+        }
+      } else {
+        console.log('ElevenLabs API key not configured, will use browser TTS fallback');
+        // Don't set audioUrl - client will use browser TTS with background music
+      }
     }
 
     // Save to database
-    await savePrayer({
+    const prayerId = await savePrayer({
       userId,
       userName,
       need,
@@ -134,21 +145,11 @@ export async function POST(request: NextRequest) {
       audioUrl,
     });
 
-    // Generate shareable video card (async, non-blocking)
-    let videoUrl: string | undefined = undefined;
-    try {
-      // This would call a video generation service
-      // For now, we'll return the audio URL as a placeholder
-      // In production, you'd generate a video card here
-    } catch (e) {
-      console.warn('Video generation failed', e);
-    }
-
     return NextResponse.json({
       success: true,
+      prayerId,
       prayerText,
       audioUrl: audioUrl || null,
-      videoUrl: videoUrl || null,
     });
   } catch (error) {
     console.error('Error generating prayer:', error);

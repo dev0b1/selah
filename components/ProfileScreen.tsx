@@ -9,7 +9,9 @@ interface ProfileScreenProps {
   userName?: string;
   userEmail?: string;
   isPremium?: boolean;
+  isAuthenticated?: boolean;
   onManageSubscription?: () => void;
+  onStartTrial?: () => void;
   onNameUpdate?: (newName: string) => void;
   onSignOut?: () => void;
 }
@@ -19,7 +21,9 @@ export function ProfileScreen({
   userName,
   userEmail,
   isPremium = false,
+  isAuthenticated = false,
   onManageSubscription,
+  onStartTrial,
   onNameUpdate,
   onSignOut,
 }: ProfileScreenProps) {
@@ -54,14 +58,23 @@ export function ProfileScreen({
     <>
       <div className="min-h-[calc(100vh-4rem)] p-4 pb-24">
         <div className="max-w-2xl mx-auto space-y-6">
-          {/* User Info */}
+          {/* User Info - Premium avatar with golden ring */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center space-y-3"
+            className="text-center space-y-4"
           >
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B8935F] flex items-center justify-center text-[#0A1628] text-3xl font-bold mx-auto">
-              {(isEditingName ? editedName : userName)?.[0]?.toUpperCase() || "?"}
+            <div className="relative inline-block">
+              <div className={`w-28 h-28 rounded-full bg-gradient-to-br from-[#D4A574] to-[#B8935F] flex items-center justify-center text-[#0A1628] text-4xl font-bold mx-auto shadow-[0_8px_30px_rgba(212,165,116,0.3)] relative ${
+                isPremium ? 'ring-4 ring-[#D4A574]/60' : ''
+              }`}>
+                {(isEditingName ? editedName : userName)?.[0]?.toUpperCase() || "?"}
+              </div>
+              {isPremium && (
+                <div className="absolute -top-2 -right-2 w-9 h-9 bg-gradient-to-br from-[#D4A574] to-[#B8935F] rounded-full flex items-center justify-center shadow-[0_4px_15px_rgba(212,165,116,0.5)] ring-2 ring-[#0A1628]">
+                  <span className="text-xl">✨</span>
+                </div>
+              )}
             </div>
             {isEditingName ? (
               <div className="flex items-center justify-center gap-2">
@@ -98,8 +111,12 @@ export function ProfileScreen({
                 </button>
               </div>
             )}
-            {userEmail && (
+            {userEmail ? (
               <p className="text-[#8B9DC3] text-sm">{userEmail}</p>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#8B9DC3]/20 rounded-full">
+                <span className="text-[#8B9DC3] text-xs font-medium">👤 Guest User</span>
+              </div>
             )}
           </motion.div>
 
@@ -132,7 +149,7 @@ export function ProfileScreen({
 
             {!isPremium && (
               <button
-                onClick={onManageSubscription}
+                onClick={isAuthenticated ? onManageSubscription : onStartTrial}
                 className="btn-primary w-full py-3 text-base min-h-[48px] touch-manipulation font-bold"
               >
                 Start Free Trial
@@ -217,12 +234,14 @@ export function ProfileScreen({
               <FaExternalLinkAlt className="text-[#8B9DC3] text-sm" />
             </button>
 
-            <button 
-              onClick={onSignOut}
-              className="w-full flex items-center justify-between p-3 text-red-400 hover:bg-[#1a2942]/60 rounded-lg transition-colors touch-manipulation"
-            >
-              <span>Sign Out</span>
-            </button>
+            {isAuthenticated && (
+              <button 
+                onClick={onSignOut}
+                className="w-full flex items-center justify-between p-3 text-red-400 hover:bg-[#1a2942]/60 rounded-lg transition-colors touch-manipulation"
+              >
+                <span>Sign Out</span>
+              </button>
+            )}
           </motion.div>
         </div>
       </div>

@@ -27,7 +27,11 @@
       "@/*": [
         "./*"
       ],
-        "@/lib/*": [
+      "@/components/*": [
+        "components/*",
+        "src/components/*"
+      ],
+      "@/lib/*": [
         "src/lib/*",
         "lib/*"
       ]
