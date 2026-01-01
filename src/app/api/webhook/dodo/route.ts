@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/server/db";
-import { transactions, subscriptions } from "@/src/db/schema";
+import { transactions, subscriptions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { refillCredits } from "@/lib/db-service";
 

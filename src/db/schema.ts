@@ -20,7 +20,7 @@ export const subscriptions = pgTable('subscriptions', {
   tier: text('tier').notNull(), // monthly, yearly, trial
   status: text('status').default('active').notNull(), // active, cancelled, expired, trial
   dodoSubscriptionId: text('dodo_subscription_id'),
-  creditsRemaining: integer('credits_remaining').default(0).notNull(), // For worship songs (1 per day for premium)
+  creditsRemaining: integer('credits_remaining').default(0).notNull(),
   renewsAt: timestamp('renews_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
@@ -30,7 +30,6 @@ export const subscriptions = pgTable('subscriptions', {
 
 export const transactions = pgTable('transactions', {
   id: text('id').primaryKey(),
-  songId: text('song_id'), // Optional reference to worship song
   userId: text('user_id'),
   amount: text('amount').notNull(),
   currency: text('currency').notNull(),
@@ -38,7 +37,6 @@ export const transactions = pgTable('transactions', {
   dodoData: text('dodo_data').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
-  songIdIdx: index('transactions_song_id_idx').on(table.songId),
   userIdIdx: index('transactions_user_id_idx').on(table.userId),
 }));
 
@@ -58,25 +56,7 @@ export const prayers = pgTable('prayers', {
   createdAtIdx: index('prayers_created_at_idx').on(table.createdAt),
 }));
 
-// Worship Songs table - stores AI-generated worship songs
-export const worshipSongs = pgTable('worship_songs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull(),
-  userName: text('user_name').notNull(), // Name used in song
-  mood: text('mood').notNull(), // peace, strength, trust, hope, gratitude
-  title: text('title'), // Generated song title
-  lyrics: text('lyrics').notNull(), // Full song lyrics
-  audioUrl: text('audio_url').notNull(), // Generated audio URL (Suno or ElevenLabs)
-  videoUrl: text('video_url'), // Video with lyrics (generated later with ffmpeg)
-  sunoTaskId: text('suno_task_id'), // Suno API task ID for tracking
-  generationMethod: text('generation_method').default('suno'), // 'suno' or 'elevenlabs'
-  isFavorite: boolean('is_favorite').default(false).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-}, (table) => ({
-  userIdIdx: index('worship_songs_user_id_idx').on(table.userId),
-  createdAtIdx: index('worship_songs_created_at_idx').on(table.createdAt),
-  sunoTaskIdIdx: index('worship_songs_suno_task_id_idx').on(table.sunoTaskId),
-}));
+
 
 // Daily Bible Verses - stores the 365 pre-selected KJV verses
 export const bibleVerses = pgTable('bible_verses', {
@@ -102,12 +82,10 @@ export type InsertTransaction = typeof transactions.$inferInsert;
 export type Prayer = typeof prayers.$inferSelect;
 export type InsertPrayer = typeof prayers.$inferInsert;
 
-export type WorshipSong = typeof worshipSongs.$inferSelect;
-export type InsertWorshipSong = typeof worshipSongs.$inferInsert;
+
 
 export type BibleVerse = typeof bibleVerses.$inferSelect;
 export type InsertBibleVerse = typeof bibleVerses.$inferInsert;
 
 // Selah-specific types
 export type PrayerNeedType = 'peace' | 'strength' | 'guidance' | 'healing' | 'gratitude' | 'comfort';
-export type WorshipMoodType = 'peace' | 'strength' | 'trust' | 'hope' | 'gratitude' | 'comfort';

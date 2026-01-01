@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { db } from '@/server/db';
-import { transactions } from '@/src/db/schema';
+import { transactions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function POST(request: NextRequest) {
@@ -24,21 +24,14 @@ export async function POST(request: NextRequest) {
     if (!user) return NextResponse.json({ success: false, error: 'not_authenticated' }, { status: 401 });
 
     const body = await request.json().catch(() => ({}));
-    const songId = body?.songId || null;
     const transactionId = body?.transactionId || null;
 
-    if (!songId && !transactionId) {
+    if (!transactionId) {
       return NextResponse.json({ success: false, error: 'missing_identifier' }, { status: 400 });
     }
 
-    // Find transaction by transactionId or by songId
-    let txRows: any[] = [];
-    if (transactionId) {
-      txRows = await db.select().from(transactions).where(eq(transactions.id, transactionId)).limit(1);
-    } else if (songId) {
-      txRows = await db.select().from(transactions).where(eq(transactions.songId, songId)).orderBy().limit(1);
-      // Note: orderBy omitted in case DB doesn't support orderBy without args; we'll pick first if present
-    }
+    // Find transaction by transactionId
+    const txRows = await db.select().from(transactions).where(eq(transactions.id, transactionId)).limit(1);
 
     if (!txRows || txRows.length === 0) {
       return NextResponse.json({ success: false, error: 'transaction_not_found' }, { status: 404 });

@@ -1,4 +1,4 @@
-import { generateTTS } from '@/lib/audio/elevenlabs-tts';
+import { generateTTS } from '@/lib/audio/openai-tts';
 import { mixAudio } from '@/lib/audio/ffmpeg-mixer';
 import { uploadPreviewAudio } from '@/lib/file-storage';
 
@@ -28,9 +28,8 @@ export class ElevenNudgeAPI {
       const estimatedSec = Math.min(60, Math.max(10, (wordCount / 150) * 60));
       const targetDuration = Math.round(estimatedSec);
 
-      // Generate TTS audio
-      const ssml = `<speak>${motivationText}</speak>`;
-      const ttsBuffer = await generateTTS(ssml);
+      // Generate TTS audio using OpenAI
+      const ttsBuffer = await generateTTS(motivationText);
 
       // Mix with pre-generated background music (reusable, subtle)
       // Background music file: public/bg/prayer-background.mp3 (will need to be added)

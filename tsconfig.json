@@ -25,15 +25,16 @@
     ],
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ],
       "@/components/*": [
-        "components/*",
         "src/components/*"
       ],
       "@/lib/*": [
-        "src/lib/*",
-        "lib/*"
+        "src/lib/*"
+      ],
+      "@/server/*": [
+        "server/*"
       ]
     }
   },
@@ -45,6 +46,7 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "your-daily-prayer-main"
   ]
 }

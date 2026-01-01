@@ -29,13 +29,81 @@ body {
   }
 }
 
-/* Selah Brand Colors */
-:root {
-  --selah-navy-start: #0A1628;
-  --selah-navy-end: #1a2942;
-  --selah-gold: #D4A574;
-  --selah-white: #F5F5F5;
-  --selah-periwinkle: #8B9DC3;
+@layer base {
+  :root {
+    --background: 230 35% 7%;
+    --foreground: 45 30% 96%;
+    --card: 230 30% 12%;
+    --card-foreground: 45 30% 96%;
+    --popover: 230 30% 10%;
+    --popover-foreground: 45 30% 96%;
+    --primary: 45 80% 70%;
+    --primary-foreground: 230 35% 7%;
+    --secondary: 230 25% 18%;
+    --secondary-foreground: 45 30% 96%;
+    --muted: 230 20% 22%;
+    --muted-foreground: 45 15% 65%;
+    --accent: 270 60% 70%;
+    --accent-foreground: 230 35% 7%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 45 30% 96%;
+    --border: 230 25% 20%;
+    --input: 230 25% 18%;
+    --ring: 45 80% 70%;
+    --radius: 1rem;
+    --sidebar-background: 230 35% 7%;
+    --sidebar-foreground: 45 30% 96%;
+    --sidebar-primary: 45 80% 70%;
+    --sidebar-primary-foreground: 230 35% 7%;
+    --sidebar-accent: 230 25% 18%;
+    --sidebar-accent-foreground: 45 30% 96%;
+    --sidebar-border: 230 25% 20%;
+    --sidebar-ring: 45 80% 70%;
+    --star: 45 100% 90%;
+    --moon: 45 50% 85%;
+    --nebula: 270 50% 50%;
+    --cosmic-glow: 230 60% 40%;
+    /* Selah Brand Colors (keep for backward compatibility) */
+    --selah-navy-start: #0A1628;
+    --selah-navy-end: #1a2942;
+    --selah-gold: #D4A574;
+    --selah-white: #F5F5F5;
+    --selah-periwinkle: #8B9DC3;
+  }
+
+  .dark {
+    --background: 230 35% 7%;
+    --foreground: 45 30% 96%;
+    --card: 230 30% 12%;
+    --card-foreground: 45 30% 96%;
+    --popover: 230 30% 10%;
+    --popover-foreground: 45 30% 96%;
+    --primary: 45 80% 70%;
+    --primary-foreground: 230 35% 7%;
+    --secondary: 230 25% 18%;
+    --secondary-foreground: 45 30% 96%;
+    --muted: 230 20% 22%;
+    --muted-foreground: 45 15% 65%;
+    --accent: 270 60% 70%;
+    --accent-foreground: 230 35% 7%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 45 30% 96%;
+    --border: 230 25% 20%;
+    --input: 230 25% 18%;
+    --ring: 45 80% 70%;
+  }
+}
+
+@layer base {
+  * { border-color: hsl(var(--border)); }
+  body { 
+    background-color: hsl(var(--background)); 
+    color: hsl(var(--foreground)); 
+    font-family: 'Crimson Pro', serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4, h5, h6 { font-family: 'Cormorant Garamond', serif; }
 }
 
 /* Typography - Premium & Elegant with Warmth */
@@ -341,6 +409,75 @@ body {
 
 .animate-parallax-breathe {
   animation: parallax-breathe 10s ease-in-out infinite;
+}
+
+/* Celestial Theme - Moon and Stars */
+.moon-glow {
+  animation: moonGlow 8s ease-in-out infinite;
+}
+
+@keyframes moonGlow {
+  0%, 100% { 
+    box-shadow: 0 0 30px rgba(212, 165, 116, 0.3), 0 0 60px rgba(212, 165, 116, 0.2);
+  }
+  50% { 
+    box-shadow: 0 0 50px rgba(212, 165, 116, 0.5), 0 0 100px rgba(212, 165, 116, 0.3);
+  }
+}
+
+/* Celestial Gradients */
+.gradient-celestial { 
+  background: radial-gradient(ellipse at top, hsl(230 35% 15%) 0%, hsl(230 35% 7%) 50%, hsl(230 40% 5%) 100%);
+}
+
+.gradient-nebula {
+  background: radial-gradient(ellipse at 30% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 60%, rgba(59, 130, 246, 0.1) 0%, transparent 40%);
+}
+
+/* Golden Text Gradient */
+.text-gradient-golden {
+  background: linear-gradient(135deg, #D4A574 0%, #E4B584 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-gradient-celestial {
+  background: linear-gradient(135deg, #D4A574 0%, rgba(139, 92, 246, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Breathing glow animation */
+.breathing-glow { 
+  animation: breathingGlow 4s ease-in-out infinite; 
+}
+
+@keyframes breathingGlow { 
+  0%, 100% { opacity: 0.4; transform: scale(1); } 
+  50% { opacity: 0.8; transform: scale(1.05); } 
+}
+
+/* Pulse soft animation */
+.pulse-soft { 
+  animation: pulseSoft 3s ease-in-out infinite; 
+}
+
+@keyframes pulseSoft { 
+  0%, 100% { opacity: 0.6; box-shadow: 0 0 20px rgba(212, 165, 116, 0.3); } 
+  50% { opacity: 1; box-shadow: 0 0 40px rgba(212, 165, 116, 0.5); } 
+}
+
+/* Float gentle animation */
+.float-gentle { 
+  animation: floatGentle 6s ease-in-out infinite; 
+}
+
+@keyframes floatGentle { 
+  0%, 100% { transform: translateY(0px); } 
+  50% { transform: translateY(-10px); } 
 }
 
 /* Mobile-first touch optimizations */

@@ -89,33 +89,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check trial/subscription status
-    const subscription = await getUserSubscriptionStatus(userId);
-    const trialStatus = await checkTrialStatus(userId);
-
-    const hasAccess = subscription.isPro || (trialStatus?.hasTrial && !trialStatus?.isExpired);
-
-    if (!hasAccess) {
-      // Start trial if eligible
-      const trialStarted = await startTrialIfEligible(userId);
-      if (!trialStarted) {
-        return NextResponse.json(
-          { error: 'Trial expired or subscription required', code: 'PAYWALL_REQUIRED' },
-          { status: 402 }
-        );
-      }
-    }
-
-    // Generate prayer text (faith-first, no spiritual level needed)
-    // Text prayers are always free
+    // Generate prayer text - FREE FOR ALL USERS
     const prayerText = await generatePrayerText(need, userName, message);
 
-    // Generate audio using ElevenLabs - PREMIUM FEATURE ONLY
-    // If ElevenLabs not configured, return null to use browser TTS fallback
+    // Check trial/subscription status for AUDIO generation only
+    const subscription = await getUserSubscriptionStatus(userId);
+    const trialStatus = await checkTrialStatus(userId);
+    const hasAccess = subscription.isPro || (trialStatus?.hasTrial && !trialStatus?.isExpired);
+
+    // Generate audio using OpenAI TTS - PREMIUM FEATURE ONLY
+    // Free users get text prayer only, premium users get audio
     let audioUrl: string | undefined = undefined;
     if (hasAccess) {
-      const elevenLabsKey = process.env.ELEVENLABS_API_KEY;
-      if (elevenLabsKey) {
+      const openaiKey = process.env.OPENAI_API_KEY;
+      if (openaiKey) {
         try {
           const nudgeClient = createElevenNudgeClient();
           const audioResult = await nudgeClient.generateDailyNudge({
@@ -126,11 +113,11 @@ export async function POST(request: NextRequest) {
           });
           audioUrl = audioResult.audioUrl;
         } catch (e) {
-          console.warn('ElevenLabs audio generation failed, will use browser TTS fallback', e);
+          console.warn('OpenAI TTS audio generation failed, will use browser TTS fallback', e);
           // Don't set audioUrl - let client use browser TTS
         }
       } else {
-        console.log('ElevenLabs API key not configured, will use browser TTS fallback');
+        console.log('OpenAI API key not configured, will use browser TTS fallback');
         // Don't set audioUrl - client will use browser TTS with background music
       }
     }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/server/db';
-import { subscriptions } from '@/src/db/schema';
+import { subscriptions } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { refillCredits } from '@/lib/db-service';
 import { createServerClient } from '@supabase/ssr';

@@ -3,9 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-// This component shows a banner when the checkout success page indicates
-// there are pending credits to claim; users must sign in to claim them.
-
 export default function PendingClaimBanner() {
   const [pending, setPending] = useState<number | null>(null);
 
@@ -22,15 +19,14 @@ export default function PendingClaimBanner() {
       else if (tier === 'weekly') credits = 3;
 
       if (credits > 0) {
-        // Show a banner indicating there are pending credits to claim after sign-in.
+        // Do not persist pending credits in browser storage; rely on server-side
+        // fulfillment and require the user to sign in to claim credits.
         setPending(credits);
       }
     } catch (e) {
       console.error('PendingClaimBanner error', e);
     }
   }, []);
-  // Note: auto-claim for guest purchases has been removed. Users should sign in
-  // to claim credits or single purchases via server-side fulfillment.
 
   if (!pending) return null;
 

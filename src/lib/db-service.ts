@@ -1,7 +1,7 @@
 import { db } from '@/server/db';
-import { subscriptions, users, prayers, worshipSongs, transactions } from '@/src/db/schema';
+import { subscriptions, users, prayers, transactions } from '@/db/schema';
 import { eq, desc, and, gte, sql } from 'drizzle-orm';
-import type { InsertPrayer, InsertWorshipSong } from '@/src/db/schema';
+import type { InsertPrayer } from '@/db/schema';
 
 // ============================================================================
 // User Management
@@ -60,7 +60,7 @@ export async function getUserSubscriptionStatus(userId: string): Promise<{
 
 		const subscription = data[0];
 		const tier = (subscription.tier || 'free') as 'free' | 'monthly' | 'yearly' | 'trial';
-    
+
 		return {
 			isPro: subscription.status === 'active',
 			tier,
@@ -146,7 +146,7 @@ export async function deductCredit(userId: string): Promise<boolean> {
 		}
 
 		const currentCredits = subscription[0].creditsRemaining || 0;
-    
+
 		if (currentCredits <= 0) {
 			return false;
 		}
@@ -206,7 +206,7 @@ export async function refillCredits(userId: string, amount: number = 20): Promis
 		}
 
 		const currentCredits = subscription[0].creditsRemaining || 0;
-    
+
 		await db
 			.update(subscriptions)
 			.set({
@@ -230,7 +230,7 @@ export async function checkTrialStatus(userId: string): Promise<{ hasTrial: bool
 	try {
 		const user = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 		if (!user || user.length === 0) return null;
-		
+
 		const userData = user[0];
 		if (!userData.trialStartDate || !userData.trialEndDate) {
 			return { hasTrial: false, isExpired: false, daysRemaining: 0 };
@@ -255,7 +255,7 @@ export async function checkTrialStatus(userId: string): Promise<{ hasTrial: bool
 export async function startTrialIfEligible(userId: string): Promise<boolean> {
 	try {
 		const trialStatus = await checkTrialStatus(userId);
-		
+
 		// If user already has an active or expired trial, don't start a new one
 		if (trialStatus?.hasTrial) {
 			return !trialStatus.isExpired;
@@ -367,165 +367,23 @@ export async function togglePrayerFavorite(prayerId: string, userId: string): Pr
 	}
 }
 
-// ============================================================================
-// Worship Song Management
-// ============================================================================
 
-export async function saveWorshipSong(song: {
-	userId: string;
-	userName: string;
-	mood: string;
-	title?: string;
-	lyrics: string;
-	audioUrl: string;
-	videoUrl?: string;
-	sunoTaskId?: string;
-	generationMethod?: 'suno' | 'elevenlabs';
-}): Promise<string | null> {
-	try {
-		const insertResult = await db.insert(worshipSongs).values({
-			userId: song.userId,
-			userName: song.userName,
-			mood: song.mood,
-			title: song.title || null,
-			lyrics: song.lyrics,
-			audioUrl: song.audioUrl,
-			videoUrl: song.videoUrl || null,
-			sunoTaskId: song.sunoTaskId || null,
-			generationMethod: song.generationMethod || 'suno',
-		}).returning({ id: worshipSongs.id });
-
-		return insertResult?.[0]?.id || null;
-	} catch (error) {
-		console.error('Error saving worship song:', error);
-		return null;
-	}
-}
-
-export async function getWorshipSongsByUser(userId: string, limit: number = 30): Promise<any[]> {
-	try {
-		const results = await db
-			.select()
-			.from(worshipSongs)
-			.where(eq(worshipSongs.userId, userId))
-			.orderBy(desc(worshipSongs.createdAt))
-			.limit(limit);
-
-		return results;
-	} catch (error) {
-		console.error('Error fetching worship songs:', error);
-		return [];
-	}
-}
-
-export async function getWorshipSongById(songId: string): Promise<any | null> {
-	try {
-		const results = await db
-			.select()
-			.from(worshipSongs)
-			.where(eq(worshipSongs.id, songId))
-			.limit(1);
-
-		return results[0] || null;
-	} catch (error) {
-		console.error('Error fetching worship song:', error);
-		return null;
-	}
-}
-
-export async function getWorshipSongBySunoTaskId(sunoTaskId: string): Promise<any | null> {
-	try {
-		const results = await db
-			.select()
-			.from(worshipSongs)
-			.where(eq(worshipSongs.sunoTaskId, sunoTaskId))
-			.limit(1);
-
-		return results[0] || null;
-	} catch (error) {
-		console.error('Error fetching worship song by Suno task ID:', error);
-		return null;
-	}
-}
-
-export async function updateWorshipSongAudioUrl(songId: string, audioUrl: string): Promise<boolean> {
-	try {
-		await db
-			.update(worshipSongs)
-			.set({
-				audioUrl: audioUrl
-			})
-			.where(eq(worshipSongs.id, songId));
-
-		return true;
-	} catch (error) {
-		console.error('Error updating worship song audio URL:', error);
-		return false;
-	}
-}
-
-export async function updateWorshipSongVideoUrl(songId: string, videoUrl: string): Promise<boolean> {
-	try {
-		await db
-			.update(worshipSongs)
-			.set({
-				videoUrl: videoUrl
-			})
-			.where(eq(worshipSongs.id, songId));
-
-		return true;
-	} catch (error) {
-		console.error('Error updating worship song video URL:', error);
-		return false;
-	}
-}
-
-export async function toggleWorshipSongFavorite(songId: string, userId: string): Promise<boolean> {
-	try {
-		const song = await getWorshipSongById(songId);
-		if (!song || song.userId !== userId) {
-			return false;
-		}
-
-		await db
-			.update(worshipSongs)
-			.set({
-				isFavorite: !song.isFavorite
-			})
-			.where(eq(worshipSongs.id, songId));
-
-		return true;
-	} catch (error) {
-		console.error('Error toggling worship song favorite:', error);
-		return false;
-	}
-}
 
 // ============================================================================
-// History (Combined Prayers & Songs)
+// History (Prayers Only)
 // ============================================================================
 
 export async function getUserHistory(userId: string, limit: number = 30): Promise<any[]> {
 	try {
-		// Fetch both prayers and songs, combine, sort by date
-		const [prayerList, songList] = await Promise.all([
-			getPrayersByUser(userId, limit),
-			getWorshipSongsByUser(userId, limit)
-		]);
+		// Fetch prayers only
+		const prayerList = await getPrayersByUser(userId, limit);
 
-		// Combine and format for history view
-		const history = [
-			...prayerList.map(p => ({
-				...p,
-				type: 'prayer' as const,
-				createdAt: p.createdAt
-			})),
-			...songList.map(s => ({
-				...s,
-				type: 'song' as const,
-				createdAt: s.createdAt
-			}))
-		].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+		// Format for history view
+		const history = prayerList.map(p => ({
+			...p,
+			type: 'prayer' as const,
+			createdAt: p.createdAt
+		})).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 			.slice(0, limit);
 
 		return history;
