@@ -101,7 +101,7 @@ export function HomeScreen({
   };
 
   if (selectedPrayer) {
-    return <PrayerPlayer prayer={selectedPrayer} onClose={() => setSelectedPrayer(null)} userName={userName} />;
+    return <PrayerPlayer prayer={selectedPrayer} onClose={() => setSelectedPrayer(null)} userName={userName} autoPlay={true} />;
   }
 
   return (

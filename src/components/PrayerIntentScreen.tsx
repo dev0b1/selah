@@ -137,6 +137,7 @@ Amen.`;
           }} 
           userName={userName}
           forFriend={lastGeneratedPrayer?.forFriend}
+          autoPlay={true}
         />
         {/* Share button overlay removed to avoid auto-switching to share UI */}
         {lastGeneratedPrayer && (

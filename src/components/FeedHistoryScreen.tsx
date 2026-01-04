@@ -97,7 +97,7 @@ export function FeedHistoryScreen({ userId, onRequireSignup, historyData = [], u
   };
 
   if (selectedPrayer) {
-    return <PrayerPlayer prayer={selectedPrayer} onClose={() => setSelectedPrayer(null)} forFriend={selectedForFriend} userName={userName} />;
+    return <PrayerPlayer prayer={selectedPrayer} onClose={() => setSelectedPrayer(null)} forFriend={selectedForFriend} userName={userName} autoPlay={true} />;
   }
 
 

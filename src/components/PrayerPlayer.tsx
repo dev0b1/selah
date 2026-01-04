@@ -13,9 +13,10 @@ interface PrayerPlayerProps {
   onClose: () => void;
   forFriend?: string;
   userName: string;
+  autoPlay?: boolean;
 }
 
-export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPlayerProps) {
+export function PrayerPlayer({ prayer, onClose, forFriend, userName, autoPlay = false }: PrayerPlayerProps) {
   const { isSpeaking, isPaused, speak, pause, resume, stop, isSupported } = useBrowserTTS({ rate: 0.85 });
   const { currentSoundscape, isPlaying: isSoundPlaying, isLoading, volume, play: playSound, stop: stopSound, setVolume, playRandom } = useAmbientSound({ volume: 0.25 });
   const [hasStarted, setHasStarted] = useState(false);
@@ -56,9 +57,11 @@ export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPla
     };
   }, [stop, stopSound]);
 
-  // Auto-start TTS and random background when SpeechSynthesis is ready.
+  // Auto-start TTS and random background when SpeechSynthesis is ready and `autoPlay` is enabled.
   // Some browsers populate voices asynchronously; wait for `isSupported` and then start.
   useEffect(() => {
+    if (!autoPlay) return;
+
     let started = false;
 
     async function startPlayback() {
@@ -80,7 +83,7 @@ export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPla
 
     return () => { started = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSupported]);
+  }, [isSupported, autoPlay]);
 
   // Ensure share dialog is closed while speaking (prevent auto-share UI)
   useEffect(() => {
