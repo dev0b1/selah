@@ -47,6 +47,32 @@ export default function AppPage() {
   const [isGeneratingPrayer, setIsGeneratingPrayer] = useState(false);
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  // Keep per-tab scroll positions so each tab can restore its own scroll offset
+  const scrollPositions = useRef<Record<TabType, number>>({ home: 0, prayers: 0, feed: 0, profile: 0 });
+
+  // Centralized tab change handler: saves current scroll, toggles tab,
+  // and restores the target tab's scroll position. If the user clicks the
+  // already-active tab, scroll to top.
+  const handleTabChange = (tab: TabType) => {
+    try {
+      const currentY = typeof window !== 'undefined' ? window.scrollY || window.pageYOffset : 0;
+      // save current position for the outgoing tab
+      scrollPositions.current[currentTab] = currentY as number;
+    } catch (e) {
+      // ignore
+    }
+
+    if (tab === currentTab) {
+      // Reselecting the same tab should scroll to top
+      if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+      // also reset stored position
+      scrollPositions.current[tab] = 0;
+      return;
+    }
+
+    // switch tab
+    setCurrentTab(tab);
+  };
 
   // Initialize app flow based on whether user has name
   // First-time users (no name) should go: landing -> name -> app
@@ -86,7 +112,7 @@ export default function AppPage() {
         const params = new URLSearchParams(window.location.search || '');
         const tabParam = params.get('tab');
         if (tabParam === 'history' || tabParam === 'feed') {
-          setCurrentTab(tabParam as TabType);
+          handleTabChange(tabParam as TabType);
         }
       } catch (e) {
         // ignore
@@ -217,6 +243,18 @@ export default function AppPage() {
       authSubscription?.unsubscribe();
     };
   }, [router, supabase]);
+
+  // Restore saved scroll position when switching tabs
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const pos = scrollPositions.current[currentTab] || 0;
+      // use instant restore to avoid jumping animation when switching tabs
+      window.scrollTo({ top: pos, behavior: 'auto' });
+    } catch (e) {
+      // ignore
+    }
+  }, [currentTab]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -397,7 +435,7 @@ export default function AppPage() {
             isGenerating={false}
           />
         </div>
-        <BottomTabNavigation currentTab={currentTab} onTabChange={setCurrentTab} isPremium={isPremium} />
+        <BottomTabNavigation currentTab={currentTab} onTabChange={handleTabChange} isPremium={isPremium} />
       </div>
     );
   }
@@ -456,7 +494,7 @@ export default function AppPage() {
             }}
           />
         </div>
-        <BottomTabNavigation currentTab={currentTab} onTabChange={setCurrentTab} isPremium={isPremium} />
+        <BottomTabNavigation currentTab={currentTab} onTabChange={handleTabChange} isPremium={isPremium} />
       </div>
     );
   }
@@ -543,7 +581,7 @@ export default function AppPage() {
                   audioUrl: currentPrayer.audioUrl,
                 } : undefined}
                 onPrayForSomething={() => setShowPrayerIntent(true)}
-                onNavigateToPrayers={() => setCurrentTab("prayers")}
+                onNavigateToPrayers={() => handleTabChange("prayers")}
                 onListenToPrayer={() => {
                   if (!isPremium) {
                     // Show upgrade modal for logged-in users, paywall for guests
@@ -621,7 +659,7 @@ export default function AppPage() {
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
-      <BottomTabNavigation currentTab={currentTab} onTabChange={setCurrentTab} isPremium={isPremium} />
+      <BottomTabNavigation currentTab={currentTab} onTabChange={handleTabChange} isPremium={isPremium} />
 
       {/* Paywall Modal - For non-authenticated users */}
       <PaywallModal
