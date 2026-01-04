@@ -176,13 +176,14 @@ Amen.`;
           
           {/* Pray for friend toggle */}
           <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-background/50 border border-border/20">
-            <Switch
-              id="pray-for-loved"
-              checked={isForFriend}
-              onCheckedChange={setIsForFriend}
-              className="h-7 w-12"
-            />
-            <Label htmlFor="pray-for-loved" className="flex items-center gap-2 cursor-pointer">
+            <button
+              onClick={() => setIsForFriend(!isForFriend)}
+              aria-pressed={isForFriend}
+              className={`w-12 h-6 rounded-full transition-colors ${isForFriend ? 'bg-[#D4A574]' : 'bg-[#8B9DC3]/30'}`}
+            >
+              <div className={`w-5 h-5 bg-white rounded-full transition-transform ${isForFriend ? 'translate-x-6' : 'translate-x-0.5'} mt-0.5`} />
+            </button>
+            <Label className="flex items-center gap-2 cursor-pointer">
               <Users className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm">Pray for loved ones</span>
             </Label>

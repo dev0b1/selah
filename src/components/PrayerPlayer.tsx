@@ -82,6 +82,13 @@ export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPla
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSupported]);
 
+  // Ensure share dialog is closed while speaking (prevent auto-share UI)
+  useEffect(() => {
+    if (isSpeaking) {
+      setShowShareDialog(false);
+    }
+  }, [isSpeaking]);
+
   return (
     <div className="min-h-screen gradient-celestial flex flex-col relative overflow-hidden">
       {/* Background effects */}
