@@ -138,18 +138,7 @@ Amen.`;
           userName={userName}
           forFriend={lastGeneratedPrayer?.forFriend}
         />
-        {/* Share button overlay */}
-        {lastGeneratedPrayer && (
-          <div className="fixed bottom-24 right-4 z-50">
-            <Button
-              onClick={() => setShowShareDialog(true)}
-              className="rounded-full shadow-lg bg-primary hover:bg-primary/90"
-              size="icon"
-            >
-              <Share2 className="w-5 h-5" />
-            </Button>
-          </div>
-        )}
+        {/* Share button overlay removed to avoid auto-switching to share UI */}
         {lastGeneratedPrayer && (
           <ShareablePrayerCard
             isOpen={showShareDialog}

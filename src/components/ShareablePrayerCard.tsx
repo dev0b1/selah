@@ -65,6 +65,51 @@ export function ShareablePrayerCard({ isOpen, onClose, prayerTitle, prayerText, 
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const exportCardAsImage = async () => {
+    if (!cardRef.current) return;
+    try {
+      const node = cardRef.current;
+      const width = node.offsetWidth;
+      const height = node.offsetHeight;
+
+      // Serialize the node to XHTML for foreignObject rendering
+      const serialized = new XMLSerializer().serializeToString(node);
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>\n` +
+        `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'>` +
+        `<foreignObject width='100%' height='100%'>` +
+        `<div xmlns='http://www.w3.org/1999/xhtml' style='width:${width}px;height:${height}px'>${serialized}</div>` +
+        `</foreignObject></svg>`;
+
+      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = width * 2; // higher-dpi
+        canvas.height = height * 2;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.scale(2, 2);
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        const dataUrl = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `prayer-card.png`;
+        a.click();
+        toast({ title: 'Downloaded', description: 'Prayer card image saved.' });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        toast({ title: 'Export failed', variant: 'destructive', description: 'Could not export image in this browser.' });
+      };
+      img.src = url;
+    } catch (e) {
+      toast({ title: 'Export failed', variant: 'destructive', description: 'Could not export image.' });
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-full sm:max-w-md p-0 overflow-hidden bg-transparent border-none">
@@ -143,23 +188,34 @@ export function ShareablePrayerCard({ isOpen, onClose, prayerTitle, prayerText, 
             </div>
 
             {/* Copy button */}
-            <Button
-              variant="outline"
-              onClick={handleCopy}
-              className="w-full"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 mr-2 text-green-500" />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy Prayer Text
-                </>
-              )}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleCopy}
+                className="flex-1"
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-4 h-4 mr-2 text-green-500" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy Prayer Text
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={exportCardAsImage}
+                className="flex-1"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Download Card
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
