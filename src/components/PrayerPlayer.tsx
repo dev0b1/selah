@@ -17,7 +17,7 @@ interface PrayerPlayerProps {
 
 export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPlayerProps) {
   const { isSpeaking, isPaused, speak, pause, resume, stop, isSupported } = useBrowserTTS({ rate: 0.85 });
-  const { currentSoundscape, isPlaying: isSoundPlaying, isLoading, volume, play: playSound, stop: stopSound, setVolume } = useAmbientSound({ volume: 0.25 });
+  const { currentSoundscape, isPlaying: isSoundPlaying, isLoading, volume, play: playSound, stop: stopSound, setVolume, playRandom } = useAmbientSound({ volume: 0.25 });
   const [hasStarted, setHasStarted] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
 
@@ -40,8 +40,12 @@ export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPla
     setHasStarted(false);
   };
 
-  const handleSoundscapeSelect = (soundscape: Soundscape) => {
-    playSound(soundscape);
+  const handleSoundscapeToggle = async (enabled: boolean) => {
+    if (enabled) {
+      await playRandom();
+    } else {
+      await stopSound();
+    }
   };
 
   // Stop everything when leaving
@@ -51,6 +55,32 @@ export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPla
       stopSound();
     };
   }, [stop, stopSound]);
+
+  // Auto-start TTS and random background when SpeechSynthesis is ready.
+  // Some browsers populate voices asynchronously; wait for `isSupported` and then start.
+  useEffect(() => {
+    let started = false;
+
+    async function startPlayback() {
+      if (started) return;
+      if (!isSupported) return;
+
+      started = true;
+      try {
+        if (playRandom) await playRandom();
+      } catch (e) {
+        // ignore
+      }
+
+      setHasStarted(true);
+      speak(personalizedText);
+    }
+
+    startPlayback();
+
+    return () => { started = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSupported]);
 
   return (
     <div className="min-h-screen gradient-celestial flex flex-col relative overflow-hidden">
@@ -90,7 +120,7 @@ export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPla
         <div className="max-w-2xl mx-auto space-y-8">
           {/* Prayer text */}
           <div className="relative">
-            <div className="absolute -left-4 top-0 bottom-0 w-1 bg-gradient-to-b from-primary via-primary/50 to-transparent rounded-full" />
+            <div className="absolute -left-4 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-selah-wood via-[#E8D4B8] to-transparent" />
             <div className="pl-6 space-y-4">
               {personalizedText.split('\n\n').map((paragraph, index) => (
                 <p
@@ -106,28 +136,14 @@ export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPla
 
           {/* Soundscape picker */}
           <div className="pt-6 border-t border-border/30">
-            <SoundscapePicker
-              currentSoundscape={currentSoundscape}
-              isPlaying={isSoundPlaying}
-              isLoading={isLoading}
-              onSelect={handleSoundscapeSelect}
-            />
+              <SoundscapePicker
+                isEnabled={isSoundPlaying}
+                isLoading={isLoading}
+                onToggle={handleSoundscapeToggle}
+              />
           </div>
 
-          {/* Volume control for ambient sound */}
-          {currentSoundscape && currentSoundscape.id !== 'silence' && isSoundPlaying && (
-            <div className="flex items-center gap-4">
-              <Volume2 className="w-4 h-4 text-muted-foreground" />
-              <Slider
-                value={[volume * 100]}
-                onValueChange={([val]) => setVolume(val / 100)}
-                max={100}
-                step={1}
-                className="flex-1"
-              />
-              <span className="text-sm text-muted-foreground w-10">{Math.round(volume * 100)}%</span>
-            </div>
-          )}
+          {/* Ambient volume control removed — single Heavenly Sound toggle is sufficient */}
         </div>
       </main>
 
@@ -178,7 +194,7 @@ export function PrayerPlayer({ prayer, onClose, forFriend, userName }: PrayerPla
                     }}
                   />
                 ))}
-                <span className="ml-3 text-sm text-muted-foreground">Speaking...</span>
+                <span className="ml-3 text-sm text-muted-foreground">Praying...</span>
               </div>
             </div>
           )}

@@ -88,6 +88,10 @@ const config: Config = {
           accent: "#ffd23f",
           warm: "#ff6b6b",
         },
+        selah: {
+          wood: '#E6D3B3',
+          'wood-dark': '#352714',
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -46,7 +46,13 @@ export function PrayerIntentScreen({ onGenerate, isGenerating = false, userName 
   const generateLongPrayerText = (name: string, input: string, forFriend?: string) => {
     const prayerFor = forFriend || name;
     const isForOther = !!forFriend;
-    
+
+    // If praying for a friend/loved one, return a shorter ~20s prayer
+    if (isForOther) {
+      const short = `Heavenly Father, we lift up ${prayerFor} to You now. Hold ${prayerFor} in Your loving care and bring healing, peace, and strength for the days ahead. Give ${prayerFor} courage and comfort, and surround ${prayerFor} with Your presence. In Jesus' name, Amen.`;
+      return short;
+    }
+
     return `Gracious and Loving Heavenly Father,
 
 We come into Your presence with hearts full of gratitude and reverence. Thank You for this sacred moment of prayer, where we can lay our burdens at Your feet and find rest in Your unfailing love.
@@ -91,7 +97,7 @@ Amen.`;
       id: `generated-${Date.now()}`,
       title: prayerTitle,
       category: 'peace',
-      duration: '2 min',
+      duration: isForFriend ? '20 sec' : '2 min',
       text: prayerText,
     };
     
@@ -171,7 +177,7 @@ Amen.`;
 
       {/* Prayer Input Section */}
       {showInput && (
-        <div className="mb-8 p-5 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 backdrop-blur-sm">
+        <div className="mb-8 p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-4">
             <Heart className="w-5 h-5 text-primary" />
             <h2 className="text-lg font-display font-medium text-foreground">
@@ -180,15 +186,15 @@ Amen.`;
           </div>
           
           {/* Pray for friend toggle */}
-          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-background/50">
+          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-background/50 border border-border/20">
             <Switch
-              id="pray-for-friend"
+              id="pray-for-loved"
               checked={isForFriend}
               onCheckedChange={setIsForFriend}
             />
-            <Label htmlFor="pray-for-friend" className="flex items-center gap-2 cursor-pointer">
+            <Label htmlFor="pray-for-loved" className="flex items-center gap-2 cursor-pointer">
               <Users className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm">Pray for a friend</span>
+              <span className="text-sm">Pray for loved ones</span>
             </Label>
           </div>
 
@@ -196,10 +202,15 @@ Amen.`;
           {isForFriend && (
             <Input
               value={friendName}
-              onChange={(e) => setFriendName(e.target.value)}
-              placeholder="Enter your friend's name..."
+              onChange={(e) => {
+                // Accept only a single token (first name) and limit length to 30 chars
+                const raw = e.target.value || '';
+                const first = raw.trim().split(/\s+/)[0] || '';
+                setFriendName(first.slice(0, 30));
+              }}
+              placeholder="Enter a loved one's given name"
               className="mb-4 bg-background/50 border-border/50 focus:border-primary/50"
-              maxLength={50}
+              maxLength={30}
             />
           )}
           
@@ -221,7 +232,8 @@ Amen.`;
             <Button
               onClick={handleGeneratePrayer}
               disabled={!prayerInput.trim() || isGenerating || (isForFriend && !friendName.trim())}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="text-primary-foreground"
+              style={{ backgroundColor: '#E6D3B3', color: '#352714' }}
             >
               {isGenerating ? (
                 <>
@@ -240,7 +252,7 @@ Amen.`;
       )}
 
       {/* Categories */}
-      <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide mb-6">
+      <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide mb-6 py-2 h-14">
         <button
           onClick={() => setSelectedCategory(null)}
           className={cn(
@@ -259,7 +271,7 @@ Amen.`;
             className={cn(
               "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 flex items-center gap-2",
               selectedCategory === cat.id
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
+                ? "bg-[#E6D3B3] text-[#352714] shadow-lg shadow-[#E6D3B3]/25 scale-105"
                 : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
             )}
           >
@@ -276,6 +288,7 @@ Amen.`;
             key={prayer.id}
             prayer={prayer}
             onClick={() => setSelectedPrayer(prayer)}
+            active={Boolean(selectedPrayer && (selectedPrayer as any).id === prayer.id)}
           />
         ))}
       </div>

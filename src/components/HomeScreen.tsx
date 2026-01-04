@@ -108,9 +108,6 @@ export function HomeScreen({
     <div className="px-4 pt-6 pb-28">
       {/* Header with Moon */}
       <header className="relative mb-8">
-        <div className="absolute -top-2 right-0">
-          <Moon className="scale-75 md:scale-100" />
-        </div>
 
         <div className="pr-24">
           <p className="text-muted-foreground text-sm mb-1 flex items-center gap-2">
@@ -181,6 +178,7 @@ export function HomeScreen({
               key={prayer.id}
               prayer={prayer}
               onClick={() => setSelectedPrayer(prayer)}
+              active={Boolean(selectedPrayer && (selectedPrayer as any).id === prayer.id)}
             />
           ))}
         </div>

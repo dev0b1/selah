@@ -2,8 +2,8 @@
 // Requires `OPENROUTER_API_KEY` in env. Optionally set `OPENROUTER_MODEL`.
 export function createOpenRouterClient() {
   const key = process.env.OPENROUTER_API_KEY || '';
-  // Prefer an inexpensive/free small Mistral model by default; allow override via OPENROUTER_MODEL.
-  const model = process.env.OPENROUTER_MODEL || 'mistral-small';
+  // Respect explicit MODEL env var (user can override which model to use).
+  const model = process.env.MODEL || process.env.OPENROUTER_MODEL || '';
 
   async function generateSongPrompt(params: any) {
     if (!key) throw new Error('OPENROUTER_API_KEY not set');
@@ -16,7 +16,7 @@ export function createOpenRouterClient() {
     const user = `User shared: "${userText.replace(/"/g, '\\"')}". Style/mood: ${style}. Return only valid JSON with the described structure.`;
 
     const body = {
-      model,
+      model: params?.model || model,
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user },
@@ -95,7 +95,7 @@ export function createOpenRouterClient() {
     return content.trim();
   }
 
-  return { generateSongPrompt, generatePrayerText };
+  return { generateSongPrompt, generatePrayerText, modelName: model, hasModel: Boolean(model) };
 }
 
 export default { createOpenRouterClient };

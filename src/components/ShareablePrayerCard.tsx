@@ -67,7 +67,7 @@ export function ShareablePrayerCard({ isOpen, onClose, prayerTitle, prayerText, 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 overflow-hidden bg-transparent border-none">
+      <DialogContent className="max-w-full sm:max-w-md p-0 overflow-hidden bg-transparent border-none">
         <div className="relative">
           {/* Close button */}
           <Button
@@ -128,7 +128,7 @@ export function ShareablePrayerCard({ isOpen, onClose, prayerTitle, prayerText, 
             </DialogHeader>
 
             {/* Share buttons */}
-            <div className="grid grid-cols-4 gap-3 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               {shareLinks.map((link) => (
                 <Button
                   key={link.name}

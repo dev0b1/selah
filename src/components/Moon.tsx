@@ -2,11 +2,23 @@ import React from 'react';
 
 interface MoonProps {
   className?: string;
+  top?: string;
+  right?: string;
+  left?: string;
 }
 
-export function Moon({ className = '' }: MoonProps) {
+export function Moon({ className = '', top = '5.5rem', right = '2.5rem', left }: MoonProps) {
+  const style: React.CSSProperties = {
+    position: 'fixed',
+    top: top,
+    right: right,
+    left: left,
+    zIndex: 5,
+    pointerEvents: 'none',
+  };
+
   return (
-    <div className={`relative ${className}`}>
+    <div style={style} className={className}>
       {/* Moon body */}
       <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-[#F5E6D3] via-[#E8D4B8] to-[#D4A574] moon-glow relative">
         {/* Craters */}

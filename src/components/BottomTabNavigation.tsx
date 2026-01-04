@@ -20,8 +20,8 @@ const tabs = [
 
 export function BottomTabNavigation({ currentTab, onTabChange, isPremium = false }: BottomTabNavigationProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-t border-border/50 safe-area-pb">
-      <div className="flex items-center justify-around py-2 px-4 max-w-lg mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/90 backdrop-blur-xl border-t border-border/50 safe-area-pb">
+      <div className="flex items-center justify-around py-1 px-4 max-w-lg mx-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = currentTab === tab.id;
@@ -31,27 +31,27 @@ export function BottomTabNavigation({ currentTab, onTabChange, isPremium = false
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={cn(
-                "flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-300",
+                "flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all duration-300",
                 isActive 
-                  ? "text-primary scale-105" 
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-selah-wood-dark scale-105"
+                  : "text-muted-foreground hover:text-selah-wood-dark"
               )}
             >
               <div className={cn(
-                "relative p-2 rounded-full transition-all duration-300",
-                isActive && "bg-primary/20"
+                "relative p-1 rounded-full transition-all duration-300 hover:bg-selah-wood/10",
+                isActive && "bg-selah-wood/20"
               )}>
                 <Icon className={cn(
                   "w-5 h-5 transition-all duration-300",
-                  isActive && "drop-shadow-[0_0_8px_hsl(var(--primary))]"
+                  isActive && "drop-shadow-[0_0_8px_rgba(53,39,20,0.6)]"
                 )} />
                 {isActive && (
-                  <div className="absolute inset-0 rounded-full bg-primary/10 blur-md" />
+                  <div className="absolute inset-0 rounded-full bg-selah-wood/10 blur-md" />
                 )}
               </div>
               <span className={cn(
                 "text-xs mt-1 font-medium transition-all duration-300",
-                isActive ? "text-primary" : "text-muted-foreground"
+                isActive ? "text-selah-wood-dark" : "text-muted-foreground"
               )}>
                 {tab.label}
               </span>

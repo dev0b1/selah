@@ -98,6 +98,16 @@ export async function updateSubscription(
 	}
 }
 
+export async function setLastAudioGeneratedAt(userId: string, when: Date = new Date()): Promise<boolean> {
+	try {
+		await db.update(subscriptions).set({ lastAudioGeneratedAt: when, updatedAt: new Date() }).where(eq(subscriptions.userId, userId));
+		return true;
+	} catch (error) {
+		console.error('Error setting lastAudioGeneratedAt:', error);
+		return false;
+	}
+}
+
 // ============================================================================
 // Credits Management
 // ============================================================================
@@ -343,6 +353,38 @@ export async function getPrayerById(prayerId: string): Promise<any | null> {
 	} catch (error) {
 		console.error('Error fetching prayer:', error);
 		return null;
+	}
+}
+
+export async function hasGeneratedAudioToday(userId: string): Promise<boolean> {
+	try {
+		// Prefer persisted `last_audio_generated_at` on the subscription row when available
+		const subs = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
+		if (subs && subs.length > 0) {
+			const last = subs[0].lastAudioGeneratedAt as Date | null | undefined;
+			if (!last) return false;
+
+			const now = new Date();
+			const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+			return new Date(last) >= startOfDay;
+		}
+
+		// Fallback: scan prayers table if subscription row missing
+		const now = new Date();
+		const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+		const results = await db
+			.select()
+			.from(prayers)
+			.where(
+				and(eq(prayers.userId, userId), sql`${prayers.audioUrl} IS NOT NULL AND ${prayers.createdAt} >= ${startOfDay}`)
+			)
+			.limit(1);
+
+		return !!(results && results.length > 0);
+	} catch (error) {
+		console.error('Error checking daily audio generation:', error);
+		return false;
 	}
 }
 

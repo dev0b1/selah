@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { DodoLoader } from "@/components/DodoLoader";
+import { Moon } from '@/components/Moon';
 import ScrollToTop from "@/components/ScrollToTop";
 import RegisterServiceWorker from "@/components/RegisterServiceWorker";
 
@@ -33,6 +34,7 @@ export default function RootLayout({
         <ScrollToTop />
         <DodoLoader />
         {children}
+        <Moon top="3rem" right="2rem" className="scale-75 md:scale-100" />
         <RegisterServiceWorker />
       </body>
     </html>

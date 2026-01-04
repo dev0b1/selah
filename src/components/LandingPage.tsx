@@ -13,7 +13,7 @@ interface LandingPageProps {
 
 export function LandingPage({ onContinue }: LandingPageProps) {
   const verse = getTodaysVerse();
-  const samplePrayer = "Lord, fill me with Your peace today. Quiet my anxious thoughts and help me trust in Your perfect plan. Guide my steps and let me feel Your presence in every moment. Amen.";
+  const samplePrayer = "Lord, fill me with Your peace today. Amen.";
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -36,10 +36,7 @@ export function LandingPage({ onContinue }: LandingPageProps) {
       {/* Nebula effects */}
       <div className="absolute inset-0 gradient-nebula opacity-50 pointer-events-none" />
 
-      {/* Moon */}
-      <div className="absolute top-12 right-8 md:top-16 md:right-16 z-10">
-        <Moon className="scale-75 md:scale-100" />
-      </div>
+      {/* Moon is rendered globally in the app layout */}
 
       <div className="max-w-xl w-full text-center space-y-12 md:space-y-16 relative z-10 py-8">
         {/* Hero Section */}
@@ -94,9 +91,11 @@ export function LandingPage({ onContinue }: LandingPageProps) {
         >
           <button
             onClick={handleContinue}
-            className="w-full max-w-sm mx-auto px-8 py-4 md:py-5 text-base md:text-lg text-primary-foreground font-medium rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all duration-300"
+            className="w-full max-w-sm mx-auto px-8 py-4 md:py-5 text-base md:text-lg font-semibold rounded-full shadow-lg hover:brightness-95 hover:scale-[1.02] transition-all duration-300 bg-selah-wood text-selah-wood-dark"
+            aria-label="Make this prayer personalized"
+            style={{ backgroundColor: '#E6D3B3', color: '#352714' }}
           >
-            Make this prayer personal
+            Make this prayer personalized
           </button>
           <p className="text-xs text-muted-foreground">
             Takes less than a minute

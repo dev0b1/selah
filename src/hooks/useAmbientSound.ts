@@ -180,6 +180,28 @@ export function useAmbientSound(options: UseAmbientSoundOptions = {}) {
     isLoading,
     volume: currentVolume,
     play,
+    // Play a random mp3 from public/bg by hitting server API that lists bg files
+    playRandom: async () => {
+      try {
+        const resp = await fetch('/api/bg/list');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const files: string[] = data?.files || [];
+        if (!files || files.length === 0) return;
+        const idx = Math.floor(Math.random() * files.length);
+        const url = files[idx];
+        const soundscape: Soundscape = {
+          id: `bg-random-${idx}`,
+          name: 'Random Background',
+          description: 'Random ambient background from server',
+          url,
+          icon: '🎧',
+        };
+        await play(soundscape);
+      } catch (e) {
+        console.warn('Failed to play random bg', e);
+      }
+    },
     stop,
     setVolume,
   };

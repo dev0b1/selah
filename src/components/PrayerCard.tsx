@@ -5,15 +5,16 @@ import { Card } from '@/components/ui/card';
 interface PrayerCardProps {
   prayer: Prayer;
   onClick: () => void;
+  active?: boolean;
 }
 
-export function PrayerCard({ prayer, onClick }: PrayerCardProps) {
+export function PrayerCard({ prayer, onClick, active = false }: PrayerCardProps) {
   const category = categories.find(c => c.id === prayer.category);
 
   return (
     <Card
       onClick={onClick}
-      className="group cursor-pointer p-6 bg-card/50 border-border/30 backdrop-blur-sm hover:bg-card/80 hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
+      className={`group cursor-pointer p-6 bg-card/50 border-border/30 backdrop-blur-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary/5 ${active ? 'bg-selah-wood/20 border-selah-wood' : 'hover:bg-card/80 hover:border-primary/30'}`}
     >
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-2xl group-hover:scale-110 transition-transform duration-300">

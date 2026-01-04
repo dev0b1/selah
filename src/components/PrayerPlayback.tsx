@@ -109,14 +109,6 @@ export function PrayerPlayback({
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={onShare}
-                className="btn-secondary flex-1 flex items-center justify-center gap-2 px-4 py-3.5 min-h-[48px] text-base sm:text-base active:scale-95 touch-manipulation"
-              >
-                <FaShare />
-                <span>Share Prayer</span>
-              </button>
-              
               {audioUrl && (
                 <a
                   href={audioUrl}

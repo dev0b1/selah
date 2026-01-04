@@ -22,6 +22,7 @@ export const subscriptions = pgTable('subscriptions', {
   dodoSubscriptionId: text('dodo_subscription_id'),
   creditsRemaining: integer('credits_remaining').default(0).notNull(),
   renewsAt: timestamp('renews_at'),
+  lastAudioGeneratedAt: timestamp('last_audio_generated_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull().$onUpdate(() => new Date()),
 }, (table) => ({
