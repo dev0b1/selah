@@ -52,7 +52,7 @@ export function BottomTabNavigation({ currentTab, onTabChange, isPremium = false
                   style={isActive ? { color: '#352714' } : undefined}
                 />
                 {isActive && (
-                  <div className="absolute inset-0 rounded-full bg-selah-wood/10 blur-md" />
+                  <div className="absolute inset-0 rounded-full bg-selah-wood/10" />
                 )}
               </div>
               <span className={cn(
