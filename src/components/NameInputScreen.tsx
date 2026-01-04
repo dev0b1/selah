@@ -63,7 +63,7 @@ export function NameInputScreen({ onContinue }: NameInputScreenProps) {
 
         {/* Text */}
         <div className="space-y-3">
-          <h2 className="text-3xl md:text-4xl font-script text-white">
+          <h2 className="text-3xl md:text-4xl font-display text-white">
             What should we call you in prayer?
           </h2>
           <p className="text-sm text-white/50">

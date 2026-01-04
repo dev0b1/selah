@@ -191,6 +191,7 @@ Amen.`;
               id="pray-for-loved"
               checked={isForFriend}
               onCheckedChange={setIsForFriend}
+              className="h-7 w-12"
             />
             <Label htmlFor="pray-for-loved" className="flex items-center gap-2 cursor-pointer">
               <Users className="w-4 h-4 text-muted-foreground" />
@@ -209,7 +210,7 @@ Amen.`;
                 setFriendName(first.slice(0, 30));
               }}
               placeholder="Enter a loved one's given name"
-              className="mb-4 bg-background/50 border-border/50 focus:border-primary/50"
+              className="mb-4 bg-background/50 border-border/50 focus:border-primary/50 placeholder-white/60 text-white"
               maxLength={30}
             />
           )}

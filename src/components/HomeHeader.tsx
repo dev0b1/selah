@@ -44,7 +44,7 @@ export function HomeHeader({ userName, onNotificationsClick, onSignOut }: HomeHe
   const displayName = userName || "Friend";
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0A1628]/95 backdrop-blur-lg border-b border-[#8B9DC3]/20">
+    <header className="sticky top-0 z-40 bg-[#0A1628] md:bg-[#0A1628]/95 backdrop-blur-lg border-b border-[#8B9DC3]/20">
       <div className="max-w-7xl mx-auto px-4 h-auto py-3 flex items-center justify-between">
         {/* Left: Greeting */}
         <div className="flex-1">
