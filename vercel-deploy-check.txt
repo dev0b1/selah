@@ -1,0 +1,8 @@
+Vercel Deploy Check
+===================
+
+This small file was added to trigger a quick deploy check.
+
+Timestamp: 2026-01-04T00:00:00Z
+
+Remove this file when no longer needed.
