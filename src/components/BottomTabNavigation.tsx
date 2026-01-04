@@ -20,7 +20,10 @@ const tabs = [
 
 export function BottomTabNavigation({ currentTab, onTabChange, isPremium = false }: BottomTabNavigationProps) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/100 md:bg-card/90 backdrop-blur-xl border-t border-border/50 safe-area-pb">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 safe-area-pb"
+      style={{ backgroundColor: 'rgba(10,16,28,0.96)' }}
+    >
       <div className="flex items-center justify-around py-1 px-4 max-w-lg mx-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -41,10 +44,13 @@ export function BottomTabNavigation({ currentTab, onTabChange, isPremium = false
                 "relative p-1 rounded-full transition-all duration-300 hover:bg-selah-wood/10",
                 isActive && "bg-selah-wood/20"
               )}>
-                <Icon className={cn(
-                  "w-5 h-5 transition-all duration-300",
-                  isActive && "drop-shadow-[0_0_8px_rgba(53,39,20,0.6)]"
-                )} />
+                <Icon
+                  className={cn(
+                    "w-5 h-5 transition-all duration-300",
+                    isActive && "drop-shadow-[0_0_8px_rgba(53,39,20,0.6)]"
+                  )}
+                  style={isActive ? { color: '#352714' } : undefined}
+                />
                 {isActive && (
                   <div className="absolute inset-0 rounded-full bg-selah-wood/10 blur-md" />
                 )}
