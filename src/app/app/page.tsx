@@ -371,7 +371,7 @@ export default function AppPage() {
         <div className="pt-20 pb-24">
           <PrayerIntentScreen
             userName={localUserName || userDisplayName || user?.email?.split('@')[0] || "Friend"}
-            onGenerate={async (intent, customMessage) => {
+            onGenerate={async (intent, customMessage, friendName) => {
               const effectiveName = localUserName || userDisplayName || user?.email?.split('@')[0] || "Friend";
               try {
                 const res = await fetch('/api/prayer/generate', {
@@ -382,12 +382,14 @@ export default function AppPage() {
                     need: intent,
                     message: customMessage,
                     userName: effectiveName,
+                    mode: friendName ? 'friend' : 'personal',
+                    friendName: friendName || undefined,
                   }),
                 });
 
                 if (res.status === 402) {
                   setShowPaywall(true);
-                  return;
+                  return null;
                 }
 
                 if (!res.ok) {
@@ -401,35 +403,34 @@ export default function AppPage() {
                   throw new Error('No prayer text returned from server');
                 }
 
-                setCurrentPrayer({
-                  text: data.prayerText,
-                  audioUrl: data.audioUrl,
-                  intent: intent,
-                  prayerId: data.prayerId,
-                });
-                setShowPrayerIntent(false);
+                // Do NOT auto-navigate to the full PrayerPlayerScreen here.
+                // Return the server response so the caller (PrayerIntentScreen)
+                // can update its in-place preview/player. This prevents the
+                // UI from switching away while the user is viewing/listening.
+                // Still show confetti and signup prompts as before.
                 setShowConfetti(true);
                 setTimeout(() => setShowConfetti(false), 3000);
 
-                // Trigger signup prompt after first personalized prayer (primary growth point)
                 if (!user && typeof window !== 'undefined') {
                   const firstPrayerPromptShown = localStorage.getItem('selah_first_prayer_prompt_shown');
                   const signupPromptShown = sessionStorage.getItem('selah_signup_prompt_shown');
 
                   if (!firstPrayerPromptShown && !signupPromptShown) {
-                    // Show prompt after a brief delay (let them see the prayer first)
                     setTimeout(() => {
                       setSignupPromptType('first-prayer');
                       setShowSignupPrompt(true);
                       localStorage.setItem('selah_first_prayer_prompt_shown', 'true');
                       sessionStorage.setItem('selah_signup_prompt_shown', 'true');
-                    }, 2000); // 2 second delay after prayer appears
+                    }, 2000);
                   }
                 }
+
+                return data;
               } catch (err) {
                 console.error('Error generating prayer:', err);
                 const errorMessage = err instanceof Error ? err.message : 'Failed to generate prayer. Please try again.';
                 alert(errorMessage);
+                return null;
               }
             }}
             isGenerating={false}

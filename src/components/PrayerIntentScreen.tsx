@@ -24,7 +24,7 @@ export type PrayerIntentType =
   | 'custom';
 
 interface PrayerIntentScreenProps {
-  onGenerate: (intent: PrayerIntentType, customMessage?: string, friendName?: string) => void;
+  onGenerate: (intent: PrayerIntentType, customMessage?: string, friendName?: string) => Promise<any | null>;
   isGenerating?: boolean;
   userName: string;
 }
@@ -87,7 +87,8 @@ Amen.`;
     if (isForFriend && !friendName.trim()) return;
     
     // Use 'custom' intent for textarea input
-    onGenerate('custom', prayerInput, isForFriend ? friendName : undefined);
+    // Await server response so we can update our in-place preview/player
+    const serverData = await onGenerate('custom', prayerInput, isForFriend ? friendName : undefined);
     
     // Also store locally for immediate display
     const prayerText = generateLongPrayerText(userName, prayerInput, isForFriend ? friendName : undefined);
@@ -123,7 +124,22 @@ Amen.`;
     setFriendName('');
     setIsForFriend(false);
     setShowInput(false);
-    setSelectedPrayer(generatedPrayer);
+    // If server returned a prayer text or audio, merge it into the preview
+    if (serverData && serverData.prayerText) {
+      const updated: Prayer = {
+        ...generatedPrayer,
+        text: serverData.prayerText || generatedPrayer.text,
+      };
+      // If server provided an audio URL, store it in localStorage as part of the prayer record
+      if (serverData.audioUrl) {
+        (updated as any).audioUrl = serverData.audioUrl;
+      }
+      setSelectedPrayer(updated);
+      // also update last generated prayer text so share card shows server text
+      setLastGeneratedPrayer({ title: prayerTitle, text: serverData.prayerText || prayerText, forFriend: isForFriend ? friendName : undefined });
+    } else {
+      setSelectedPrayer(generatedPrayer);
+    }
   };
 
   if (selectedPrayer) {
