@@ -49,7 +49,7 @@ export function BottomTabNavigation({ currentTab, onTabChange, isPremium = false
                     "w-5 h-5 transition-all duration-300",
                     isActive && "drop-shadow-[0_0_8px_rgba(53,39,20,0.6)]"
                   )}
-                  style={isActive ? { color: '#352714' } : undefined}
+                  style={isActive ? { color: '#6B4A2E' } : undefined}
                 />
                 {isActive && (
                   <div className="absolute inset-0 rounded-full bg-selah-wood/10" />
